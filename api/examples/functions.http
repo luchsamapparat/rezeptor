@@ -1,0 +1,84 @@
+# @baseUrl = https://rezeptor.azurewebsites.net
+@baseUrl = http://localhost:7071
+
+###
+
+POST {{baseUrl}}/api/addCookbook
+Content-Type: multipart/form-data;boundary="boundary"
+
+--boundary
+Content-Disposition: form-data; name="backCoverFile"; filename="example.jpg"
+Content-Type: image/jpeg
+
+< ./backcover.jpg
+--boundary--
+
+###
+
+GET {{baseUrl}}/api/getCookbook?id=50de9498-4f93-4371-9082-0c4622d4e469
+
+###
+
+POST {{baseUrl}}/api/updateCookbook
+Content-Type: application/x-www-form-urlencoded
+
+id=50de9498-4f93-4371-9082-0c4622d4e469&title=Simple&authors=Yotam%20Ottolenghi
+
+###
+
+GET {{baseUrl}}/api/getCookbooks
+
+###
+
+POST {{baseUrl}}/api/addRecipe
+Content-Type: multipart/form-data;boundary="boundary"
+
+--boundary
+Content-Disposition: form-data; name="cookbookId"
+
+50de9498-4f93-4371-9082-0c4622d4e469
+--boundary
+Content-Disposition: form-data; name="recipeFile"; filename="example.jpg"
+Content-Type: image/jpeg
+
+< ./recipe3.jpg
+--boundary--
+
+###
+
+GET {{baseUrl}}/api/getRecipe?id=f8e93544-2a67-4102-8b38-43e45e19de31
+
+###
+
+GET {{baseUrl}}/api/getRecipes
+
+###
+
+POST {{baseUrl}}/api/updateRecipe
+Content-Type: application/x-www-form-urlencoded
+
+id=f8e93544-2a67-4102-8b38-43e45e19de31&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20kartoffeln&pageNumber=238
+
+###
+
+POST {{baseUrl}}/api/replaceRecipePhoto
+Content-Type: multipart/form-data;boundary="boundary"
+
+--boundary
+Content-Disposition: form-data; name="id"
+
+bdcc6216-86c8-457b-8698-457157d465c1
+--boundary
+Content-Disposition: form-data; name="photoFile"; filename="example.jpg"
+Content-Type: image/jpeg
+
+< ./photo.jpg
+--boundary--
+
+###
+
+GET {{baseUrl}}/api/getRecipePhoto?id=2d9417a3-88a1-42bc-b33d-49710e29188b
+
+###
+
+GET https://www.googleapis.com/books/v1/volumes?q=isbn:9783831046362

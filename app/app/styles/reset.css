@@ -1,0 +1,96 @@
+/*
+based on https://www.joshwcomeau.com/css/custom-css-reset/
+*/
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    font-size: 1rem;
+    font-weight: normal;
+    font-style: normal;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+    display: block;
+    max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+    font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    overflow-wrap: break-word;
+}
+
+#root {
+    isolation: isolate;
+}
+
+/*
+ Project specific additional resets
+ */
+
+* {
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+ul>li {
+    list-style-type: none;
+}
+
+/**
+Prevent 'sub' and 'sup' elements from affecting the line height in all browsers.
+Taken from https://github.com/sindresorhus/modern-normalize/blob/main/modern-normalize.css
+*/
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+sup {
+    top: -0.5em;
+}
