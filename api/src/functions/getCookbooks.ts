@@ -1,11 +1,11 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { appEnvironment } from '../appEnvironment';
-import { getCookbookEntities } from '../infrastructure/persistence/cookbookTableStorage';
+import { getCookbookEntities } from '../infrastructure/persistence/cookbook';
 
 export async function getCookbooks(_request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
-    const azureStorageCookbookTableClient = await appEnvironment.get('azureStorageCookbookTableClient');
+    const cookbookContainer = await appEnvironment.get('cookbookContainer');
 
-    const cookbooks = await getCookbookEntities(azureStorageCookbookTableClient);
+    const cookbooks = await getCookbookEntities(cookbookContainer);
 
     return {
         jsonBody: cookbooks

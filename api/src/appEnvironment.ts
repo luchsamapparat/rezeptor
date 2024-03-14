@@ -1,8 +1,9 @@
 import { createContainer } from "iti";
 import { z } from "zod";
 import { createAzureDocumentAnalysisApiClient } from "./infrastructure/api/azureDocumentIntelligence";
-import { createGoogleBooksApiClient } from "./infrastructure/api/googleBooks";
-import { createBlobContainerClient, createBlobServiceClient, createTableClient } from "./infrastructure/persistence/azureStorageAccount";
+import { createbooksApi } from "./infrastructure/api/googleBooks";
+import { createCosmosDbClient, createOrGetDatabase, createOrGetDatabaseContainer } from "./infrastructure/persistence/azureCosmosDb";
+import { createBlobContainerClient, createBlobServiceClient } from "./infrastructure/persistence/azureStorageAccount";
 
 const environmentSchema = z.object({
     GOOGLE_API_KEY: z.string(),
@@ -11,7 +12,8 @@ const environmentSchema = z.object({
     AZURE_STORAGE_ACCOUNT_NAME: z.string(),
     AZURE_STORAGE_ACCOUNT_KEY: z.string(),
     AZURE_STORAGE_BLOB_ENDPOINT: z.string().url(),
-    AZURE_STORAGE_TABLE_ENDPOINT: z.string().url(),
+    AZURE_COSMOSDB_ENDPOINT: z.string().url(),
+    AZURE_COSMOSDB_KEY: z.string(),
 });
 
 type EnvironmentVars = z.infer<typeof environmentSchema>;
@@ -21,41 +23,34 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
 
     const container = createContainer()
         .add({
-            azureStorageBlobServiceClient: () => createBlobServiceClient(
+            blobService: () => createBlobServiceClient(
                 env.AZURE_STORAGE_BLOB_ENDPOINT,
                 env.AZURE_STORAGE_ACCOUNT_NAME,
                 env.AZURE_STORAGE_ACCOUNT_KEY
             )
         })
-        .add(items => ({
-            azureStoragePhotoBlobContainerClient: () => createBlobContainerClient(
-                items.azureStorageBlobServiceClient,
-                'photo'
-            ),
-            azureStorageRecipeBlobContainerClient: () => createBlobContainerClient(
-                items.azureStorageBlobServiceClient,
-                'recipe'
-            ),
+        .add(ctx => ({
+            photoBlobContainer: () => createBlobContainerClient(ctx.blobService, 'photo'),
+            recipeBlobContainer: () => createBlobContainerClient(ctx.blobService, 'recipe'),
         }))
         .add({
-            azureStorageCookbookTableClient: () => createTableClient(
-                env.AZURE_STORAGE_TABLE_ENDPOINT,
-                'cookbook',
-                env.AZURE_STORAGE_ACCOUNT_NAME,
-                env.AZURE_STORAGE_ACCOUNT_KEY
-            ),
-            azureStorageRecipeTableClient: () => createTableClient(
-                env.AZURE_STORAGE_TABLE_ENDPOINT,
-                'recipe',
-                env.AZURE_STORAGE_ACCOUNT_NAME,
-                env.AZURE_STORAGE_ACCOUNT_KEY
+            dbClient: () => createCosmosDbClient(
+                env.AZURE_COSMOSDB_ENDPOINT,
+                env.AZURE_COSMOSDB_KEY,
             )
         })
+        .add(ctx => ({
+            database: async () => createOrGetDatabase(ctx.dbClient, 'rezeptor')
+        }))
+        .add(ctx => ({
+            cookbookContainer: async () => createOrGetDatabaseContainer(await ctx.database, 'cookbook'),
+            recipeContainer: async () => createOrGetDatabaseContainer(await ctx.database, 'recipe'),
+        }))
         .add({
-            googleBooksApiClient: () => createGoogleBooksApiClient(
+            booksApi: () => createbooksApi(
                 env.GOOGLE_API_KEY
             ),
-            azureDocumentIntelligenceApiClient: () => createAzureDocumentAnalysisApiClient(
+            documentAnalysisApi: () => createAzureDocumentAnalysisApiClient(
                 env.AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT,
                 env.AZURE_DOCUMENT_INTELLIGENCE_KEY
             )

@@ -15,14 +15,14 @@ Content-Type: image/jpeg
 
 ###
 
-GET {{baseUrl}}/api/getCookbook?id=50de9498-4f93-4371-9082-0c4622d4e469
+GET {{baseUrl}}/api/getCookbook?id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc
 
 ###
 
-POST {{baseUrl}}/api/updateCookbook
+POST {{baseUrl}}/api/editCookbook
 Content-Type: application/x-www-form-urlencoded
 
-id=50de9498-4f93-4371-9082-0c4622d4e469&title=Simple&authors=Yotam%20Ottolenghi
+id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc&title=Simple&authors=Yotam%20Ottolenghi
 
 ###
 
@@ -41,12 +41,12 @@ Content-Disposition: form-data; name="cookbookId"
 Content-Disposition: form-data; name="recipeFile"; filename="example.jpg"
 Content-Type: image/jpeg
 
-< ./recipe3.jpg
+< ./recipe4.jpg
 --boundary--
 
 ###
 
-GET {{baseUrl}}/api/getRecipe?id=f8e93544-2a67-4102-8b38-43e45e19de31
+GET {{baseUrl}}/api/getRecipe?id=1a469355-7211-42f6-8a48-314ffeabaffa
 
 ###
 
@@ -54,10 +54,10 @@ GET {{baseUrl}}/api/getRecipes
 
 ###
 
-POST {{baseUrl}}/api/updateRecipe
+POST {{baseUrl}}/api/editRecipe
 Content-Type: application/x-www-form-urlencoded
 
-id=f8e93544-2a67-4102-8b38-43e45e19de31&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20kartoffeln&pageNumber=238
+id=1a469355-7211-42f6-8a48-314ffeabaffa&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20Kartoffeln&pageNumber=238
 
 ###
 
@@ -67,7 +67,7 @@ Content-Type: multipart/form-data;boundary="boundary"
 --boundary
 Content-Disposition: form-data; name="id"
 
-bdcc6216-86c8-457b-8698-457157d465c1
+1a469355-7211-42f6-8a48-314ffeabaffa
 --boundary
 Content-Disposition: form-data; name="photoFile"; filename="example.jpg"
 Content-Type: image/jpeg
@@ -77,7 +77,7 @@ Content-Type: image/jpeg
 
 ###
 
-GET {{baseUrl}}/api/getRecipePhoto?id=2d9417a3-88a1-42bc-b33d-49710e29188b
+GET {{baseUrl}}/api/getRecipePhoto?id=bf8515b0-8838-4a6f-85f6-0f7b6149dc79
 
 ###
 

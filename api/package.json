@@ -8,12 +8,11 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "azurite": "azurite --silent --location ./.azurite --debug ./.azurite/debug.log",
     "deploy": "func azure functionapp publish rezeptor --build remote"
   },
   "dependencies": {
     "@azure/ai-form-recognizer": "5.0.0",
-    "@azure/data-tables": "13.2.2",
+    "@azure/cosmos": "4.0.0",
     "@azure/functions": "4.3.0",
     "@azure/identity": "4.0.1",
     "@azure/storage-blob": "12.17.0",
@@ -29,7 +28,6 @@
     "@types/node": "20.11.27",
     "@types/stopword": "2.0.3",
     "azure-functions-core-tools": "4.0.5530",
-    "azurite": "3.29.0",
     "rimraf": "5.0.5",
     "typescript": "5.4.2"
   },

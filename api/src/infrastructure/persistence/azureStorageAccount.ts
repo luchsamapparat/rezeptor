@@ -1,5 +1,4 @@
-import { AzureNamedKeyCredential, TableClient, TableServiceClient } from "@azure/data-tables";
-import { BlobServiceClient, StorageSharedKeyCredential } from "@azure/storage-blob";
+import { BlobServiceClient, ContainerClient, StorageSharedKeyCredential } from "@azure/storage-blob";
 
 export const createBlobServiceClient = (blobEndpoint: string, accountName: string, accountKey: string) => new BlobServiceClient(
     blobEndpoint,
@@ -12,26 +11,26 @@ export const createBlobContainerClient = async (storageClient: BlobServiceClient
     return containerClient;
 }
 
-export const createTableClient = async (tableEndpoint: string, tableName: string, accountName: string, accountKey: string) => {
-    const credential = new AzureNamedKeyCredential(accountName, accountKey);
-    const options = {
-        allowInsecureConnection: isLocalEndpoint(tableEndpoint)
+export async function uploadFile(containerClient: ContainerClient, fileName: string, file: File) {
+    const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+    await blockBlobClient.uploadData(await file.arrayBuffer(), {
+        blobHTTPHeaders: {
+            blobContentType: file.type
+        }
+    });
+}
+
+export async function downloadFile(containerClient: ContainerClient, fileName: string) {
+    const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+
+    if (!(await blockBlobClient.exists())) {
+        return null;
+    }
+
+    const fileBuffer = await blockBlobClient.downloadToBuffer();
+    const contentType = (await blockBlobClient.getProperties()).contentType ?? null;
+    return {
+        fileBuffer,
+        contentType
     };
-
-    const tableServiceClient = new TableServiceClient(
-        tableEndpoint,
-        credential,
-        options
-    );
-    await tableServiceClient.createTable(tableName);
-
-    return new TableClient(
-        tableEndpoint,
-        tableName,
-        credential,
-        options
-    )
-
-};
-
-const isLocalEndpoint = (endpoint: string) => endpoint.startsWith('http://127.0.0.1') || endpoint.startsWith('http://localhost');
+}

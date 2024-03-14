@@ -1,10 +1,10 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { appEnvironment } from '../appEnvironment';
-import { updateRecipeEntity } from '../infrastructure/persistence/recipeTableStorage';
+import { updateRecipeEntity } from '../infrastructure/persistence/recipe';
 import { getStringValue } from '../infrastructure/util/form';
 
 export async function editRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
-    const azureStorageRecipeTableClient = await appEnvironment.get('azureStorageRecipeTableClient');
+    const recipeContainer = await appEnvironment.get('recipeContainer');
 
     const formData = await request.formData();
 
@@ -12,8 +12,7 @@ export async function editRecipe(request: HttpRequest, _context: InvocationConte
     const title = getStringValue(formData, 'title');
     const pageNumber = parseInt(getStringValue(formData, 'pageNumber'));
 
-    await updateRecipeEntity(azureStorageRecipeTableClient, {
-        id,
+    await updateRecipeEntity(recipeContainer, id, {
         title,
         pageNumber
     });

@@ -1,10 +1,10 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { appEnvironment } from '../appEnvironment';
-import { updateCookbookEntity } from '../infrastructure/persistence/cookbookTableStorage';
+import { updateCookbookEntity } from '../infrastructure/persistence/cookbook';
 import { getStringValue } from '../infrastructure/util/form';
 
 export async function editCookbook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
-    const azureStorageCookbookTableClient = await appEnvironment.get('azureStorageCookbookTableClient');
+    const cookbookContainer = await appEnvironment.get('cookbookContainer');
 
     const formData = await request.formData();
 
@@ -14,8 +14,7 @@ export async function editCookbook(request: HttpRequest, _context: InvocationCon
         .map(author => author.trim())
         .filter(author => author.length > 0);
 
-    await updateCookbookEntity(azureStorageCookbookTableClient, {
-        id,
+    await updateCookbookEntity(cookbookContainer, id, {
         title,
         authors
     });

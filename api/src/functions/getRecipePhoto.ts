@@ -1,27 +1,28 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { appEnvironment } from '../appEnvironment';
+import { downloadFile } from '../infrastructure/persistence/azureStorageAccount';
 import { getStringValue } from '../infrastructure/util/form';
 
 export async function getRecipePhoto(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
-    const azureStoragePhotoBlobContainerClient = await appEnvironment.get('azureStoragePhotoBlobContainerClient');
+    const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
 
     const id = getStringValue(request.query, 'id');
 
-    const blockBlobClient = azureStoragePhotoBlobContainerClient.getBlockBlobClient(id);
+    const recipePhotoFile = await downloadFile(photoBlobContainer, id);
 
-    if (!(await blockBlobClient.exists())) {
+    if (recipePhotoFile === null) {
         return {
             status: 404
         };
     }
 
-    const recipePhotoBuffer = await blockBlobClient.downloadToBuffer();
-    const recipePhotoContentType = (await blockBlobClient.getProperties()).contentType ?? null;
+    const { fileBuffer, contentType } = recipePhotoFile;
+
     return {
-        body: recipePhotoBuffer,
+        body: fileBuffer,
         headers: {
-            ...(recipePhotoContentType === null) ? {} : {
-                'content-type': recipePhotoContentType
+            ...(contentType === null) ? {} : {
+                'content-type': contentType
             }
         }
     };

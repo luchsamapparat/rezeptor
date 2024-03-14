@@ -7,7 +7,7 @@ type Book = {
     isbn13: string | null;
 }
 
-export const createGoogleBooksApiClient = (key: string) => books({ version: 'v1', key });
+export const createbooksApi = (key: string) => books({ version: 'v1', key });
 
 export async function findBook(apiClient: books_v1.Books, isbn: string): Promise<Book | null> {
     const sanitizedIsbn = isbn.replace(/\D/g, '');
