@@ -14,23 +14,24 @@
   "dependencies": {
     "@azure/ai-form-recognizer": "5.0.0",
     "@azure/data-tables": "13.2.2",
-    "@azure/functions": "^4.0.0",
+    "@azure/functions": "4.3.0",
     "@azure/identity": "4.0.1",
     "@azure/storage-blob": "12.17.0",
     "@googleapis/books": "1.0.5",
     "capitalize": "2.0.4",
+    "iti": "0.6.0",
     "sharp": "0.33.2",
     "stopword": "3.0.1",
     "zod": "3.22.4"
   },
   "devDependencies": {
     "@types/capitalize": "2.0.2",
-    "@types/node": "^18.x",
+    "@types/node": "20.11.27",
     "@types/stopword": "2.0.3",
     "azure-functions-core-tools": "4.0.5530",
     "azurite": "3.29.0",
-    "rimraf": "^5.0.0",
-    "typescript": "^4.0.0"
+    "rimraf": "5.0.5",
+    "typescript": "5.4.2"
   },
   "main": "dist/src/functions/*.js"
 }

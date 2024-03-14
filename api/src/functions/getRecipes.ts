@@ -1,10 +1,11 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { environment } from '../environment';
+import { appEnvironment } from '../appEnvironment';
 import { getRecipeEntities } from '../infrastructure/persistence/recipeTableStorage';
 
 export async function getRecipes(_request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
-    const recipeTableClient = await environment.getTableClient('recipe');
-    const recipes = await getRecipeEntities(recipeTableClient);
+    const azureStorageRecipeTableClient = await appEnvironment.get('azureStorageRecipeTableClient');
+
+    const recipes = await getRecipeEntities(azureStorageRecipeTableClient);
 
     return {
         jsonBody: recipes

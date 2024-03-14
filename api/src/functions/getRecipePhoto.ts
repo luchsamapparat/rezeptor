@@ -1,12 +1,13 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { environment } from '../environment';
+import { appEnvironment } from '../appEnvironment';
 import { getStringValue } from '../infrastructure/util/form';
 
 export async function getRecipePhoto(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+    const azureStoragePhotoBlobContainerClient = await appEnvironment.get('azureStoragePhotoBlobContainerClient');
+
     const id = getStringValue(request.query, 'id');
 
-    const photoBlobContainerClient = await environment.getBlobContainerClient('photo');
-    const blockBlobClient = photoBlobContainerClient.getBlockBlobClient(id);
+    const blockBlobClient = azureStoragePhotoBlobContainerClient.getBlockBlobClient(id);
 
     if (!(await blockBlobClient.exists())) {
         return {
