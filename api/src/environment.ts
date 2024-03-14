@@ -13,7 +13,7 @@ const environmentSchema = z.object({
     AZURE_DOCUMENT_INTELLIGENCE_KEY: z.string(),
     AZURE_STORAGE_ACCOUNT_NAME: z.string(),
     AZURE_STORAGE_ACCOUNT_KEY: z.string(),
-    AZURE_STORAGE_BLOG_ENDPOINT: z.string().url(),
+    AZURE_STORAGE_BLOB_ENDPOINT: z.string().url(),
     AZURE_STORAGE_TABLE_ENDPOINT: z.string().url(),
 });
 
@@ -31,7 +31,7 @@ const initEnvironment = (env: NodeJS.ProcessEnv) => {
     return {
         getBlobServiceClient() {
             return blobServiceClient ??= createBlobServiceClient(
-                environment.AZURE_STORAGE_BLOG_ENDPOINT,
+                environment.AZURE_STORAGE_BLOB_ENDPOINT,
                 environment.AZURE_STORAGE_ACCOUNT_NAME,
                 environment.AZURE_STORAGE_ACCOUNT_KEY
             );
