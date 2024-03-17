@@ -1,7 +1,7 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
-import { deleteRecipeEntity } from '../infrastructure/persistence/recipe';
-import { getStringValue } from '../infrastructure/util/form';
+import { appEnvironment } from '../../appEnvironment';
+import { getStringValue } from '../../common/util/form';
+import { deleteRecipeEntity } from '../infrastructure/persistence/cookbook';
 
 export async function removeRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
     const recipeContainer = await appEnvironment.get('recipeContainer');

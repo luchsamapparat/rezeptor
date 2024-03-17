@@ -1,7 +1,7 @@
 import { AzureKeyCredential, DocumentAnalysisClient, FormRecognizerFeature } from "@azure/ai-form-recognizer";
-import { getFileSize } from "../util/file";
-import { resizeImage } from "../util/image";
-import { sanitizeString } from "../util/string";
+import { getFileSize } from "../../../common/util/file";
+import { resizeImage } from "../../../common/util/image";
+import { sanitizeString } from "../../../common/util/string";
 
 export const createAzureDocumentAnalysisApiClient = (endpoint: string, key: string) => new DocumentAnalysisClient(
     endpoint,

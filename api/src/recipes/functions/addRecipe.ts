@@ -1,8 +1,8 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
+import { appEnvironment } from '../../appEnvironment';
+import { getStringValue } from '../../common/util/form';
 import { extractMetadata } from '../infrastructure/api/azureDocumentIntelligence';
 import { createRecipeEntity, uploadRecipeFile } from '../infrastructure/persistence/recipe';
-import { getStringValue } from '../infrastructure/util/form';
 
 export async function addRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
     const recipeBlobContainer = await appEnvironment.get('recipeBlobContainer');

@@ -1,7 +1,7 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
+import { appEnvironment } from '../../appEnvironment';
+import { getStringValue } from '../../common/util/form';
 import { getCookbookEntity } from '../infrastructure/persistence/cookbook';
-import { getStringValue } from '../infrastructure/util/form';
 
 export async function getCookbook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
     const cookbookContainer = await appEnvironment.get('cookbookContainer');

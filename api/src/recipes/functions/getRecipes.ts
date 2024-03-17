@@ -1,5 +1,5 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
+import { appEnvironment } from '../../appEnvironment';
 import { getRecipeEntities } from '../infrastructure/persistence/recipe';
 
 export async function getRecipes(_request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {

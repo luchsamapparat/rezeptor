@@ -1,9 +1,9 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
+import { appEnvironment } from '../../appEnvironment';
+import { getFile } from '../../common/util/form';
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
 import { findBook } from '../infrastructure/api/googleBooks';
 import { createCookbookEntity } from '../infrastructure/persistence/cookbook';
-import { getFile } from '../infrastructure/util/form';
 
 export async function addCookbook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
     const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');

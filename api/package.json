@@ -17,6 +17,7 @@
     "@azure/identity": "4.0.1",
     "@azure/storage-blob": "12.17.0",
     "@googleapis/books": "1.0.5",
+    "@simplewebauthn/server": "9.0.3",
     "capitalize": "2.0.4",
     "iti": "0.6.0",
     "sharp": "0.33.2",
@@ -31,5 +32,5 @@
     "rimraf": "5.0.5",
     "typescript": "5.4.2"
   },
-  "main": "dist/src/functions/*.js"
+  "main": "dist/src/**/functions/*.js"
 }

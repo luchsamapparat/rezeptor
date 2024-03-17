@@ -1,7 +1,7 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
-import { appEnvironment } from '../appEnvironment';
-import { downloadFile } from '../infrastructure/persistence/azureStorageAccount';
-import { getStringValue } from '../infrastructure/util/form';
+import { appEnvironment } from '../../appEnvironment';
+import { downloadFile } from '../../common/infrastructure/persistence/azureStorageAccount';
+import { getStringValue } from '../../common/util/form';
 
 export async function getRecipePhoto(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
     const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
