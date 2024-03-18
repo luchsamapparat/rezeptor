@@ -1,7 +1,6 @@
 {
     "name": "Rezeptor",
     "short_name": "Rezeptor",
-    "start_url": "https://rezeptor.luchsamappar.at",
     "display": "fullscreen",
     "description": "Die digitale Rezeptesammlung für deine analogen Kochbücher",
     "lang": "de",
