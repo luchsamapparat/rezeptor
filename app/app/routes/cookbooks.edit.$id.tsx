@@ -1,7 +1,7 @@
 import { CaretLeft } from "@phosphor-icons/react";
 import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Link, redirect, useFetcher, useLoaderData } from "@remix-run/react";
 import { isUndefined } from "lodash-es";
-import { fetch } from "~/infrastructure/fetch";
+import { authenticatedFetch } from "~/infrastructure/fetch";
 import { Cookbook } from "~/model";
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
@@ -13,12 +13,12 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
         });
     }
 
-    const response = await fetch(`/getCookbook?id=${id}`);
+    const response = await authenticatedFetch(`/getCookbook?id=${id}`);
     return response.json() as Promise<Cookbook>;
 }
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-    await fetch(`/editCookbook`, {
+    await authenticatedFetch(`/editCookbook`, {
         method: 'post',
         body: await request.formData()
     });

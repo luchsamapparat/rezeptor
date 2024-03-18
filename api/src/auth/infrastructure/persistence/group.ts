@@ -21,7 +21,7 @@ export async function getGroupEntity(container: Container, id: EntityId) {
 
 export async function findGroupEntityByInvitationCode(container: Container, invitationCode: Group['invitationCode']) {
     const { resources } = await container.items.query<Group>({
-        query: 'SELECT * FROM group g WHERE g.invitationCode = @invitationCode',
+        query: 'SELECT * FROM g WHERE g.invitationCode = @invitationCode',
         parameters: [{
             name: '@invitationCode', value: invitationCode
         }]

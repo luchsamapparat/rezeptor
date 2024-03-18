@@ -1,5 +1,6 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { createChallengeEntity } from '../infrastructure/persistence/challenge';
@@ -24,7 +25,7 @@ export async function getRegistrationOptions(request: HttpRequest, _context: Inv
     attestationType: 'none',
     // Prevent users from re-registering existing authenticators
     excludeCredentials: group.authenticators.map(({ credentialId, transports }) => ({
-      id: credentialId,
+      id: isoBase64URL.toBuffer(credentialId),
       type: 'public-key',
       transports: transports
     })),

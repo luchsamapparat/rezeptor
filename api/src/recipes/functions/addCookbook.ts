@@ -26,7 +26,7 @@ export async function addCookbook(request: HttpRequest, _context: InvocationCont
         throw new Error(`No book found for ${ean13}.`);
     }
 
-    const cookbookId = await createCookbookEntity(cookbookContainer, book);
+    const { id: cookbookId } = await createCookbookEntity(cookbookContainer, book);
 
     return {
         body: cookbookId

@@ -1,10 +1,10 @@
 import { Book, BookBookmark, Bookmarks, CaretLeft } from "@phosphor-icons/react";
 import { Link, useLoaderData } from "@remix-run/react";
-import { fetch } from "~/infrastructure/fetch";
+import { authenticatedFetch } from "~/infrastructure/fetch";
 import { Cookbook } from "~/model";
 
 export async function clientLoader() {
-    const response = await fetch(`/getCookbooks`);
+    const response = await authenticatedFetch(`/getCookbooks`);
     return response.json() as Promise<Cookbook[]>;
 }
 

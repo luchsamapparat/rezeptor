@@ -1,9 +1,10 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
-import { findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
+import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { findGroupEntityByInvitationCode, updateGroupEntity } from '../infrastructure/persistence/group';
 
 const requestBodySchema = z.object({
@@ -23,7 +24,13 @@ export async function registerAuthenticator(request: HttpRequest, _context: Invo
 
   const { registrationInfo, verified } = await verifyRegistrationResponse({
     response: registrationResponse,
-    expectedChallenge: givenChallenge => challenges.some(({ value }) => value === givenChallenge),
+    expectedChallenge: givenChallenge => challenges.some(async challenge => {
+      if (challenge.value !== givenChallenge) {
+        return false;
+      }
+      await deleteChallengeEntity(challengeContainer, challenge.id);
+      return true;
+    }),
     expectedRPID: rpId,
     expectedOrigin: allowedOrigin
   });
@@ -38,12 +45,15 @@ export async function registerAuthenticator(request: HttpRequest, _context: Invo
       credentialBackedUp,
     } = registrationInfo;
 
+    const serializedCredentialId = isoBase64URL.fromBuffer(credentialID);
+    const serializedCredentialPublicKey = isoBase64URL.fromBuffer(credentialPublicKey);
+
     await updateGroupEntity(groupContainer, group.id, {
       authenticators: [
         ...group.authenticators,
         {
-          credentialId: credentialID,
-          credentialPublicKey,
+          credentialId: serializedCredentialId,
+          credentialPublicKey: serializedCredentialPublicKey,
           counter,
           credentialDeviceType,
           credentialBackedUp,

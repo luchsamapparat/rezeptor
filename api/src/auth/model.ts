@@ -1,3 +1,4 @@
+import { isoBase64URL } from "@simplewebauthn/server/helpers";
 import { AuthenticatorDevice, AuthenticatorTransportFuture, CredentialDeviceType } from "@simplewebauthn/types";
 import { EntityId } from "../common/infrastructure/persistence/azureCosmosDb";
 import { Model } from "../common/model";
@@ -17,17 +18,18 @@ export type Group = Model<{
 }>;
 
 export type Authenticator = {
-    credentialId: Uint8Array;
-    credentialPublicKey: Uint8Array;
+    credentialId: string;
+    credentialPublicKey: string;
     counter: number;
     credentialDeviceType: CredentialDeviceType;
     credentialBackedUp: boolean;
     transports?: AuthenticatorTransportFuture[];
 };
 
-export const toAuthenticatorDevice = ({ credentialId, ...authenticator }: Authenticator): AuthenticatorDevice => ({
+export const toAuthenticatorDevice = ({ credentialId, credentialPublicKey, ...authenticator }: Authenticator): AuthenticatorDevice => ({
     ...authenticator,
-    credentialID: credentialId
+    credentialID: isoBase64URL.toBuffer(credentialId),
+    credentialPublicKey: isoBase64URL.toBuffer(credentialPublicKey)
 });
 
 export type Challenge = Model<{

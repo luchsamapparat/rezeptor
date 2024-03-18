@@ -1,7 +1,7 @@
 import { CaretLeft } from "@phosphor-icons/react";
 import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Link, redirect, useFetcher, useLoaderData } from "@remix-run/react";
 import { isUndefined } from "lodash-es";
-import { fetch } from "~/infrastructure/fetch";
+import { authenticatedFetch } from "~/infrastructure/fetch";
 import { Recipe } from "~/model";
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
@@ -13,7 +13,7 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
         });
     }
 
-    const response = await fetch(`/getRecipe?id=${id}`);
+    const response = await authenticatedFetch(`/getRecipe?id=${id}`);
     return response.json() as Promise<Recipe>;
 }
 
@@ -26,7 +26,7 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
         });
     }
 
-    await fetch(`/editRecipe`, {
+    await authenticatedFetch(`/editRecipe`, {
         method: 'post',
         body: await request.formData()
     });

@@ -1,9 +1,11 @@
 import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { createChallengeEntity } from '../infrastructure/persistence/challenge';
-import { getGroupEntity } from '../infrastructure/persistence/group';
+import { findGroupEntityByInvitationCode, getGroupEntity } from '../infrastructure/persistence/group';
+import { Group } from '../model';
 
 export async function getAuthenticationOptions(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
   const groupContainer = await appEnvironment.get('groupContainer');
@@ -12,21 +14,30 @@ export async function getAuthenticationOptions(request: HttpRequest, _context: I
 
   const formData = await request.formData();
 
-  const groupId = getStringValue(formData, 'groupId');
+  const groupId = getStringValue(formData, 'groupId', false);
+  const invitationCode = getStringValue(formData, 'invitationCode', false);
 
-  const group = await getGroupEntity(groupContainer, groupId);
+  let group: Group | null = null;
 
-  if (group === undefined) {
-    throw new Error(`unknown group ID ${groupId}`);
+  if (groupId !== null) {
+    group = await getGroupEntity(groupContainer, groupId);
+  }
+
+  if (invitationCode !== null) {
+    group = await findGroupEntityByInvitationCode(groupContainer, invitationCode);
+  }
+
+  if (group === null) {
+    throw new Error(`cannot find group by neither group ID (${groupId}) nor invitation code (${invitationCode})`);
   }
 
   const options = await generateAuthenticationOptions({
     rpID: rpId,
     allowCredentials: group.authenticators.map(authenticator => ({
-      id: authenticator.credentialId,
+      id: isoBase64URL.toBuffer(authenticator.credentialId),
       type: 'public-key',
       transports: authenticator.transports
-    })),
+    } as const)),
     userVerification: 'preferred',
   });
 

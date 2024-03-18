@@ -16,21 +16,23 @@ export type EntityId = Item['id'];
 
 export async function createItem<T extends ItemDefinition>(container: Container, body: T) {
     const id = crypto.randomUUID();
-    await container.items.create<T>({
+    const { resource } = await container.items.create<T>({
         id,
         ...body
     });
-    return id;
+    return resource!;
 }
 
 export async function updateItem<T extends ItemDefinition>(container: Container, id: EntityId, updatedBody: T) {
     const item = container.item(id);
     const { resource } = await item.read<T>();
 
-    await item.replace({
+    const { resource: updatedResource } = await item.replace({
         ...resource,
         ...updatedBody,
     });
+
+    return updatedResource!;
 }
 
 export async function deleteItem<T extends ItemDefinition>(container: Container, id: EntityId) {
@@ -39,7 +41,7 @@ export async function deleteItem<T extends ItemDefinition>(container: Container,
 
 export async function getItem<T extends ItemDefinition>(container: Container, id: EntityId) {
     const { resource } = await container.item(id).read<T>();
-    return resource;
+    return resource ?? null;
 }
 
 export async function getItems<T extends ItemDefinition>(container: Container) {

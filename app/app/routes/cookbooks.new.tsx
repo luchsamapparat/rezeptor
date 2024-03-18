@@ -1,10 +1,10 @@
 import { CaretLeft } from "@phosphor-icons/react";
 import { ClientActionFunctionArgs, Link, redirect, useFetcher } from "@remix-run/react";
 import { FormEvent } from "react";
-import { fetch } from "~/infrastructure/fetch";
+import { authenticatedFetch } from "~/infrastructure/fetch";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-    const response = await fetch(`/addCookbook`, {
+    const response = await authenticatedFetch(`/addCookbook`, {
         method: 'post',
         body: await request.formData()
     });

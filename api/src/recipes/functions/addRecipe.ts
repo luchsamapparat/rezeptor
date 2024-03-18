@@ -18,7 +18,7 @@ export async function addRecipe(request: HttpRequest, _context: InvocationContex
 
     const { title, pageNumber } = await extractMetadata(documentAnalysisApi, recipeFile);
 
-    const recipeId = await createRecipeEntity(recipeContainer, {
+    const { id: recipeId } = await createRecipeEntity(recipeContainer, {
         title: title ?? '',
         photoFileId: null,
         recipeFileId,

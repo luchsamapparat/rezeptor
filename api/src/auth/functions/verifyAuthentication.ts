@@ -4,7 +4,7 @@ import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
-import { findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
+import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { getGroupEntity, updateGroupEntity } from '../infrastructure/persistence/group';
 import { createSessionEntity } from '../infrastructure/persistence/session';
 import { toAuthenticatorDevice } from '../model';
@@ -14,43 +14,56 @@ const requestBodySchema = z.object({
   authenticationResponse: z.object({}).passthrough().transform(value => value as unknown as AuthenticationResponseJSON)
 })
 
-export async function authenticate(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+export async function verifyAuthentication(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { rpId, allowedOrigin } = appEnvironment.get('authenticationConfig');
+  const { rpId, allowedOrigin, sessionTtl } = appEnvironment.get('authenticationConfig');
 
   const { groupId, authenticationResponse } = requestBodySchema.parse(await request.json());
 
   const group = await getGroupEntity(groupContainer, groupId);
 
-  if (group === undefined) {
+  if (group === null) {
     throw new Error(`unknown group ID ${groupId}`);
   }
 
-  const authenticationCredentialId = isoBase64URL.toBuffer(authenticationResponse.rawId);
+  const authenticatedCredentialId = isoBase64URL.toBuffer(authenticationResponse.rawId);
 
-  const usedAuthenticator = group.authenticators.find(({ credentialId }) => isoUint8Array.areEqual(authenticationCredentialId, credentialId));
+  const usedAuthenticator = group.authenticators.find(({ credentialId }) => {
+    return isoUint8Array.areEqual(authenticatedCredentialId, isoBase64URL.toBuffer(credentialId));
+  });
 
   if (usedAuthenticator === undefined) {
-    throw new Error(`unknown credential ID ${authenticationCredentialId}`);
+    throw new Error(`unknown credential ID ${authenticationResponse.rawId}`);
   }
 
   const challenges = await findChallengeEntitiesByGroupIdAndType(challengeContainer, group.id, 'authentication');
 
   const { authenticationInfo, verified } = await verifyAuthenticationResponse({
     response: authenticationResponse,
-    expectedChallenge: givenChallenge => challenges.some(({ value }) => value === givenChallenge),
+    expectedChallenge: givenChallenge => challenges.some(async challenge => {
+      if (challenge.value !== givenChallenge) {
+        return false;
+      }
+      await deleteChallengeEntity(challengeContainer, challenge.id);
+      return true;
+    }),
     expectedOrigin: allowedOrigin,
     expectedRPID: rpId,
     authenticator: toAuthenticatorDevice(usedAuthenticator)
   });
 
-
-  let sessionId = undefined;
+  let session = undefined;
 
   if (verified) {
-    sessionId = await createSessionEntity(sessionContainer, { groupId });
+    const { id: sessionId } = await createSessionEntity(sessionContainer, { groupId });
+
+    session = {
+      sessionId,
+      groupId,
+      expiresAt: (new Date().getTime() / 1000) + sessionTtl
+    }
 
     const { newCounter } = authenticationInfo;
 
@@ -66,12 +79,15 @@ export async function authenticate(request: HttpRequest, _context: InvocationCon
   }
 
   return {
-    jsonBody: { verified, sessionId }
+    jsonBody: {
+      verified,
+      session
+    }
   };
 };
 
-app.http('authenticate', {
+app.http('verifyAuthentication', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: authenticate
+  handler: verifyAuthentication
 });
