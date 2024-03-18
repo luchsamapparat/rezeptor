@@ -41,8 +41,11 @@ input,
 button,
 textarea,
 select {
+    appearance: none;
     font: inherit;
+    color: inherit;
 }
+
 
 p,
 h1,

@@ -18,10 +18,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de">
       <head>
+        <title>Rezeptor</title>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <link rel="manifest" href="manifest.json" />
       </head>
       <body>
         <IconContext.Provider value={{
