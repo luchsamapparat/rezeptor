@@ -37,7 +37,7 @@ jobs:
           popd
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./api/* -r
+        run: Compress-Archive -Path api/* -Destination release.zip
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
@@ -61,7 +61,7 @@ jobs:
           name: release
 
       - name: unzip artifact for deployment
-        run: unzip release.zip
+        run: Expand-Archive -Path release.zip
       
       - name: Login to Azure
         uses: azure/login@v1
