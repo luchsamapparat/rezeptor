@@ -56,8 +56,6 @@ const verifyAuthentication: RequestHandler = async request => {
     authenticator: toAuthenticatorDevice(usedAuthenticator)
   });
 
-  let session = undefined;
-
   if (!verified) {
     return {
       status: 422
@@ -83,7 +81,7 @@ const verifyAuthentication: RequestHandler = async request => {
     cookies: [
       createSessionKeyCookie(sessionId, { cookieDomain, sessionTtl, sessionKeySecret }),
       createSessionCookie({ cookieDomain, sessionTtl }),
-      createGroupCookie(sessionId, { cookieDomain })
+      createGroupCookie(groupId, { cookieDomain })
     ]
   };
 };
