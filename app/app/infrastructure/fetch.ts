@@ -1,7 +1,7 @@
 import { getApiBaseUrl } from "~/environment";
 
 export async function authenticatedFetch(path: string, init: RequestInit = {}) {
-    return fetch(
+    const response = fetch(
         path,
         {
             ...init,
@@ -10,12 +10,17 @@ export async function authenticatedFetch(path: string, init: RequestInit = {}) {
                 // Authorization: `bearer ${accessToken}`,
             }
         }
-    )
+    );
+
+    return response;
 }
 
 export async function fetch(path: string, init: RequestInit = {}) {
     return window.fetch(
         `${getApiBaseUrl()}${path}`,
-        init
+        {
+            ...init,
+            credentials: 'include'
+        }
     )
 }

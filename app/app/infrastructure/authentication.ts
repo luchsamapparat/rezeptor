@@ -1,8 +1,7 @@
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
-import { useMemo, useSyncExternalStore } from "react";
+import { isEmpty } from "lodash-es";
+import { getCookie } from "react-use-cookie";
 import { fetch } from "~/infrastructure/fetch";
-import { getSessionStore, isSessionValid } from "./session";
-
 
 export async function loginWithInvitationCode(invitationCode: string) {
     const groupId = await register(invitationCode);
@@ -14,13 +13,6 @@ export async function loginWithGroupId(groupId: string) {
 }
 
 async function login(groupId: string) {
-    const sessionStore = getSessionStore()!;
-    const existingSession = sessionStore.get();
-
-    if (isSessionValid(existingSession)) {
-        throw new Error(`there is a valid session for group ID ${groupId}`);
-    }
-
     const authenticationOptionsResponse = await fetch('/getAuthenticationOptions', {
         method: 'POST',
         body: new URLSearchParams({ groupId })
@@ -39,29 +31,15 @@ async function login(groupId: string) {
         }),
     });
 
-    const { verified, session } = await authenticationVerificationResponse.json();
-
-    if (!verified) {
-        throw new Error('authentication verfication failed');
+    if (!authenticationVerificationResponse.ok) {
+        throw new Error('authentication verification failed');
     }
-
-    sessionStore.update(session);
 }
 
 export async function logout() {
-    const sessionStore = getSessionStore()!;
-    const session = sessionStore.get();
-
-    if (!isSessionValid(session)) {
-        return;
-    }
-
     await fetch('/endSession', {
-        method: 'POST',
-        body: new URLSearchParams({ sessionId: session.sessionId })
+        method: 'POST'
     });
-
-    sessionStore.invalidate();
 }
 
 async function register(invitationCode: string) {
@@ -93,24 +71,27 @@ async function register(invitationCode: string) {
 }
 
 export function isAuthenticated() {
-    return isSessionValid(getSessionStore()?.get() ?? null);
+    return !isSessionExpired(getSessionFromCookie());
 }
 
-export const useSession = () => {
-    const sessionStore = getSessionStore()!;
+type Session = { expiresAt: number };
 
-    const session = useSyncExternalStore(
-        callback => {
-            sessionStore.addEventListener('sessionChanged', callback);
-            return () => sessionStore.removeEventListener('sessionChanged', callback);
-        },
-        () => sessionStore.get(),
-        () => null
-    );
-
-    return useMemo(() => ({
-        groupId: session?.groupId ?? null,
-        isAuthenticated: isSessionValid(session)
-    }), [session]);
+function getSessionFromCookie() {
+    const stringifiedSession = getCookie('session');
+    return isEmpty(stringifiedSession) ? null : JSON.parse(stringifiedSession) as Session
 }
 
+function getGroupIdFromCookie() {
+    const stringifiedGroupId = getCookie('group');
+    return isEmpty(stringifiedGroupId) ? null : stringifiedGroupId;
+}
+
+export { getGroupIdFromCookie as getGroupId };
+
+function isSessionExpired(session: Session | null) {
+    if (session === null) {
+        return true;
+    }
+    const now = (new Date().getTime() / 1000);
+    return session.expiresAt < now;
+}

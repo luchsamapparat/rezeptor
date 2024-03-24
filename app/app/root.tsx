@@ -5,7 +5,7 @@ import { ClientActionFunctionArgs, Links, Meta, Outlet, Scripts, ScrollRestorati
 
 import { isNull } from "lodash-es";
 import stylesheet from '~/styles/stylesheet.css?url';
-import { loginWithGroupId, loginWithInvitationCode, logout, useSession } from "./infrastructure/authentication";
+import { getGroupId, isAuthenticated, loginWithGroupId, loginWithInvitationCode, logout } from "./infrastructure/authentication";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref
@@ -70,9 +70,9 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
 export default function App() {
   const fetcher = useFetcher();
-  const { groupId, isAuthenticated } = useSession();
+  const groupId = getGroupId();
   return (<>
-    {isAuthenticated ? (<>
+    {isAuthenticated() ? (<>
       <fetcher.Form method="post">
         <button type="submit" name="action" value="logout">Abmelden</button>
       </fetcher.Form>
