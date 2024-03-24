@@ -13,7 +13,6 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_FUNCTIONAPP_PACKAGE_PATH: 'api'
   NODE_VERSION: '20.x'
 
 jobs:
@@ -31,16 +30,20 @@ jobs:
       - name: 'Resolve Project Dependencies Using Npm'
         shell: pwsh
         run: |
-          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          pushd ./api
           npm install
           npm run build
+          npm prune --production
           popd
+
+      - name: Zip artifact for deployment
+        run: zip release.zip ./api/* -r
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: node-app
-          path: .
+          name: release
+          path: release.zip
 
   deploy:
     runs-on: windows-latest
@@ -55,7 +58,10 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
-          name: node-app
+          name: release
+
+      - name: unzip artifact for deployment
+        run: unzip release.zip
       
       - name: Login to Azure
         uses: azure/login@v1
@@ -66,7 +72,6 @@ jobs:
 
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
-        id: fa
         with:
           app-name: 'rezeptor'
           slot-name: 'Production'
