@@ -1,7 +1,7 @@
-import { setup as setupApplicationInsights } from 'applicationinsights';
 import { createContainer } from "iti";
 import { z } from "zod";
 import { AuthenticationConfig } from "./auth/model";
+import { setupApplicationInsights } from "./common/infrastructure/azureApplicationInsights";
 import { createCosmosDbClient, createOrGetDatabase, createOrGetDatabaseContainer } from "./common/infrastructure/persistence/azureCosmosDb";
 import { createBlobContainerClient, createBlobServiceClient } from "./common/infrastructure/persistence/azureStorageAccount";
 import { createAzureDocumentAnalysisApiClient } from "./recipes/infrastructure/api/azureDocumentIntelligence";
@@ -9,7 +9,7 @@ import { createbooksApi } from "./recipes/infrastructure/api/googleBooks";
 
 const environmentSchema = z.object({
     GOOGLE_API_KEY: z.string(),
-    APPLICATIONINSIGHTS_CONNECTION_STRING: z.string().url().optional(),
+    APPLICATIONINSIGHTS_CONNECTION_STRING: z.string().optional(),
     AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: z.string().url(),
     AZURE_DOCUMENT_INTELLIGENCE_KEY: z.string(),
     AZURE_STORAGE_ACCOUNT_NAME: z.string(),
@@ -84,7 +84,6 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
                 env.AZURE_DOCUMENT_INTELLIGENCE_KEY
             )
         });
-
 
     return container;
 }

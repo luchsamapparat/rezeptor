@@ -8,7 +8,9 @@
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
     "start": "func start",
-    "deploy": "func azure functionapp publish rezeptor --build remote"
+    "predeploy": "npm prune --omit=dev",
+    "deploy": "func azure functionapp publish rezeptor",
+    "postdeploy": "npm install"
   },
   "dependencies": {
     "@azure/ai-form-recognizer": "5.0.0",
