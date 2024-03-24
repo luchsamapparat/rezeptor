@@ -5,7 +5,7 @@ import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { createGroupCookie, createSessionCookie } from '../cookie';
+import { createGroupCookie, createSessionCookie, createSessionKeyCookie } from '../cookie';
 import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { getGroupEntity, updateGroupEntity } from '../infrastructure/persistence/group';
 import { createSessionEntity } from '../infrastructure/persistence/session';
@@ -20,7 +20,7 @@ const verifyAuthentication: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { rpId, allowedOrigin, sessionTtl, cookieDomain } = appEnvironment.get('authenticationConfig');
+  const { rpId, allowedOrigin, sessionTtl, cookieDomain, sessionKeySecret } = appEnvironment.get('authenticationConfig');
 
   const { groupId, authenticationResponse } = requestBodySchema.parse(await request.json());
 
@@ -66,12 +66,6 @@ const verifyAuthentication: RequestHandler = async request => {
 
   const { id: sessionId } = await createSessionEntity(sessionContainer, { groupId });
 
-  session = {
-    sessionId,
-    groupId,
-    expiresAt: (new Date().getTime() / 1000) + sessionTtl
-  }
-
   const { newCounter } = authenticationInfo;
 
   await updateGroupEntity(groupContainer, group.id, {
@@ -85,13 +79,11 @@ const verifyAuthentication: RequestHandler = async request => {
   });
 
   return {
-    status: 201,
-    jsonBody: {
-      session
-    },
+    status: 204,
     cookies: [
-      createSessionCookie(session.sessionId, { cookieDomain, sessionTtl }),
-      createGroupCookie(session.sessionId, { cookieDomain })
+      createSessionKeyCookie(sessionId, { cookieDomain, sessionTtl, sessionKeySecret }),
+      createSessionCookie({ cookieDomain, sessionTtl }),
+      createGroupCookie(sessionId, { cookieDomain })
     ]
   };
 };

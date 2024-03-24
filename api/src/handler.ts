@@ -23,7 +23,8 @@ export function createRequestHandler(handler: RequestHandler): HttpHandler {
 export function createAuthenticatedRequestHandler(handler: AuthenticatedRequestHandler): HttpHandler {
     return async (request, context) => {
         const sessionContainer = await appEnvironment.get('sessionContainer');
-        const session = await getSessionFromCookie(sessionContainer, request);
+        const authenticationConfig = await appEnvironment.get('authenticationConfig');
+        const session = await getSessionFromCookie(sessionContainer, request, authenticationConfig);
 
         if (session === null) {
             return {

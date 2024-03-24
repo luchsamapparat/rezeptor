@@ -9,6 +9,7 @@ export type AuthenticationConfig = {
     allowedOrigin: string;
     challengeTtl: number;
     sessionTtl: number;
+    sessionKeySecret: string;
     cookieDomain: string;
 };
 

@@ -1,14 +1,14 @@
 import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie } from '../cookie';
+import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from '../cookie';
 import { deleteSessionEntity } from '../infrastructure/persistence/session';
 
 const endSession: RequestHandler = async request => {
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { cookieDomain } = await appEnvironment.get('authenticationConfig');
+  const { cookieDomain, sessionKeySecret } = await appEnvironment.get('authenticationConfig');
 
-  const sessionId = getSessionIdFromCookie(request);
+  const sessionId = getSessionIdFromCookie(request, { sessionKeySecret });
 
   if (sessionId !== null) {
     await deleteSessionEntity(sessionContainer, sessionId);
@@ -17,6 +17,7 @@ const endSession: RequestHandler = async request => {
   return {
     status: 204,
     cookies: [
+      invalidateSessionKeyCookie({ cookieDomain }),
       invalidateSessionCookie({ cookieDomain }),
       invalidateGroupCookie({ cookieDomain }),
     ]
