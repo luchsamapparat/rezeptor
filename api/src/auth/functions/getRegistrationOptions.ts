@@ -1,12 +1,13 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { RequestHandler, createRequestHandler } from '../../handler';
 import { createChallengeEntity } from '../infrastructure/persistence/challenge';
 import { findGroupEntityByInvitationCode } from '../infrastructure/persistence/group';
 
-export async function getRegistrationOptions(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getRegistrationOptions: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const { rpName, rpId } = appEnvironment.get('authenticationConfig');
@@ -50,5 +51,5 @@ export async function getRegistrationOptions(request: HttpRequest, _context: Inv
 app.http('getRegistrationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: getRegistrationOptions
+  handler: createRequestHandler(getRegistrationOptions)
 });

@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { getCookbookEntity } from '../infrastructure/persistence/cookbook';
 
-export async function getCookbook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getCookbook: AuthenticatedRequestHandler = async request => {
     const cookbookContainer = await appEnvironment.get('cookbookContainer');
 
     const id = getStringValue(request.query, 'id');
@@ -18,5 +19,5 @@ export async function getCookbook(request: HttpRequest, _context: InvocationCont
 app.http('getCookbook', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: getCookbook
+    handler: createAuthenticatedRequestHandler(getCookbook)
 });

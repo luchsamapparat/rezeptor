@@ -22,6 +22,7 @@ const environmentSchema = z.object({
     AUTH_ALLOWED_ORIGIN: z.string().url(),
     AUTH_CHALLENGE_TTL: z.string().regex(/^\d+$/).transform(value => parseInt(value, 10)),
     AUTH_SESSION_TTL: z.string().regex(/^\d+$/).transform(value => parseInt(value, 10)),
+    AUTH_COOKIE_DOMAIN: z.string(),
 });
 
 type EnvironmentVars = z.infer<typeof environmentSchema>;
@@ -63,7 +64,8 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
                 rpId: env.AUTH_RP_ID,
                 allowedOrigin: env.AUTH_ALLOWED_ORIGIN,
                 challengeTtl: env.AUTH_CHALLENGE_TTL,
-                sessionTtl: env.AUTH_SESSION_TTL
+                sessionTtl: env.AUTH_SESSION_TTL,
+                cookieDomain: env.AUTH_COOKIE_DOMAIN
             })
         })
         .add(ctx => ({
@@ -89,3 +91,5 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
 }
 
 export const appEnvironment = createAppEnvironment(process.env);
+
+export type AppEnvironment = typeof appEnvironment;

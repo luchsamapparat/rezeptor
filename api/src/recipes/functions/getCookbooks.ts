@@ -1,8 +1,9 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { getCookbookEntities } from '../infrastructure/persistence/cookbook';
 
-export async function getCookbooks(_request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getCookbooks: AuthenticatedRequestHandler = async request => {
     const cookbookContainer = await appEnvironment.get('cookbookContainer');
 
     const cookbooks = await getCookbookEntities(cookbookContainer);
@@ -15,5 +16,5 @@ export async function getCookbooks(_request: HttpRequest, _context: InvocationCo
 app.http('getCookbooks', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: getCookbooks
+    handler: createAuthenticatedRequestHandler(getCookbooks)
 });

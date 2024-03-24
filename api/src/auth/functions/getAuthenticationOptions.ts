@@ -1,13 +1,14 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { RequestHandler, createRequestHandler } from '../../handler';
 import { createChallengeEntity } from '../infrastructure/persistence/challenge';
 import { findGroupEntityByInvitationCode, getGroupEntity } from '../infrastructure/persistence/group';
 import { Group } from '../model';
 
-export async function getAuthenticationOptions(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getAuthenticationOptions: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const { rpId } = appEnvironment.get('authenticationConfig');
@@ -55,5 +56,5 @@ export async function getAuthenticationOptions(request: HttpRequest, _context: I
 app.http('getAuthenticationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: getAuthenticationOptions
+  handler: createRequestHandler(getAuthenticationOptions)
 });

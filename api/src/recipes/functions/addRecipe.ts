@@ -1,10 +1,11 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractMetadata } from '../infrastructure/api/azureDocumentIntelligence';
 import { createRecipeEntity, uploadRecipeFile } from '../infrastructure/persistence/recipe';
 
-export async function addRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const addRecipe: AuthenticatedRequestHandler = async request => {
     const recipeBlobContainer = await appEnvironment.get('recipeBlobContainer');
     const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
     const recipeContainer = await appEnvironment.get('recipeContainer');
@@ -34,5 +35,5 @@ export async function addRecipe(request: HttpRequest, _context: InvocationContex
 app.http('addRecipe', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: addRecipe
+    handler: createAuthenticatedRequestHandler(addRecipe)
 });

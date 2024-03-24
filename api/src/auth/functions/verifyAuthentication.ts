@@ -1,9 +1,11 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
 import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
+import { RequestHandler, createRequestHandler } from '../../handler';
+import { createGroupCookie, createSessionCookie } from '../cookie';
 import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { getGroupEntity, updateGroupEntity } from '../infrastructure/persistence/group';
 import { createSessionEntity } from '../infrastructure/persistence/session';
@@ -14,11 +16,11 @@ const requestBodySchema = z.object({
   authenticationResponse: z.object({}).passthrough().transform(value => value as unknown as AuthenticationResponseJSON)
 })
 
-export async function verifyAuthentication(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const verifyAuthentication: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { rpId, allowedOrigin, sessionTtl } = appEnvironment.get('authenticationConfig');
+  const { rpId, allowedOrigin, sessionTtl, cookieDomain } = appEnvironment.get('authenticationConfig');
 
   const { groupId, authenticationResponse } = requestBodySchema.parse(await request.json());
 
@@ -56,38 +58,46 @@ export async function verifyAuthentication(request: HttpRequest, _context: Invoc
 
   let session = undefined;
 
-  if (verified) {
-    const { id: sessionId } = await createSessionEntity(sessionContainer, { groupId });
-
-    session = {
-      sessionId,
-      groupId,
-      expiresAt: (new Date().getTime() / 1000) + sessionTtl
-    }
-
-    const { newCounter } = authenticationInfo;
-
-    await updateGroupEntity(groupContainer, group.id, {
-      authenticators: [
-        ...group.authenticators.filter(authenticator => authenticator !== usedAuthenticator),
-        {
-          ...usedAuthenticator,
-          counter: newCounter
-        }
-      ]
-    });
+  if (!verified) {
+    return {
+      status: 422
+    };
   }
 
+  const { id: sessionId } = await createSessionEntity(sessionContainer, { groupId });
+
+  session = {
+    sessionId,
+    groupId,
+    expiresAt: (new Date().getTime() / 1000) + sessionTtl
+  }
+
+  const { newCounter } = authenticationInfo;
+
+  await updateGroupEntity(groupContainer, group.id, {
+    authenticators: [
+      ...group.authenticators.filter(authenticator => authenticator !== usedAuthenticator),
+      {
+        ...usedAuthenticator,
+        counter: newCounter
+      }
+    ]
+  });
+
   return {
+    status: 201,
     jsonBody: {
-      verified,
       session
-    }
+    },
+    cookies: [
+      createSessionCookie(session.sessionId, { cookieDomain, sessionTtl }),
+      createGroupCookie(session.sessionId, { cookieDomain })
+    ]
   };
 };
 
 app.http('verifyAuthentication', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: verifyAuthentication
+  handler: createRequestHandler(verifyAuthentication)
 });

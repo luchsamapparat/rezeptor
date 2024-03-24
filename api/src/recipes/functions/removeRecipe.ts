@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { deleteRecipeEntity } from '../infrastructure/persistence/cookbook';
 
-export async function removeRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const removeRecipe: AuthenticatedRequestHandler = async request => {
     const recipeContainer = await appEnvironment.get('recipeContainer');
 
     const formData = await request.formData();
@@ -20,5 +21,5 @@ export async function removeRecipe(request: HttpRequest, _context: InvocationCon
 app.http('removeRecipe', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: removeRecipe
+    handler: createAuthenticatedRequestHandler(removeRecipe)
 });

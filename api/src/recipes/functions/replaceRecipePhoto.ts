@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { updateRecipeEntity, uploadPhotoFile } from '../infrastructure/persistence/recipe';
 
-export async function replaceRecipePhoto(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const replaceRecipePhoto: AuthenticatedRequestHandler = async request => {
     const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
     const recipeContainer = await appEnvironment.get('recipeContainer');
 
@@ -26,5 +27,5 @@ export async function replaceRecipePhoto(request: HttpRequest, _context: Invocat
 app.http('replaceRecipePhoto', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: replaceRecipePhoto
+    handler: createAuthenticatedRequestHandler(replaceRecipePhoto)
 });

@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
+import { RequestHandler, createRequestHandler } from '../../handler';
 import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { findGroupEntityByInvitationCode, updateGroupEntity } from '../infrastructure/persistence/group';
 
@@ -12,7 +13,7 @@ const requestBodySchema = z.object({
   registrationResponse: z.object({}).passthrough().transform(value => value as unknown as RegistrationResponseJSON)
 })
 
-export async function registerAuthenticator(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const registerAuthenticator: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const { rpId, allowedOrigin } = appEnvironment.get('authenticationConfig');
@@ -71,5 +72,5 @@ export async function registerAuthenticator(request: HttpRequest, _context: Invo
 app.http('registerAuthenticator', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: registerAuthenticator
+  handler: createRequestHandler(registerAuthenticator)
 });

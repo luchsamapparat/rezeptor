@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { getRecipeEntity } from '../infrastructure/persistence/recipe';
 
-export async function getRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getRecipe: AuthenticatedRequestHandler = async request => {
     const recipeContainer = await appEnvironment.get('recipeContainer');
 
     const id = getStringValue(request.query, 'id');
@@ -18,5 +19,5 @@ export async function getRecipe(request: HttpRequest, _context: InvocationContex
 app.http('getRecipe', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: getRecipe
+    handler: createAuthenticatedRequestHandler(getRecipe)
 });

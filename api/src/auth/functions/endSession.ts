@@ -1,24 +1,30 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
-import { getStringValue } from '../../common/util/form';
+import { RequestHandler, createRequestHandler } from '../../handler';
+import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie } from '../cookie';
 import { deleteSessionEntity } from '../infrastructure/persistence/session';
 
-export async function endSession(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const endSession: RequestHandler = async request => {
   const sessionContainer = await appEnvironment.get('sessionContainer');
+  const { cookieDomain } = await appEnvironment.get('authenticationConfig');
 
-  const formData = await request.formData();
+  const sessionId = getSessionIdFromCookie(request);
 
-  const sessionId = getStringValue(formData, 'sessionId');
-
-  await deleteSessionEntity(sessionContainer, sessionId);
+  if (sessionId !== null) {
+    await deleteSessionEntity(sessionContainer, sessionId);
+  }
 
   return {
-    status: 204
+    status: 204,
+    cookies: [
+      invalidateSessionCookie({ cookieDomain }),
+      invalidateGroupCookie({ cookieDomain }),
+    ]
   };
 };
 
 app.http('endSession', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: endSession
+  handler: createRequestHandler(endSession)
 });

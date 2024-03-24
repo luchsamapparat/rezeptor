@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { updateRecipeEntity } from '../infrastructure/persistence/recipe';
 
-export async function editRecipe(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const editRecipe: AuthenticatedRequestHandler = async request => {
     const recipeContainer = await appEnvironment.get('recipeContainer');
 
     const formData = await request.formData();
@@ -25,5 +26,5 @@ export async function editRecipe(request: HttpRequest, _context: InvocationConte
 app.http('editRecipe', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: editRecipe
+    handler: createAuthenticatedRequestHandler(editRecipe)
 });

@@ -9,6 +9,7 @@ export type AuthenticationConfig = {
     allowedOrigin: string;
     challengeTtl: number;
     sessionTtl: number;
+    cookieDomain: string;
 };
 
 export type Group = Model<{

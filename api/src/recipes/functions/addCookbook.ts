@@ -1,11 +1,12 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getFile } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
 import { findBook } from '../infrastructure/api/googleBooks';
 import { createCookbookEntity } from '../infrastructure/persistence/cookbook';
 
-export async function addCookbook(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const addCookbook: AuthenticatedRequestHandler = async request => {
     const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
     const booksApi = appEnvironment.get('booksApi');
     const cookbookContainer = await appEnvironment.get('cookbookContainer');
@@ -36,5 +37,5 @@ export async function addCookbook(request: HttpRequest, _context: InvocationCont
 app.http('addCookbook', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: addCookbook
+    handler: createAuthenticatedRequestHandler(addCookbook)
 });

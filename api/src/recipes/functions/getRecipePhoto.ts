@@ -1,9 +1,10 @@
-import { HttpRequest, HttpResponseInit, InvocationContext, app } from '@azure/functions';
+import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { downloadFile } from '../../common/infrastructure/persistence/azureStorageAccount';
 import { getStringValue } from '../../common/util/form';
+import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
-export async function getRecipePhoto(request: HttpRequest, _context: InvocationContext): Promise<HttpResponseInit> {
+const getRecipePhoto: AuthenticatedRequestHandler = async request => {
     const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
 
     const id = getStringValue(request.query, 'id');
@@ -31,5 +32,5 @@ export async function getRecipePhoto(request: HttpRequest, _context: InvocationC
 app.http('getRecipePhoto', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: getRecipePhoto
+    handler: createAuthenticatedRequestHandler(getRecipePhoto)
 });
