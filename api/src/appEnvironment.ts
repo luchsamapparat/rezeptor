@@ -1,3 +1,4 @@
+import { setup as setupApplicationInsights } from 'applicationinsights';
 import { createContainer } from "iti";
 import { z } from "zod";
 import { AuthenticationConfig } from "./auth/model";
@@ -8,6 +9,7 @@ import { createbooksApi } from "./recipes/infrastructure/api/googleBooks";
 
 const environmentSchema = z.object({
     GOOGLE_API_KEY: z.string(),
+    APPLICATIONINSIGHTS_CONNECTION_STRING: z.string().url().optional(),
     AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT: z.string().url(),
     AZURE_DOCUMENT_INTELLIGENCE_KEY: z.string(),
     AZURE_STORAGE_ACCOUNT_NAME: z.string(),
@@ -28,6 +30,9 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
     const env: EnvironmentVars = environmentSchema.parse(processEnv);
 
     const container = createContainer()
+        .add({
+            telemetry: () => setupApplicationInsights(env.APPLICATIONINSIGHTS_CONNECTION_STRING)
+        })
         .add({
             blobService: () => createBlobServiceClient(
                 env.AZURE_STORAGE_BLOB_ENDPOINT,

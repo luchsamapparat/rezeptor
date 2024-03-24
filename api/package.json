@@ -18,6 +18,7 @@
     "@azure/storage-blob": "12.17.0",
     "@googleapis/books": "1.0.5",
     "@simplewebauthn/server": "9.0.3",
+    "applicationinsights": "2.9.5",
     "capitalize": "2.0.4",
     "iti": "0.6.0",
     "sharp": "0.33.2",
