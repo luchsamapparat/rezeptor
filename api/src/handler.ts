@@ -1,6 +1,6 @@
 import { HttpHandler, HttpRequest, InvocationContext } from "@azure/functions";
 import { AppEnvironment, appEnvironment } from "./appEnvironment";
-import { getSessionFromCookie } from "./auth/cookie";
+import { getSessionFromCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from "./auth/cookie";
 import { Session } from "./auth/model";
 
 type AppContext = {
@@ -28,7 +28,11 @@ export function createAuthenticatedRequestHandler(handler: AuthenticatedRequestH
 
         if (session === null) {
             return {
-                status: 401
+                status: 401,
+                cookies: [
+                    invalidateSessionKeyCookie(authenticationConfig),
+                    invalidateSessionCookie(authenticationConfig),
+                ]
             };
         }
 
