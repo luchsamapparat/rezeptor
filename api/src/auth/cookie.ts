@@ -1,5 +1,5 @@
 import { Container } from "@azure/cosmos";
-import { HttpRequest } from "@azure/functions";
+import { Cookie, HttpRequest } from "@azure/functions";
 import { parse } from 'cookie';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { getSessionEntity } from "./infrastructure/persistence/session";
@@ -35,42 +35,37 @@ export function getSessionIdFromCookie(request: HttpRequest, { sessionKeySecret 
 }
 
 export function createSessionKeyCookie(sessionId: Session['id'], { cookieDomain, sessionTtl, sessionKeySecret }: Pick<AuthenticationConfig, 'cookieDomain' | 'sessionTtl' | 'sessionKeySecret'>) {
-    return {
+    return createCookie({
         name: sessionKeyCookieName,
         value: encrypt(sessionId, sessionKeySecret),
         domain: cookieDomain,
         httpOnly: true,
-        sameSite: 'Strict',
-        secure: true,
         maxAge: sessionTtl
-    } as const;
+    });
 }
 
 export function createSessionCookie({ cookieDomain, sessionTtl }: Pick<AuthenticationConfig, 'cookieDomain' | 'sessionTtl'>) {
-    return {
+    return createCookie({
         name: sessionCookieName,
         value: JSON.stringify({
             expiresAt: (new Date().getTime() / 1000) + sessionTtl
         }),
         domain: cookieDomain,
         httpOnly: false,
-        sameSite: 'Strict',
-        secure: true,
         maxAge: sessionTtl
-    } as const;
+    });
 }
 
 export function createGroupCookie(groupId: Group['id'], { cookieDomain }: Pick<AuthenticationConfig, 'cookieDomain'>) {
-    return {
+    return createCookie({
         name: groupCookieName,
         value: groupId,
         domain: cookieDomain,
         httpOnly: false,
-        sameSite: 'Strict',
-        secure: true,
         maxAge: 60 * 60 * 24 * 365
-    } as const;
+    });
 }
+
 
 export function invalidateSessionKeyCookie(config: Pick<AuthenticationConfig, 'cookieDomain'>) {
     return invalidateCookie(sessionKeyCookieName, config);
@@ -85,16 +80,21 @@ export function invalidateGroupCookie(config: Pick<AuthenticationConfig, 'cookie
 }
 
 function invalidateCookie(name: string, { cookieDomain }: Pick<AuthenticationConfig, 'cookieDomain'>) {
-    return {
+    return createCookie({
         name,
         value: '',
         domain: cookieDomain,
         httpOnly: true,
-        sameSite: 'Strict',
-        secure: true,
         maxAge: 0
-    } as const;
+    });
 }
+
+const createCookie = ({ domain, ...cookie }: Pick<Cookie, 'name' | 'value' | 'domain' | 'httpOnly' | 'maxAge'>): Cookie => ({
+    ...cookie,
+    sameSite: (domain === 'localhost') ? 'Lax' : 'Strict',
+    secure: true,
+    domain: (domain === 'localhost') ? undefined : domain,
+} as const)
 
 function encrypt(value: string, secret: string) {
     const initializationVector = randomBytes(16);

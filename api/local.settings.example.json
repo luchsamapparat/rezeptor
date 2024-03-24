@@ -1,0 +1,27 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsFeatureFlags": "EnableWorkerIndexing",
+    "GOOGLE_API_KEY": "",
+    "AZURE_COSMOSDB_ENDPOINT": "",
+    "AZURE_COSMOSDB_KEY": "",
+    "AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT": "",
+    "AZURE_DOCUMENT_INTELLIGENCE_KEY": "",
+    "AZURE_STORAGE_ACCOUNT_NAME": "",
+    "AZURE_STORAGE_ACCOUNT_KEY": "",
+    "AZURE_STORAGE_BLOB_ENDPOINT": "",
+    "AUTH_RP_NAME": "Rezeptor",
+    "AUTH_RP_ID": "localhost",
+    "AUTH_ALLOWED_ORIGIN": "http://localhost:5173",
+    "AUTH_CHALLENGE_TTL": "300",
+    "AUTH_SESSION_TTL": "14400",
+    "AUTH_COOKIE_DOMAIN": "localhost",
+    "AUTH_SESSION_KEY_SECRET": ""
+  },
+  "Host": {
+    "CORS": "http://localhost:5173",
+    "CORSCredentials": true
+  }
+}
