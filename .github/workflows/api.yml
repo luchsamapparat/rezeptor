@@ -45,6 +45,8 @@ jobs:
   deploy:
     runs-on: windows-latest
     needs: build
+    environment:
+      name: 'Production'
     permissions:
       id-token: write
     steps:
