@@ -1,0 +1,70 @@
+name: Build and deploy API
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/app.yml'
+      - 'app/**'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    name: build and deploy
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup Node ${{ env.NODE_VERSION }} environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: build
+        shell: pwsh
+        run: |
+          pushd ./app
+          npm ci
+          npm run build
+          popd
+
+      - name: zip artifact
+        run: Compress-Archive -Path app/dist/client* -Destination app-release.zip
+
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app-release.zip
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - name: download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release
+
+      - name: unzip artifact
+        run: Expand-Archive -Path app-release.zip -DestinationPath ./app
+
+      - name: debug
+        shell: pwsh
+        run: |
+          dir -Recurse
+
+      - name: deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: ./app
+          output_location: ./dist/client
+          skip_app_build: true
