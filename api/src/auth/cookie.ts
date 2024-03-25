@@ -93,7 +93,11 @@ const createCookie = ({ domain, ...cookie }: Pick<Cookie, 'name' | 'value' | 'do
     ...cookie,
     sameSite: (domain === 'localhost') ? 'Lax' : 'Strict',
     secure: true,
-    domain: (domain === 'localhost') ? undefined : domain,
+    domain: (domain === undefined || domain === 'localhost')
+        ? undefined
+        : domain.startsWith('.')
+            ? domain
+            : `.${domain}`,
 } as const)
 
 function encrypt(value: string, secret: string) {
