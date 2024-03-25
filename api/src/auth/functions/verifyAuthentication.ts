@@ -20,7 +20,7 @@ const verifyAuthentication: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { rpId, allowedOrigin, sessionTtl, cookieDomain, sessionKeySecret } = appEnvironment.get('authenticationConfig');
+  const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
 
   const { groupId, authenticationResponse } = requestBodySchema.parse(await request.json());
 
@@ -79,9 +79,9 @@ const verifyAuthentication: RequestHandler = async request => {
   return {
     status: 204,
     cookies: [
-      createSessionKeyCookie(sessionId, { cookieDomain, sessionTtl, sessionKeySecret }),
+      createSessionKeyCookie(sessionId, { cookieDomain, sessionTtl, cookieSecret }),
       createSessionCookie({ cookieDomain, sessionTtl }),
-      createGroupCookie(groupId, { cookieDomain })
+      createGroupCookie(groupId, { cookieDomain, cookieSecret })
     ]
   };
 };

@@ -11,12 +11,20 @@ const groupCookieName = 'group';
 
 const encryptionAlgorithm = 'aes-256-cbc';
 
-export async function getSessionFromCookie(sessionContainer: Container, request: HttpRequest, config: Pick<AuthenticationConfig, 'sessionKeySecret'>) {
+export async function getSessionFromCookie(sessionContainer: Container, request: HttpRequest, config: Pick<AuthenticationConfig, 'cookieSecret'>) {
     const sessionId = getSessionIdFromCookie(request, config);
     return (sessionId === null) ? null : getSessionEntity(sessionContainer, sessionId);
 }
 
-export function getSessionIdFromCookie(request: HttpRequest, { sessionKeySecret }: Pick<AuthenticationConfig, 'sessionKeySecret'>) {
+export function getSessionIdFromCookie(request: HttpRequest, config: Pick<AuthenticationConfig, 'cookieSecret'>) {
+    return getEncryptedValueFromCookie(sessionKeyCookieName, request, config);
+}
+
+export function getGroupIdFromCookie(request: HttpRequest, config: Pick<AuthenticationConfig, 'cookieSecret'>) {
+    return getEncryptedValueFromCookie(groupCookieName, request, config);
+}
+
+function getEncryptedValueFromCookie(cookieName: string, request: HttpRequest, { cookieSecret }: Pick<AuthenticationConfig, 'cookieSecret'>) {
     const cookieHeader = request.headers.get('cookie')
 
     if (cookieHeader === null) {
@@ -25,19 +33,19 @@ export function getSessionIdFromCookie(request: HttpRequest, { sessionKeySecret 
 
     const cookie = parse(cookieHeader);
 
-    const encryptedSessionId = cookie[sessionKeyCookieName];
+    const encryptedValue = cookie[cookieName];
 
-    if (encryptedSessionId === undefined) {
+    if (encryptedValue === undefined) {
         return null;
     }
 
-    return decrypt(encryptedSessionId, sessionKeySecret);
+    return decrypt(encryptedValue, cookieSecret);
 }
 
-export function createSessionKeyCookie(sessionId: Session['id'], { cookieDomain, sessionTtl, sessionKeySecret }: Pick<AuthenticationConfig, 'cookieDomain' | 'sessionTtl' | 'sessionKeySecret'>) {
+export function createSessionKeyCookie(sessionId: Session['id'], { cookieDomain, sessionTtl, cookieSecret }: Pick<AuthenticationConfig, 'cookieDomain' | 'sessionTtl' | 'cookieSecret'>) {
     return createCookie({
         name: sessionKeyCookieName,
-        value: encrypt(sessionId, sessionKeySecret),
+        value: encrypt(sessionId, cookieSecret),
         domain: cookieDomain,
         httpOnly: true,
         maxAge: sessionTtl
@@ -56,10 +64,10 @@ export function createSessionCookie({ cookieDomain, sessionTtl }: Pick<Authentic
     });
 }
 
-export function createGroupCookie(groupId: Group['id'], { cookieDomain }: Pick<AuthenticationConfig, 'cookieDomain'>) {
+export function createGroupCookie(groupId: Group['id'], { cookieDomain, cookieSecret }: Pick<AuthenticationConfig, 'cookieDomain' | 'cookieSecret'>) {
     return createCookie({
         name: groupCookieName,
-        value: groupId,
+        value: encrypt(groupId, cookieSecret),
         domain: cookieDomain,
         httpOnly: false,
         maxAge: 60 * 60 * 24 * 365

@@ -4,6 +4,7 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { RequestHandler, createRequestHandler } from '../../handler';
+import { getGroupIdFromCookie } from '../cookie';
 import { createChallengeEntity } from '../infrastructure/persistence/challenge';
 import { findGroupEntityByInvitationCode, getGroupEntity } from '../infrastructure/persistence/group';
 import { Group } from '../model';
@@ -11,11 +12,11 @@ import { Group } from '../model';
 const getAuthenticationOptions: RequestHandler = async request => {
   const groupContainer = await appEnvironment.get('groupContainer');
   const challengeContainer = await appEnvironment.get('challengeContainer');
-  const { rpId } = appEnvironment.get('authenticationConfig');
+  const { rpId, cookieSecret } = appEnvironment.get('authenticationConfig');
 
   const formData = await request.formData();
 
-  const groupId = getStringValue(formData, 'groupId', false);
+  const groupId = getGroupIdFromCookie(request, { cookieSecret });
   const invitationCode = getStringValue(formData, 'invitationCode', false);
 
   let group: Group | null = null;

@@ -18,7 +18,7 @@
     "AUTH_CHALLENGE_TTL": "300",
     "AUTH_SESSION_TTL": "14400",
     "AUTH_COOKIE_DOMAIN": "localhost",
-    "AUTH_SESSION_KEY_SECRET": ""
+    "AUTH_COOKIE_SECRET": ""
   },
   "Host": {
     "CORS": "http://localhost:5173",

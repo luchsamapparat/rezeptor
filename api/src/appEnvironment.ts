@@ -22,7 +22,7 @@ const environmentSchema = z.object({
     AUTH_ALLOWED_ORIGIN: z.string().url(),
     AUTH_CHALLENGE_TTL: z.string().regex(/^\d+$/).transform(value => parseInt(value, 10)),
     AUTH_SESSION_TTL: z.string().regex(/^\d+$/).transform(value => parseInt(value, 10)),
-    AUTH_SESSION_KEY_SECRET: z.string(),
+    AUTH_COOKIE_SECRET: z.string(),
     AUTH_COOKIE_DOMAIN: z.string(),
 });
 
@@ -66,7 +66,7 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
                 allowedOrigin: env.AUTH_ALLOWED_ORIGIN,
                 challengeTtl: env.AUTH_CHALLENGE_TTL,
                 sessionTtl: env.AUTH_SESSION_TTL,
-                sessionKeySecret: env.AUTH_SESSION_KEY_SECRET,
+                cookieSecret: env.AUTH_COOKIE_SECRET,
                 cookieDomain: env.AUTH_COOKIE_DOMAIN
             })
         })

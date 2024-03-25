@@ -6,9 +6,9 @@ import { deleteSessionEntity } from '../infrastructure/persistence/session';
 
 const endSession: RequestHandler = async request => {
   const sessionContainer = await appEnvironment.get('sessionContainer');
-  const { cookieDomain, sessionKeySecret } = await appEnvironment.get('authenticationConfig');
+  const { cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
 
-  const sessionId = getSessionIdFromCookie(request, { sessionKeySecret });
+  const sessionId = getSessionIdFromCookie(request, { cookieSecret });
 
   if (sessionId !== null) {
     await deleteSessionEntity(sessionContainer, sessionId);
