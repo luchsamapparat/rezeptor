@@ -23,5 +23,7 @@ export function setupApplicationInsights(connectionString?: string) {
         .enableWebInstrumentation(false)
         .start();
 
+    defaultClient.context.tags[defaultClient.context.keys.cloudRole] = 'rezeptor-api';
+
     return defaultClient;
 }

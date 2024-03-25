@@ -1,5 +1,5 @@
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
-import { isUndefined } from "lodash-es";
+import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import { isUndefined } from 'lodash-es';
 
 export function initTelemetry(connectionString: string | undefined) {
   if (isUndefined(connectionString)) {
@@ -12,6 +12,12 @@ export function initTelemetry(connectionString: string | undefined) {
       enableAutoRouteTracking: true
     }
   });
+
+  appInsights.addTelemetryInitializer(envelope => {
+    envelope.tags ??= [];
+    envelope.tags['ai.cloud.role'] = 'rezeptor-app';
+  });
+
 
   appInsights.loadAppInsights();
   appInsights.trackPageView();
