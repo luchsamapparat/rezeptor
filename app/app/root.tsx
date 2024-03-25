@@ -5,7 +5,7 @@ import { ClientActionFunctionArgs, Links, Meta, Outlet, Scripts, ScrollRestorati
 
 import { isNull } from "lodash-es";
 import stylesheet from '~/styles/stylesheet.css?url';
-import { getGroupId, isAuthenticated, loginWithGroupId, loginWithInvitationCode, logout } from "./infrastructure/authentication";
+import { isAuthenticated, isRegisteredClient, loginWithCookie, loginWithInvitationCode, logout } from "./infrastructure/authentication";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref
@@ -46,20 +46,19 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
   const formData = await request.formData();
 
   if (formData.get('action') === 'login') {
-    const invitationCode = formData.get('invitationCode') as string | null;
-    const groupId = formData.get('groupId') as string | null;
-
-    if (!isNull(groupId)) {
-      await loginWithGroupId(groupId);
+    if (isRegisteredClient()) {
+      await loginWithCookie();
       return null;
     }
+
+    const invitationCode = formData.get('invitationCode') as string | null;
 
     if (!isNull(invitationCode)) {
       await loginWithInvitationCode(invitationCode);
       return null;
     }
 
-    throw new Error(`invitation code or group ID required to login`)
+    throw new Error(`invitation code or group cookie required to login`)
   }
 
   if (formData.get('action') === 'logout') {
@@ -70,7 +69,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
 export default function App() {
   const fetcher = useFetcher();
-  const groupId = getGroupId();
+
   return (<>
     {isAuthenticated() ? (<>
       <fetcher.Form method="post">
@@ -79,9 +78,9 @@ export default function App() {
       <Outlet />
     </>) : (<>
       <fetcher.Form method="post">
-        {isNull(groupId) ? (
+        {isRegisteredClient() ? null : (
           <input type="text" name="invitationCode" defaultValue="HHL1635" />
-        ) : null}
+        )}
 
         <button type="submit" name="action" value="login">Anmelden</button>
       </fetcher.Form>
