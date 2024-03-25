@@ -9,7 +9,10 @@ export function initTelemetry(connectionString: string | undefined) {
   const appInsights = new ApplicationInsights({
     config: {
       connectionString,
-      enableAutoRouteTracking: true
+      enableAutoRouteTracking: true,
+      enableCorsCorrelation: true,
+      enableRequestHeaderTracking: true,
+      enableResponseHeaderTracking: true
     }
   });
 
