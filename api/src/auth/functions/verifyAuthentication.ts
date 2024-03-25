@@ -5,14 +5,14 @@ import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { createGroupCookie, createSessionCookie, createSessionKeyCookie } from '../cookie';
+import { createGroupCookie, createSessionCookie, createSessionKeyCookie, getGroupIdFromCookie } from '../cookie';
 import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
 import { getGroupEntity, updateGroupEntity } from '../infrastructure/persistence/group';
 import { createSessionEntity } from '../infrastructure/persistence/session';
 import { toAuthenticatorDevice } from '../model';
 
 const requestBodySchema = z.object({
-  groupId: z.string().uuid(),
+  groupId: z.string().uuid().optional(),
   authenticationResponse: z.object({}).passthrough().transform(value => value as unknown as AuthenticationResponseJSON)
 })
 
@@ -22,7 +22,13 @@ const verifyAuthentication: RequestHandler = async request => {
   const sessionContainer = await appEnvironment.get('sessionContainer');
   const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
 
-  const { groupId, authenticationResponse } = requestBodySchema.parse(await request.json());
+  const { groupId: groupIdFromRequestBody, authenticationResponse } = requestBodySchema.parse(await request.json());
+
+  const groupId = groupIdFromRequestBody ?? getGroupIdFromCookie(request, { cookieSecret });
+
+  if (groupId === null) {
+    throw new Error(`group ID provided`);
+  }
 
   const group = await getGroupEntity(groupContainer, groupId);
 

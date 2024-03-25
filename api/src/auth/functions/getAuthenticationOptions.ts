@@ -16,7 +16,7 @@ const getAuthenticationOptions: RequestHandler = async request => {
 
   const formData = await request.formData();
 
-  const groupId = getGroupIdFromCookie(request, { cookieSecret });
+  const groupId = getStringValue(formData, 'groupId', false) ?? getGroupIdFromCookie(request, { cookieSecret });
   const invitationCode = getStringValue(formData, 'invitationCode', false);
 
   let group: Group | null = null;
