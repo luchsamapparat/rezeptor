@@ -81,9 +81,7 @@ export default function App() {
       <fetcher.Form method="post">
         {isNull(groupId) ? (
           <input type="text" name="invitationCode" defaultValue="HHL1635" />
-        ) : (
-          <input type="hidden" name="groupId" defaultValue={groupId} />
-        )}
+        ) : null}
 
         <button type="submit" name="action" value="login">Anmelden</button>
       </fetcher.Form>
