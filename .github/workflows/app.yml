@@ -11,6 +11,8 @@ on:
 
 env:
   NODE_VERSION: '20.x'
+  VITE_API_BASE_URL: 'https://api.rezeptor.luchsamappar.at/api'
+  VITE_APPLICATION_INSIGHTS_CONNECTION_STRING: 'InstrumentationKey=ab40e922-e66a-434f-a78d-66ec6ee8f20a;IngestionEndpoint=https://germanywestcentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://germanywestcentral.livediagnostics.monitor.azure.com'
 
 jobs:
   build:
