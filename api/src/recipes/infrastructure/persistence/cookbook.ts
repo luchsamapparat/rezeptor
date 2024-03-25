@@ -1,24 +1,30 @@
-import { Container } from "@azure/cosmos";
-import { EntityId, createItem, deleteItem, getItem, getItems, updateItem } from "../../../common/infrastructure/persistence/azureCosmosDb";
+import { EntityId, ItemContainer } from "../../../common/infrastructure/persistence/azureCosmosDb";
 import { WithoutModelId } from "../../../common/model";
 import { Cookbook } from "../../model";
 
-export async function createCookbookEntity(container: Container, cookbook: WithoutModelId<Cookbook>) {
-    return createItem(container, cookbook);
-}
+export class CookbookRepository {
 
-export async function updateCookbookEntity(container: Container, id: EntityId, cookbook: Partial<WithoutModelId<Cookbook>>) {
-    return updateItem(container, id, cookbook);
-}
+    constructor(
+        private cookbookContainer: ItemContainer
+    ) { }
 
-export async function deleteRecipeEntity(container: Container, id: EntityId) {
-    return deleteItem(container, id);
-}
+    async create(cookbook: WithoutModelId<Cookbook>) {
+        return this.cookbookContainer.createItem(cookbook);
+    }
 
-export async function getCookbookEntity(container: Container, id: EntityId) {
-    return getItem<Cookbook>(container, id);
-}
+    async update(id: EntityId, cookbook: Partial<WithoutModelId<Cookbook>>) {
+        return this.cookbookContainer.updateItem(id, cookbook);
+    }
 
-export async function getCookbookEntities(container: Container) {
-    return getItems<Cookbook>(container);
+    async delete(id: EntityId) {
+        return this.cookbookContainer.deleteItem(id);
+    }
+
+    async get(id: EntityId) {
+        return this.cookbookContainer.getItem<Cookbook>(id);
+    }
+
+    async getAll() {
+        return this.cookbookContainer.getItems<Cookbook>();
+    }
 }

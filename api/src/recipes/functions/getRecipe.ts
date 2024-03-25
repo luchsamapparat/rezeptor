@@ -2,14 +2,13 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { getRecipeEntity } from '../infrastructure/persistence/recipe';
 
 const getRecipe: AuthenticatedRequestHandler = async request => {
-    const recipeContainer = await appEnvironment.get('recipeContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
 
     const id = getStringValue(request.query, 'id');
 
-    const recipe = await getRecipeEntity(recipeContainer, id);
+    const recipe = await recipeRepository.get(id);
 
     return {
         jsonBody: recipe

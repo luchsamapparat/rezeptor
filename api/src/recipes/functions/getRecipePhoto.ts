@@ -1,15 +1,14 @@
 import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
-import { downloadFile } from '../../common/infrastructure/persistence/azureStorageAccount';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
 const getRecipePhoto: AuthenticatedRequestHandler = async request => {
-    const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
 
     const id = getStringValue(request.query, 'id');
 
-    const recipePhotoFile = await downloadFile(photoBlobContainer, id);
+    const recipePhotoFile = await recipeRepository.downloadPhotoFile(id);
 
     if (recipePhotoFile === null) {
         return {

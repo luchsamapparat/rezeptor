@@ -2,20 +2,18 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { updateRecipeEntity, uploadPhotoFile } from '../infrastructure/persistence/recipe';
 
 const replaceRecipePhoto: AuthenticatedRequestHandler = async request => {
-    const photoBlobContainer = await appEnvironment.get('photoBlobContainer');
-    const recipeContainer = await appEnvironment.get('recipeContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
 
     const formData = await request.formData();
 
     const id = getStringValue(formData, 'id');
     const photoFile = formData.get('photoFile') as unknown as File;
 
-    const photoFileId = await uploadPhotoFile(photoBlobContainer, photoFile);
+    const photoFileId = await recipeRepository.uploadPhotoFile(photoFile);
 
-    await updateRecipeEntity(recipeContainer, id, {
+    await recipeRepository.update(id, {
         photoFileId
     });
 

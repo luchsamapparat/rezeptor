@@ -2,16 +2,15 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { deleteRecipeEntity } from '../infrastructure/persistence/cookbook';
 
 const removeRecipe: AuthenticatedRequestHandler = async request => {
-    const recipeContainer = await appEnvironment.get('recipeContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
 
     const formData = await request.formData();
 
     const id = getStringValue(formData, 'id');
 
-    await deleteRecipeEntity(recipeContainer, id);
+    await recipeRepository.delete(id);
 
     return {
         body: null

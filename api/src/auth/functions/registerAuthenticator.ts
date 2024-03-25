@@ -5,8 +5,6 @@ import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
-import { findGroupEntityByInvitationCode, updateGroupEntity } from '../infrastructure/persistence/group';
 
 const requestBodySchema = z.object({
   invitationCode: z.string(),
@@ -14,14 +12,14 @@ const requestBodySchema = z.object({
 })
 
 const registerAuthenticator: RequestHandler = async request => {
-  const groupContainer = await appEnvironment.get('groupContainer');
-  const challengeContainer = await appEnvironment.get('challengeContainer');
+  const groupRepository = await appEnvironment.get('groupRepository');
+  const challengeRepository = await appEnvironment.get('challengeRepository');
   const { rpId, allowedOrigin } = appEnvironment.get('authenticationConfig');
 
   const { invitationCode, registrationResponse } = requestBodySchema.parse(await request.json());
 
-  const group = await findGroupEntityByInvitationCode(groupContainer, invitationCode);
-  const challenges = await findChallengeEntitiesByGroupIdAndType(challengeContainer, group.id, 'registration');
+  const group = await groupRepository.findByInvitationCode(invitationCode);
+  const challenges = await challengeRepository.findByGroupIdAndType(group.id, 'registration');
 
   const { registrationInfo, verified } = await verifyRegistrationResponse({
     response: registrationResponse,
@@ -29,7 +27,7 @@ const registerAuthenticator: RequestHandler = async request => {
       if (challenge.value !== givenChallenge) {
         return false;
       }
-      await deleteChallengeEntity(challengeContainer, challenge.id);
+      await challengeRepository.delete(challenge.id);
       return true;
     }),
     expectedRPID: rpId,
@@ -49,7 +47,7 @@ const registerAuthenticator: RequestHandler = async request => {
     const serializedCredentialId = isoBase64URL.fromBuffer(credentialID);
     const serializedCredentialPublicKey = isoBase64URL.fromBuffer(credentialPublicKey);
 
-    await updateGroupEntity(groupContainer, group.id, {
+    await groupRepository.update(group.id, {
       authenticators: [
         ...group.authenticators,
         {

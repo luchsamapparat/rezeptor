@@ -1,12 +1,11 @@
 import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { getRecipeEntities } from '../infrastructure/persistence/recipe';
 
 const getRecipes: AuthenticatedRequestHandler = async request => {
-    const recipeContainer = await appEnvironment.get('recipeContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
 
-    const recipes = await getRecipeEntities(recipeContainer);
+    const recipes = await recipeRepository.getAll();
 
     return {
         jsonBody: recipes

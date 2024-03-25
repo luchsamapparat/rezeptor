@@ -2,14 +2,13 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { getCookbookEntity } from '../infrastructure/persistence/cookbook';
 
 const getCookbook: AuthenticatedRequestHandler = async request => {
-    const cookbookContainer = await appEnvironment.get('cookbookContainer');
+    const cookbookRepository = await appEnvironment.get('cookbookRepository');
 
     const id = getStringValue(request.query, 'id');
 
-    const cookbook = await getCookbookEntity(cookbookContainer, id);
+    const cookbook = await cookbookRepository.get(id);
 
     return {
         jsonBody: cookbook

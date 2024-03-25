@@ -1,6 +1,6 @@
 import { HttpHandler, HttpRequest, InvocationContext } from "@azure/functions";
 import { AppEnvironment, appEnvironment } from "./appEnvironment";
-import { getSessionFromCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from "./auth/cookie";
+import { getSessionIdFromCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from "./auth/cookie";
 import { Session } from "./auth/model";
 
 type AppContext = {
@@ -22,9 +22,12 @@ export function createRequestHandler(handler: RequestHandler): HttpHandler {
 
 export function createAuthenticatedRequestHandler(handler: AuthenticatedRequestHandler): HttpHandler {
     return async (request, context) => {
-        const sessionContainer = await appEnvironment.get('sessionContainer');
-        const authenticationConfig = await appEnvironment.get('authenticationConfig');
-        const session = await getSessionFromCookie(sessionContainer, request, authenticationConfig);
+        const sessionRepository = await appEnvironment.get('sessionRepository');
+        const authenticationConfig = appEnvironment.get('authenticationConfig');
+
+        const sessionId = getSessionIdFromCookie(request, authenticationConfig);
+
+        const session = (sessionId === null) ? null : await sessionRepository.get(sessionId)
 
         if (session === null) {
             return {

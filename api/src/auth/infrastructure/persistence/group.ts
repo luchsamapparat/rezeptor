@@ -1,34 +1,41 @@
-import { Container } from "@azure/cosmos";
-import { EntityId, createItem, deleteItem, getItem, getItems, updateItem } from "../../../common/infrastructure/persistence/azureCosmosDb";
+import { EntityId, ItemContainer } from "../../../common/infrastructure/persistence/azureCosmosDb";
 import { WithoutModelId } from "../../../common/model";
 import { Group } from "../../model";
 
-export async function createGroupEntity(container: Container, group: WithoutModelId<Group>) {
-    return createItem(container, group);
-}
+export class GroupRepository {
 
-export async function updateGroupEntity(container: Container, id: EntityId, group: Partial<WithoutModelId<Group>>) {
-    return updateItem(container, id, group);
-}
+    constructor(
+        private groupContainer: ItemContainer
+    ) { }
 
-export async function deleteRecipeEntity(container: Container, id: EntityId) {
-    return deleteItem(container, id);
-}
+    async create(group: WithoutModelId<Group>) {
+        return this.groupContainer.createItem(group);
+    }
 
-export async function getGroupEntity(container: Container, id: EntityId) {
-    return getItem<Group>(container, id);
-}
+    async update(id: EntityId, group: Partial<WithoutModelId<Group>>) {
+        return this.groupContainer.updateItem(id, group);
+    }
 
-export async function findGroupEntityByInvitationCode(container: Container, invitationCode: Group['invitationCode']) {
-    const { resources } = await container.items.query<Group>({
-        query: 'SELECT * FROM g WHERE g.invitationCode = @invitationCode',
-        parameters: [{
-            name: '@invitationCode', value: invitationCode
-        }]
-    }).fetchAll();
-    return resources[0] ?? null;
-}
+    async delete(id: EntityId) {
+        return this.groupContainer.deleteItem(id);
+    }
 
-export async function getGroupEntities(container: Container) {
-    return getItems<Group>(container);
+    async get(id: EntityId) {
+        return this.groupContainer.getItem<Group>(id);
+    }
+
+    async findByInvitationCode(invitationCode: Group['invitationCode']) {
+        const { resources } = await this.groupContainer.container.items.query<Group>({
+            query: 'SELECT * FROM g WHERE g.invitationCode = @invitationCode',
+            parameters: [{
+                name: '@invitationCode', value: invitationCode
+            }]
+        }).fetchAll();
+        return resources[0] ?? null;
+    }
+
+    async getGroupEntities() {
+        return this.groupContainer.getItems<Group>();
+    }
+
 }

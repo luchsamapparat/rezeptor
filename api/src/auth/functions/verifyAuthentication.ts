@@ -6,9 +6,6 @@ import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
 import { createGroupCookie, createSessionCookie, createSessionKeyCookie, getGroupIdFromCookie } from '../cookie';
-import { deleteChallengeEntity, findChallengeEntitiesByGroupIdAndType } from '../infrastructure/persistence/challenge';
-import { getGroupEntity, updateGroupEntity } from '../infrastructure/persistence/group';
-import { createSessionEntity } from '../infrastructure/persistence/session';
 import { toAuthenticatorDevice } from '../model';
 
 const requestBodySchema = z.object({
@@ -17,9 +14,9 @@ const requestBodySchema = z.object({
 })
 
 const verifyAuthentication: RequestHandler = async request => {
-  const groupContainer = await appEnvironment.get('groupContainer');
-  const challengeContainer = await appEnvironment.get('challengeContainer');
-  const sessionContainer = await appEnvironment.get('sessionContainer');
+  const groupRepository = await appEnvironment.get('groupRepository');
+  const challengeRepository = await appEnvironment.get('challengeRepository');
+  const sessionRepository = await appEnvironment.get('sessionRepository');
   const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
 
   const { groupId: groupIdFromRequestBody, authenticationResponse } = requestBodySchema.parse(await request.json());
@@ -30,7 +27,7 @@ const verifyAuthentication: RequestHandler = async request => {
     throw new Error(`group ID provided`);
   }
 
-  const group = await getGroupEntity(groupContainer, groupId);
+  const group = await groupRepository.get(groupId);
 
   if (group === null) {
     throw new Error(`unknown group ID ${groupId}`);
@@ -46,7 +43,7 @@ const verifyAuthentication: RequestHandler = async request => {
     throw new Error(`unknown credential ID ${authenticationResponse.rawId}`);
   }
 
-  const challenges = await findChallengeEntitiesByGroupIdAndType(challengeContainer, group.id, 'authentication');
+  const challenges = await challengeRepository.findByGroupIdAndType(group.id, 'authentication');
 
   const { authenticationInfo, verified } = await verifyAuthenticationResponse({
     response: authenticationResponse,
@@ -54,7 +51,7 @@ const verifyAuthentication: RequestHandler = async request => {
       if (challenge.value !== givenChallenge) {
         return false;
       }
-      await deleteChallengeEntity(challengeContainer, challenge.id);
+      await challengeRepository.delete(challenge.id);
       return true;
     }),
     expectedOrigin: allowedOrigin,
@@ -68,11 +65,11 @@ const verifyAuthentication: RequestHandler = async request => {
     };
   }
 
-  const { id: sessionId } = await createSessionEntity(sessionContainer, { groupId });
+  const { id: sessionId } = await sessionRepository.create({ groupId });
 
   const { newCounter } = authenticationInfo;
 
-  await updateGroupEntity(groupContainer, group.id, {
+  await groupRepository.update(group.id, {
     authenticators: [
       ...group.authenticators.filter(authenticator => authenticator !== usedAuthenticator),
       {

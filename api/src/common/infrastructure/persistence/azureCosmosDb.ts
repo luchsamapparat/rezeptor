@@ -7,44 +7,58 @@ export const createOrGetDatabase = async (cosmosClient: CosmosClient, id: string
     return database;
 }
 
-export const createOrGetDatabaseContainer = async (database: Database, id: string, options: Omit<ContainerRequest, 'id'> = {}) => {
+const createOrGetDatabaseContainer = async (database: Database, id: string, options: Omit<ContainerRequest, 'id'> = {}) => {
     const { container } = await database.containers.createIfNotExists({ id, ...options });
     return container;
 }
 
+export const createItemContainer = async (database: Database, id: string, options?: Omit<ContainerRequest, 'id'>) => {
+    const container = await createOrGetDatabaseContainer(database, id, options);
+    return new ItemContainer(container);
+}
+
 export type EntityId = Item['id'];
 
-export async function createItem<T extends ItemDefinition>(container: Container, body: T) {
-    const id = crypto.randomUUID();
-    const { resource } = await container.items.create<T>({
-        id,
-        ...body
-    });
-    return resource!;
-}
+export class ItemContainer {
 
-export async function updateItem<T extends ItemDefinition>(container: Container, id: EntityId, updatedBody: T) {
-    const item = container.item(id);
-    const { resource } = await item.read<T>();
+    constructor(
+        public readonly container: Container
+    ) { }
 
-    const { resource: updatedResource } = await item.replace({
-        ...resource,
-        ...updatedBody,
-    });
+    async createItem<T extends ItemDefinition>(body: T) {
+        const id = crypto.randomUUID();
+        const { resource } = await this.container.items.create<T>({
+            id,
+            ...body
+        });
+        return resource!;
+    }
 
-    return updatedResource!;
-}
+    async updateItem<T extends ItemDefinition>(id: EntityId, updatedBody: T) {
+        const item = this.container.item(id);
+        const { resource } = await item.read<T>();
 
-export async function deleteItem<T extends ItemDefinition>(container: Container, id: EntityId) {
-    await container.item(id).delete<T>();
-}
+        const { resource: updatedResource } = await item.replace({
+            ...resource,
+            ...updatedBody,
+        });
 
-export async function getItem<T extends ItemDefinition>(container: Container, id: EntityId) {
-    const { resource } = await container.item(id).read<T>();
-    return resource ?? null;
-}
+        return updatedResource!;
+    }
 
-export async function getItems<T extends ItemDefinition>(container: Container) {
-    const { resources } = await container.items.readAll<T>().fetchAll();
-    return resources;
+    async deleteItem<T extends ItemDefinition>(id: EntityId) {
+        await this.container.item(id).delete<T>();
+    }
+
+    async getItem<T extends ItemDefinition>(id: EntityId) {
+        const { resource } = await this.container.item(id).read<T>();
+        return resource ?? null;
+    }
+
+    async getItems<T extends ItemDefinition>() {
+        const { resources } = await this.container.items.readAll<T>().fetchAll();
+        return resources;
+    }
+
+
 }

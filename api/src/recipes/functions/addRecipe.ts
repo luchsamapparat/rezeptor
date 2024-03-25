@@ -3,23 +3,21 @@ import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractMetadata } from '../infrastructure/api/azureDocumentIntelligence';
-import { createRecipeEntity, uploadRecipeFile } from '../infrastructure/persistence/recipe';
 
 const addRecipe: AuthenticatedRequestHandler = async request => {
-    const recipeBlobContainer = await appEnvironment.get('recipeBlobContainer');
+    const recipeRepository = await appEnvironment.get('recipeRepository');
     const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
-    const recipeContainer = await appEnvironment.get('recipeContainer');
 
     const formData = await request.formData();
 
     const cookbookId = getStringValue(formData, 'cookbookId');
     const recipeFile = formData.get('recipeFile') as unknown as File;
 
-    const recipeFileId = await uploadRecipeFile(recipeBlobContainer, recipeFile);
+    const recipeFileId = await recipeRepository.uploadRecipeFile(recipeFile);
 
     const { title, pageNumber } = await extractMetadata(documentAnalysisApi, recipeFile);
 
-    const { id: recipeId } = await createRecipeEntity(recipeContainer, {
+    const { id: recipeId } = await recipeRepository.create({
         title: title ?? '',
         photoFileId: null,
         recipeFileId,

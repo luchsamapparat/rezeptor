@@ -4,12 +4,11 @@ import { getFile } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
 import { findBook } from '../infrastructure/api/googleBooks';
-import { createCookbookEntity } from '../infrastructure/persistence/cookbook';
 
 const addCookbook: AuthenticatedRequestHandler = async request => {
     const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
     const booksApi = appEnvironment.get('booksApi');
-    const cookbookContainer = await appEnvironment.get('cookbookContainer');
+    const cookbookRepository = await appEnvironment.get('cookbookRepository');
 
     const formData = await request.formData();
 
@@ -27,7 +26,7 @@ const addCookbook: AuthenticatedRequestHandler = async request => {
         throw new Error(`No book found for ${ean13}.`);
     }
 
-    const { id: cookbookId } = await createCookbookEntity(cookbookContainer, book);
+    const { id: cookbookId } = await cookbookRepository.create(book);
 
     return {
         body: cookbookId

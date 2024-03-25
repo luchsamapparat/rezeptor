@@ -2,10 +2,9 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { updateCookbookEntity } from '../infrastructure/persistence/cookbook';
 
 const editCookbook: AuthenticatedRequestHandler = async request => {
-    const cookbookContainer = await appEnvironment.get('cookbookContainer');
+    const cookbookRepository = await appEnvironment.get('cookbookRepository');
 
     const formData = await request.formData();
 
@@ -15,7 +14,7 @@ const editCookbook: AuthenticatedRequestHandler = async request => {
         .map(author => author.trim())
         .filter(author => author.length > 0);
 
-    await updateCookbookEntity(cookbookContainer, id, {
+    await cookbookRepository.update(id, {
         title,
         authors
     });

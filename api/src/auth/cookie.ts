@@ -1,8 +1,6 @@
-import { Container } from "@azure/cosmos";
 import { Cookie, HttpRequest } from "@azure/functions";
 import { parse } from 'cookie';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { getSessionEntity } from "./infrastructure/persistence/session";
 import { AuthenticationConfig, Group, Session } from "./model";
 
 const sessionKeyCookieName = 'session-key';
@@ -10,11 +8,6 @@ const sessionCookieName = 'session';
 const groupCookieName = 'group';
 
 const encryptionAlgorithm = 'aes-256-cbc';
-
-export async function getSessionFromCookie(sessionContainer: Container, request: HttpRequest, config: Pick<AuthenticationConfig, 'cookieSecret'>) {
-    const sessionId = getSessionIdFromCookie(request, config);
-    return (sessionId === null) ? null : getSessionEntity(sessionContainer, sessionId);
-}
 
 export function getSessionIdFromCookie(request: HttpRequest, config: Pick<AuthenticationConfig, 'cookieSecret'>) {
     return getEncryptedValueFromCookie(sessionKeyCookieName, request, config);

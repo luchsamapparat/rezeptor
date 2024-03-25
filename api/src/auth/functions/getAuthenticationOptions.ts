@@ -5,13 +5,11 @@ import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { RequestHandler, createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie } from '../cookie';
-import { createChallengeEntity } from '../infrastructure/persistence/challenge';
-import { findGroupEntityByInvitationCode, getGroupEntity } from '../infrastructure/persistence/group';
 import { Group } from '../model';
 
 const getAuthenticationOptions: RequestHandler = async request => {
-  const groupContainer = await appEnvironment.get('groupContainer');
-  const challengeContainer = await appEnvironment.get('challengeContainer');
+  const groupRepository = await appEnvironment.get('groupRepository');
+  const challengeRepository = await appEnvironment.get('challengeRepository');
   const { rpId, cookieSecret } = appEnvironment.get('authenticationConfig');
 
   const formData = await request.formData();
@@ -22,11 +20,11 @@ const getAuthenticationOptions: RequestHandler = async request => {
   let group: Group | null = null;
 
   if (groupId !== null) {
-    group = await getGroupEntity(groupContainer, groupId);
+    group = await groupRepository.get(groupId);
   }
 
   if (invitationCode !== null) {
-    group = await findGroupEntityByInvitationCode(groupContainer, invitationCode);
+    group = await groupRepository.findByInvitationCode(invitationCode);
   }
 
   if (group === null) {
@@ -43,7 +41,7 @@ const getAuthenticationOptions: RequestHandler = async request => {
     userVerification: 'preferred',
   });
 
-  await createChallengeEntity(challengeContainer, {
+  await challengeRepository.create({
     groupId: group.id,
     value: options.challenge,
     type: 'authentication'

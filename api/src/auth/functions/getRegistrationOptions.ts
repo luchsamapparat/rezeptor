@@ -4,19 +4,17 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { createChallengeEntity } from '../infrastructure/persistence/challenge';
-import { findGroupEntityByInvitationCode } from '../infrastructure/persistence/group';
 
 const getRegistrationOptions: RequestHandler = async request => {
-  const groupContainer = await appEnvironment.get('groupContainer');
-  const challengeContainer = await appEnvironment.get('challengeContainer');
+  const groupRepository = await appEnvironment.get('groupRepository');
+  const challengeRepository = await appEnvironment.get('challengeRepository');
   const { rpName, rpId } = appEnvironment.get('authenticationConfig');
 
   const formData = await request.formData();
 
   const invitationCode = getStringValue(formData, 'invitationCode');
 
-  const group = await findGroupEntityByInvitationCode(groupContainer, invitationCode);
+  const group = await groupRepository.findByInvitationCode(invitationCode);
 
   const options = await generateRegistrationOptions({
     rpName,
@@ -37,7 +35,7 @@ const getRegistrationOptions: RequestHandler = async request => {
     }
   });
 
-  await createChallengeEntity(challengeContainer, {
+  await challengeRepository.create({
     groupId: group.id,
     value: options.challenge,
     type: 'registration'
