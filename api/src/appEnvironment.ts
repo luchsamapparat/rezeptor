@@ -65,8 +65,8 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
             ),
             recipeRepository: async () => new RecipeRepository(
                 await createItemContainer(await ctx.database, 'recipe'),
-                new FileContainer(await createBlobContainerClient(ctx.blobService, 'photo')),
                 new FileContainer(await createBlobContainerClient(ctx.blobService, 'recipe')),
+                new FileContainer(await createBlobContainerClient(ctx.blobService, 'photo')),
             ),
         }))
         .add({
