@@ -21,12 +21,17 @@ export type AuthenticatedRequestHandler = (requestContext: AuthenticatedRequestC
 export function createRequestHandler(appEnvironment: AppEnvironment, handler: RequestHandler): HttpHandler {
     return (request, context) => {
         const requestEnvironment = createRequestEnvironment(request, appEnvironment);
-        return handler({
-            request,
-            context,
-            env: appEnvironment,
-            requestEnv: requestEnvironment
-        });
+        try {
+            return handler({
+                request,
+                context,
+                env: appEnvironment,
+                requestEnv: requestEnvironment
+            });
+        } catch (error) {
+            context.error(error);
+            throw error;
+        }
     };
 }
 
@@ -47,12 +52,17 @@ export function createAuthenticatedRequestHandler(appEnvironment: AppEnvironment
             };
         }
 
-        return handler({
-            request,
-            context,
-            env: appEnvironment,
-            requestEnv: requestEnvironment,
-            session
-        });
+        try {
+            return handler({
+                request,
+                context,
+                env: appEnvironment,
+                requestEnv: requestEnvironment,
+                session
+            });
+        } catch (error) {
+            context.error(error);
+            throw error;
+        }
     };
 }
