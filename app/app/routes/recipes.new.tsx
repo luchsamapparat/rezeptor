@@ -15,7 +15,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
         body: await request.formData()
     });
     const id = await response.text();
-    return redirect(`/recipes/edit/${id}`);
+    return redirect(`/recipes/edit/${id}?redirectTo=${encodeURIComponent(`/recipes/replacePhoto/${id}`)}`);
 }
 
 export default function NewRecipe() {

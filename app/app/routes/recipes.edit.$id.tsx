@@ -33,6 +33,8 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
     const id = params.id;
 
+    const redirectTo = new URL(request.url).searchParams.get('redirectTo') ?? '/';
+
     if (isUndefined(id)) {
         throw new Response(null, {
             status: 404,
@@ -43,7 +45,7 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
         method: 'post',
         body: await request.formData()
     });
-    return redirect(`/recipes/replacePhoto/${id}`);
+    return redirect(redirectTo);
 }
 
 export default function EditRecipe() {
