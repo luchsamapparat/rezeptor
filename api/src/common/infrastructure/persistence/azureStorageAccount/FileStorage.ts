@@ -10,7 +10,7 @@ export const createFileContainer = async <O extends GenericOwnership>(blobServic
 }
 
 const createOwnershipIdentifier = <O extends GenericOwnership>(ownership: O): string => ownership
-    .map((prop, value) => `${prop}-${value}`)
+    .map(([prop, value]) => `${prop}-${value}`)
     .join('/');
 
 export class FileContainer {
