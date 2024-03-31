@@ -37,6 +37,5 @@
     "rimraf": "5.0.5",
     "typescript": "5.4.2"
   },
-  "main": "dist/src/**/functions/*.js",
-  "type": "module"
+  "main": "dist/src/**/functions/*.js"
 }

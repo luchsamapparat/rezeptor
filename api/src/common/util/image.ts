@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 
 export async function resizeImage(file: File, width: number) {
     return new File(
