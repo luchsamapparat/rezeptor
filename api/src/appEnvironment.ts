@@ -6,7 +6,7 @@ import { SessionRepository } from "./auth/infrastructure/persistence/SessionRepo
 import { AuthenticationConfig } from "./auth/model";
 import { setupApplicationInsights } from "./common/infrastructure/azureApplicationInsights";
 import { createCosmosDbClient, createNonPartitionedItemContainer, createOrGetDatabase } from "./common/infrastructure/persistence/azureCosmosDb";
-import { createBlobServiceClient } from "./common/infrastructure/persistence/azureStorageAccount";
+import { createBlobServiceClient } from "./common/infrastructure/persistence/azureStorageAccount/storage";
 import { createAzureDocumentAnalysisApiClient } from "./recipes/infrastructure/api/azureDocumentIntelligence";
 import { createbooksApi } from "./recipes/infrastructure/api/googleBooks";
 

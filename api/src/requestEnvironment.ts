@@ -1,10 +1,10 @@
 import { HttpRequest } from "@azure/functions";
 import { createContainer } from "iti";
 import { AppEnvironment } from "./appEnvironment";
-import { getOwnership } from "./auth/model";
+import { getOwnership, toOwnershipProperties } from "./auth/model";
 import { getSessionFromRequest } from "./auth/session";
 import { createOwnedItemContainer } from "./common/infrastructure/persistence/azureCosmosDb";
-import { FileContainer, createBlobContainerClient } from "./common/infrastructure/persistence/azureStorageAccount";
+import { createFileContainer } from "./common/infrastructure/persistence/azureStorageAccount";
 import { CookbookRepository } from "./recipes/infrastructure/persistence/CookbookRepository";
 import { RecipeRepository } from "./recipes/infrastructure/persistence/RecipeRepository";
 
@@ -33,7 +33,7 @@ export const createRequestEnvironment = (request: HttpRequest, appEnvironment: A
                 await createOwnedItemContainer(
                     await appEnvironment.get('database'),
                     'cookbook',
-                    await ctx.ownership,
+                    toOwnershipProperties(await ctx.ownership),
                     appEnvironment.get('telemetry')
                 )
             ),
@@ -41,11 +41,11 @@ export const createRequestEnvironment = (request: HttpRequest, appEnvironment: A
                 await createOwnedItemContainer(
                     await appEnvironment.get('database'),
                     'recipe',
-                    await ctx.ownership,
+                    toOwnershipProperties(await ctx.ownership),
                     appEnvironment.get('telemetry')
                 ),
-                new FileContainer(await createBlobContainerClient(appEnvironment.get('blobService'), 'recipe')),
-                new FileContainer(await createBlobContainerClient(appEnvironment.get('blobService'), 'photo')),
+                await createFileContainer(appEnvironment.get('blobService'), 'recipe', await ctx.ownership),
+                await createFileContainer(appEnvironment.get('blobService'), 'photo', await ctx.ownership),
             ),
         }));
 }

@@ -26,7 +26,7 @@ export const createOwnedItemContainer = async <O extends GenericOwnership>(
     return new OwnedItemContainer(ownership, genericItemContainer);
 }
 
-export class OwnedItemContainer<O extends GenericOwnership> implements ItemContainer {
+class OwnedItemContainer<O extends GenericOwnership> implements ItemContainer {
 
     private readonly partitionKey: PartitionKey;
 

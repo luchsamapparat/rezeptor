@@ -19,9 +19,9 @@ export type Group = Model<{
     authenticators: Authenticator[];
 }>;
 
-export type Ownership = {
-    groupId: Group['id'];
-};
+export type Ownership = readonly [
+    ['groupId', Group['id']]
+];
 
 export type OwnedByGroup<T> = T & Ownership;
 
@@ -50,4 +50,9 @@ export type Session = Model<{
     groupId: EntityId;
 }>;
 
-export const getOwnership = ({ groupId }: Session): Ownership => ({ groupId });
+
+export const getOwnership = ({ groupId }: Session): Ownership => [
+    ['groupId', groupId]
+];
+
+export const toOwnershipProperties = (ownership: Ownership) => Object.fromEntries(ownership);

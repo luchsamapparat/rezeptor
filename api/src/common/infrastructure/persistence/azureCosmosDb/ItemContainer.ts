@@ -45,7 +45,7 @@ export class GenericItemContainer {
                 operation: 'createItem',
                 operationArgs: { body }
             }
-        )
+        );
     }
 
     async updateItem<T extends ItemDefinition>(id: EntityId, updatedBodyOrPartitionKey: PartitionKey | T, maybeUpdatedBody?: T): Promise<ItemDefinition & Resource> {
@@ -155,7 +155,7 @@ export class GenericItemContainer {
             name: 'database operation execution time',
             value: executionTime,
             properties
-        })
+        });
         return result;
     }
 }
