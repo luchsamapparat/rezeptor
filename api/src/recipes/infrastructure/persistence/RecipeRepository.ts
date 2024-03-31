@@ -41,6 +41,10 @@ export class RecipeRepository {
         return this.recipeFileRepository.downloadFile(fileName);
     }
 
+    async deleteRecipeFile(fileName: string) {
+        return this.recipeFileRepository.deleteFile(fileName);
+    }
+
     async uploadPhotoFile(file: File) {
         const fileName = crypto.randomUUID();
         await this.photoFileRepository.uploadFile(fileName, file);
@@ -49,6 +53,10 @@ export class RecipeRepository {
 
     async downloadPhotoFile(fileName: string) {
         return this.photoFileRepository.downloadFile(fileName);
+    }
+
+    async deletePhotoFile(fileName: string) {
+        return this.photoFileRepository.deleteFile(fileName);
     }
 
 }

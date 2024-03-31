@@ -62,6 +62,20 @@ export class FileContainer {
         );
     }
 
+    async deleteFile(fileName: string) {
+        const filePath = `${this.ownershipIdentifier}/${fileName}`;
+        return this.trackStorageOperation(
+            async () => {
+                const blockBlobClient = this.containerClient.getBlockBlobClient(filePath);
+                await blockBlobClient.deleteIfExists();
+            },
+            {
+                operation: 'deleteFile',
+                operationArgs: { filePath }
+            }
+        )
+    }
+
     private async trackStorageOperation<T>(operation: () => T, additionalProperties: Record<string, any>) {
         const properties = {
             ...additionalProperties,

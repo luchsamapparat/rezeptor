@@ -10,7 +10,20 @@ const removeRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }
 
     const id = getStringValue(formData, 'id');
 
-    await recipeRepository.delete(id);
+    const recipe = await recipeRepository.get(id);
+
+    if (recipe !== null) {
+        await recipeRepository.delete(id);
+
+        if (recipe.photoFileId !== null) {
+            await recipeRepository.deletePhotoFile(recipe.photoFileId);
+        }
+
+        if (recipe.recipeFileId !== null) {
+            await recipeRepository.deleteRecipeFile(recipe.recipeFileId);
+        }
+    }
+
 
     return {
         body: null
