@@ -1,9 +1,11 @@
 import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
+import { WithoutModelId } from '../../common/model';
 import { getFile } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
 import { findBook } from '../infrastructure/api/googleBooks';
+import { Cookbook } from '../model';
 
 const addCookbook: AuthenticatedRequestHandler = async ({ request, env, requestEnv }) => {
     const documentAnalysisApi = env.get('documentAnalysisApi');
@@ -16,17 +18,22 @@ const addCookbook: AuthenticatedRequestHandler = async ({ request, env, requestE
 
     const { ean13 } = await extractBarcode(documentAnalysisApi, backCoverFile);
 
-    if (ean13 === null) {
-        throw new Error(`No EAN 13 barcode found.`);
+    let cookbook: WithoutModelId<Cookbook> = {
+        title: '',
+        authors: [],
+        isbn10: null,
+        isbn13: null
     }
 
-    const book = await findBook(booksApi, ean13);
+    if (ean13 !== null) {
+        const book = await findBook(booksApi, ean13);
 
-    if (book === null) {
-        throw new Error(`No book found for ${ean13}.`);
+        if (book !== null) {
+            cookbook = book;
+        }
     }
 
-    const { id: cookbookId } = await cookbookRepository.create(book);
+    const { id: cookbookId } = await cookbookRepository.create(cookbook);
 
     return {
         body: cookbookId
