@@ -43,6 +43,7 @@ export function createAuthenticatedRequestHandler(appEnvironment: AppEnvironment
         const session = await requestEnvironment.get('session');
 
         if (session === null) {
+            context.error(`Failed to authenticate ${request.method.toUpperCase()} ${request.url}. No session found.`);
             return {
                 status: 401,
                 cookies: [
@@ -51,6 +52,8 @@ export function createAuthenticatedRequestHandler(appEnvironment: AppEnvironment
                 ]
             };
         }
+
+        context.trace(`Authenticated group ${session.groupId} for ${request.method.toUpperCase()} ${request.url}`);
 
         try {
             return handler({

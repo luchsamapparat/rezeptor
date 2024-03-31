@@ -1,5 +1,6 @@
 import { Container, ContainerRequest, Database, ItemDefinition, PartitionKey, Resource, SqlQuerySpec } from "@azure/cosmos";
-import { TelemetryClient } from "applicationinsights";
+import { Contracts, TelemetryClient } from "applicationinsights";
+import { performance } from 'node:perf_hooks';
 import { EntityId } from "./Entity";
 import { createOrGetDatabaseContainer } from "./database";
 
@@ -31,50 +32,130 @@ export class GenericItemContainer {
     ) { }
 
     async createItem<T extends ItemDefinition>(body: T) {
-        const id = crypto.randomUUID();
-        const { resource } = await this.container.items.create<T>({
-            id,
-            ...body
-        });
-        return resource!;
+        return this.trackContainerOperation(
+            async () => {
+                const id = crypto.randomUUID();
+                const { resource } = await this.container.items.create<T>({
+                    id,
+                    ...body
+                });
+                return resource!;
+            },
+            {
+                operation: 'createItem',
+                operationArgs: { body }
+            }
+        )
     }
 
     async updateItem<T extends ItemDefinition>(id: EntityId, updatedBodyOrPartitionKey: PartitionKey | T, maybeUpdatedBody?: T): Promise<ItemDefinition & Resource> {
         const partitionKey = ((maybeUpdatedBody === undefined) ? undefined : updatedBodyOrPartitionKey) as PartitionKey | undefined;
         const updatedBody = ((maybeUpdatedBody === undefined) ? updatedBodyOrPartitionKey : maybeUpdatedBody) as T;
 
-        const item = this.container.item(id, partitionKey);
-        const { resource } = await item.read<T>();
+        return this.trackContainerOperation(
+            async () => {
 
-        const { resource: updatedResource } = await item.replace({
-            ...resource,
-            ...updatedBody,
-        });
+                const item = this.container.item(id, partitionKey);
+                const { resource } = await item.read<T>();
 
-        return updatedResource!;
+                const { resource: updatedResource } = await item.replace({
+                    ...resource,
+                    ...updatedBody,
+                });
+
+                return updatedResource!;
+            },
+            {
+                operation: 'updateItem',
+                operationArgs: { id, partitionKey, updatedBody }
+            }
+        );
     }
 
     async deleteItem<T extends ItemDefinition>(id: EntityId, partitionKey?: PartitionKey) {
-        await this.container.item(id, partitionKey).delete<T>({});
+        return this.trackContainerOperation(
+            async () => {
+                await this.container.item(id, partitionKey).delete<T>({});
+            },
+            {
+                operation: 'deleteItem',
+                operationArgs: { id, partitionKey }
+            }
+        );
     }
 
     async getItem<T extends ItemDefinition>(id: EntityId, partitionKey?: PartitionKey) {
-        const { resource } = await this.container.item(id, partitionKey).read<T>();
-        return resource ?? null;
+        return this.trackContainerOperation(
+            async () => {
+                const { resource } = await this.container.item(id, partitionKey).read<T>();
+                return resource ?? null;
+            },
+            {
+                operation: 'getItem',
+                operationArgs: { id, partitionKey }
+            }
+        );
     }
 
     async getItems<T extends ItemDefinition>(partitionKey?: PartitionKey) {
-        const { resources } = await this.container.items.readAll<T>({ partitionKey }).fetchAll();
-        return resources;
+        return this.trackContainerOperation(
+            async () => {
+                const { resources } = await this.container.items.readAll<T>({ partitionKey }).fetchAll();
+                return resources;
+            },
+            {
+                operation: 'getItems',
+                operationArgs: { partitionKey }
+            }
+        );
     }
 
     async queryItems<T extends ItemDefinition>(query: SqlQuerySpec, partitionKey?: PartitionKey) {
-        const { resources } = await this.container.items.query<T>(query, { partitionKey }).fetchAll();
-        return resources;
+        return this.trackContainerOperation(
+            async () => {
+                const { resources } = await this.container.items.query<T>(query, { partitionKey }).fetchAll();
+                return resources;
+            },
+            {
+                operation: 'queryItems',
+                operationArgs: { query, partitionKey }
+            }
+        );
     }
 
     async queryItem<T extends ItemDefinition>(query: SqlQuerySpec, partitionKey?: PartitionKey): Promise<T | null> {
         const resources = await this.queryItems<T>(query, partitionKey);
         return resources[0] ?? null;
+    }
+
+    private async trackContainerOperation<T>(operation: () => T, additionalProperties: Record<string, any>) {
+        const properties = {
+            ...additionalProperties,
+            container: this.container.id
+        };
+        let result: T | undefined;
+        const start = performance.now();
+        this.telemetry?.trackTrace({
+            message: 'executing database operation',
+            properties
+        })
+        try {
+            result = await operation();
+        } catch (error) {
+            this.telemetry?.trackException({
+                exception: (error instanceof Error) ? error : new Error(JSON.stringify(error)),
+                severity: Contracts.SeverityLevel.Error,
+                properties
+            });
+            throw error;
+        }
+        const end = performance.now();
+        const executionTime = start - end;
+        this.telemetry?.trackMetric({
+            name: 'database operation execution time',
+            value: executionTime,
+            properties
+        })
+        return result;
     }
 }
