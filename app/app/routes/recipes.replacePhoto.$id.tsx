@@ -1,11 +1,10 @@
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import { ClientActionFunctionArgs, Link, redirect, useFetcher, useParams } from "@remix-run/react";
 import { FormEvent } from "react";
-import { getApiBaseUrl } from "~/environment";
 import { authenticatedFetch } from "~/infrastructure/fetch";
 
 export async function clientAction({ request }: ClientActionFunctionArgs) {
-    await authenticatedFetch(`${getApiBaseUrl()}/replaceRecipePhoto`, {
+    await authenticatedFetch(`/replaceRecipePhoto`, {
         method: 'post',
         body: await request.formData()
     });
