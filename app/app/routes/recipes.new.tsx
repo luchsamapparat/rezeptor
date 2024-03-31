@@ -32,7 +32,7 @@ export default function NewRecipe() {
             <fetcher.Form method="post" encType="multipart/form-data">
                 <fieldset disabled={submitting}>
                     <label>
-                        Cookbook
+                        Kochbuch
                         <select name="cookbookId">
                             {cookbooks.map(cookbook => (
                                 <option value={cookbook.id} key={cookbook.id}>{cookbook.title}</option>
@@ -40,7 +40,7 @@ export default function NewRecipe() {
                         </select>
                     </label>
                     <label>
-                        Recipe
+                        Rezept
                         <input type="file" name="recipeFile" accept="image/*" capture="environment" onChange={handleChange} required />
                     </label>
                     <button type="submit">Hinzufügen</button>

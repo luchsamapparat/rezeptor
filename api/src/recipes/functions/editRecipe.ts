@@ -11,10 +11,12 @@ const editRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }) 
     const id = getStringValue(formData, 'id');
     const title = getStringValue(formData, 'title');
     const pageNumber = parseInt(getStringValue(formData, 'pageNumber'));
+    const cookbookId = getStringValue(formData, 'cookbookId');
 
     await recipeRepository.update(id, {
         title,
-        pageNumber
+        pageNumber,
+        cookbookId
     });
 
     return {

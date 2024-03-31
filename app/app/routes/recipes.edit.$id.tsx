@@ -1,8 +1,9 @@
 import { CaretLeft } from "@phosphor-icons/react";
 import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Link, redirect, useFetcher, useLoaderData } from "@remix-run/react";
 import { isUndefined } from "lodash-es";
+import { getApiBaseUrl } from "~/environment";
 import { authenticatedFetch } from "~/infrastructure/fetch";
-import { Recipe } from "~/model";
+import { Cookbook, RecipeDto, toRecipe } from "~/model";
 
 export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
     const id = params.id;
@@ -13,8 +14,20 @@ export async function clientLoader({ params }: ClientLoaderFunctionArgs) {
         });
     }
 
-    const response = await authenticatedFetch(`/getRecipe?id=${id}`);
-    return response.json() as Promise<Recipe>;
+    const [recipeDto, cookbooks] = await Promise.all([
+        authenticatedFetch(`/getRecipe?id=${id}`)
+            .then(response => response.json() as Promise<RecipeDto>),
+
+        authenticatedFetch(`/getCookbooks`)
+            .then(response => response.json() as Promise<Cookbook[]>)
+    ]);
+
+    const recipe = toRecipe(cookbooks, getApiBaseUrl(), recipeDto);
+
+    return {
+        recipe,
+        cookbooks
+    };
 }
 
 export async function clientAction({ request, params }: ClientActionFunctionArgs) {
@@ -34,7 +47,7 @@ export async function clientAction({ request, params }: ClientActionFunctionArgs
 }
 
 export default function EditRecipe() {
-    const recipe = useLoaderData<typeof clientLoader>();
+    const { cookbooks, recipe } = useLoaderData<typeof clientLoader>();
 
     const fetcher = useFetcher();
     const submitting = fetcher.state === 'submitting';
@@ -45,6 +58,14 @@ export default function EditRecipe() {
             <fetcher.Form method="post">
                 <fieldset disabled={submitting}>
                     <input type="hidden" name="id" defaultValue={recipe.id} />
+                    <label>
+                        Kochbuch
+                        <select name="cookbookId">
+                            {cookbooks.map(cookbook => (
+                                <option value={cookbook.id} key={cookbook.id}>{cookbook.title}</option>
+                            ))}
+                        </select>
+                    </label>
                     <label>
                         Titel
                         <input type="text" name="title" defaultValue={recipe.title} required />
