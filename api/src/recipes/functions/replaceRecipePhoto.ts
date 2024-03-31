@@ -3,8 +3,8 @@ import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
-const replaceRecipePhoto: AuthenticatedRequestHandler = async request => {
-    const recipeRepository = await appEnvironment.get('recipeRepository');
+const replaceRecipePhoto: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
+    const recipeRepository = await requestEnv.get('recipeRepository');
 
     const formData = await request.formData();
 
@@ -25,5 +25,5 @@ const replaceRecipePhoto: AuthenticatedRequestHandler = async request => {
 app.http('replaceRecipePhoto', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(replaceRecipePhoto)
+    handler: createAuthenticatedRequestHandler(appEnvironment, replaceRecipePhoto)
 });

@@ -4,9 +4,9 @@ import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 import { extractMetadata } from '../infrastructure/api/azureDocumentIntelligence';
 
-const addRecipe: AuthenticatedRequestHandler = async request => {
-    const recipeRepository = await appEnvironment.get('recipeRepository');
-    const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
+const addRecipe: AuthenticatedRequestHandler = async ({ request, env, requestEnv }) => {
+    const recipeRepository = await requestEnv.get('recipeRepository');
+    const documentAnalysisApi = env.get('documentAnalysisApi');
 
     const formData = await request.formData();
 
@@ -33,5 +33,5 @@ const addRecipe: AuthenticatedRequestHandler = async request => {
 app.http('addRecipe', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(addRecipe)
+    handler: createAuthenticatedRequestHandler(appEnvironment, addRecipe)
 });

@@ -13,11 +13,11 @@ const requestBodySchema = z.object({
   authenticationResponse: z.object({}).passthrough().transform(value => value as unknown as AuthenticationResponseJSON)
 })
 
-const verifyAuthentication: RequestHandler = async request => {
-  const groupRepository = await appEnvironment.get('groupRepository');
-  const challengeRepository = await appEnvironment.get('challengeRepository');
-  const sessionRepository = await appEnvironment.get('sessionRepository');
-  const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
+const verifyAuthentication: RequestHandler = async ({ request, env }) => {
+  const groupRepository = await env.get('groupRepository');
+  const challengeRepository = await env.get('challengeRepository');
+  const sessionRepository = await env.get('sessionRepository');
+  const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = env.get('authenticationConfig');
 
   const { groupId: groupIdFromRequestBody, authenticationResponse } = requestBodySchema.parse(await request.json());
 
@@ -92,5 +92,5 @@ const verifyAuthentication: RequestHandler = async request => {
 app.http('verifyAuthentication', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(verifyAuthentication)
+  handler: createRequestHandler(appEnvironment, verifyAuthentication)
 });

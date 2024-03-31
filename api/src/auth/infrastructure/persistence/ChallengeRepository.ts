@@ -17,15 +17,13 @@ export class ChallengeRepository {
     }
 
     async findByGroupIdAndType(groupId: Challenge['groupId'], type: Challenge['type']) {
-        const { resources } = await this.challengeContainer.container.items.query<Challenge>({
+        return this.challengeContainer.queryItems<Challenge>({
             query: 'SELECT * FROM c WHERE c.groupId = @groupId AND c.type = @type',
-            parameters: [{
-                name: '@groupId', value: groupId
-            }, {
-                name: '@type', value: type
-            }]
-        }).fetchAll();
-        return resources;
+            parameters: [
+                { name: '@groupId', value: groupId },
+                { name: '@type', value: type }
+            ]
+        });
     }
 
 }

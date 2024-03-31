@@ -2,8 +2,8 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
-const getRecipes: AuthenticatedRequestHandler = async request => {
-    const recipeRepository = await appEnvironment.get('recipeRepository');
+const getRecipes: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
+    const recipeRepository = await requestEnv.get('recipeRepository');
 
     const recipes = await recipeRepository.getAll();
 
@@ -15,5 +15,5 @@ const getRecipes: AuthenticatedRequestHandler = async request => {
 app.http('getRecipes', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(getRecipes)
+    handler: createAuthenticatedRequestHandler(appEnvironment, getRecipes)
 });

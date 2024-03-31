@@ -1,33 +1,41 @@
 import { HttpHandler, HttpRequest, InvocationContext } from "@azure/functions";
-import { AppEnvironment, appEnvironment } from "./appEnvironment";
-import { getSessionIdFromCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from "./auth/cookie";
+import { AppEnvironment } from "./appEnvironment";
+import { invalidateSessionCookie, invalidateSessionKeyCookie } from "./auth/cookie";
 import { Session } from "./auth/model";
+import { RequestEnvironment, createRequestEnvironment } from "./requestEnvironment";
 
-type AppContext = {
+type RequestContext = {
+    request: HttpRequest;
+    context: InvocationContext;
     env: AppEnvironment;
+    requestEnv: RequestEnvironment;
 }
 
-type AuthenticatedAppContext = AppContext & {
+type AuthenticatedRequestContext = RequestContext & {
     session: Session;
 }
 
-export type RequestHandler = (request: HttpRequest, context: InvocationContext, appContent: AppContext) => ReturnType<HttpHandler>;
-export type AuthenticatedRequestHandler = (request: HttpRequest, context: InvocationContext, appContent: AuthenticatedAppContext) => ReturnType<HttpHandler>;
+export type RequestHandler = (requestContext: RequestContext) => ReturnType<HttpHandler>;
+export type AuthenticatedRequestHandler = (requestContext: AuthenticatedRequestContext) => ReturnType<HttpHandler>;
 
-export function createRequestHandler(handler: RequestHandler): HttpHandler {
-    return (request, context) => handler(request, context, {
-        env: appEnvironment
-    });
+export function createRequestHandler(appEnvironment: AppEnvironment, handler: RequestHandler): HttpHandler {
+    return (request, context) => {
+        const requestEnvironment = createRequestEnvironment(request, appEnvironment);
+        return handler({
+            request,
+            context,
+            env: appEnvironment,
+            requestEnv: requestEnvironment
+        });
+    };
 }
 
-export function createAuthenticatedRequestHandler(handler: AuthenticatedRequestHandler): HttpHandler {
+export function createAuthenticatedRequestHandler(appEnvironment: AppEnvironment, handler: AuthenticatedRequestHandler): HttpHandler {
     return async (request, context) => {
-        const sessionRepository = await appEnvironment.get('sessionRepository');
         const authenticationConfig = appEnvironment.get('authenticationConfig');
+        const requestEnvironment = createRequestEnvironment(request, appEnvironment);
 
-        const sessionId = getSessionIdFromCookie(request, authenticationConfig);
-
-        const session = (sessionId === null) ? null : await sessionRepository.get(sessionId)
+        const session = await requestEnvironment.get('session');
 
         if (session === null) {
             return {
@@ -39,8 +47,11 @@ export function createAuthenticatedRequestHandler(handler: AuthenticatedRequestH
             };
         }
 
-        return handler(request, context, {
+        return handler({
+            request,
+            context,
             env: appEnvironment,
+            requestEnv: requestEnvironment,
             session
         });
     };

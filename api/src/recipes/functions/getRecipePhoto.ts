@@ -3,8 +3,8 @@ import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
-const getRecipePhoto: AuthenticatedRequestHandler = async request => {
-    const recipeRepository = await appEnvironment.get('recipeRepository');
+const getRecipePhoto: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
+    const recipeRepository = await requestEnv.get('recipeRepository');
 
     const id = getStringValue(request.query, 'id');
 
@@ -31,5 +31,5 @@ const getRecipePhoto: AuthenticatedRequestHandler = async request => {
 app.http('getRecipePhoto', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(getRecipePhoto)
+    handler: createAuthenticatedRequestHandler(appEnvironment, getRecipePhoto)
 });

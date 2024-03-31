@@ -25,13 +25,12 @@ export class GroupRepository {
     }
 
     async findByInvitationCode(invitationCode: Group['invitationCode']) {
-        const { resources } = await this.groupContainer.container.items.query<Group>({
+        return this.groupContainer.queryItem<Group>({
             query: 'SELECT * FROM g WHERE g.invitationCode = @invitationCode',
             parameters: [{
                 name: '@invitationCode', value: invitationCode
             }]
-        }).fetchAll();
-        return resources[0] ?? null;
+        });
     }
 
     async getGroupEntities() {

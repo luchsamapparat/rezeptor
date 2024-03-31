@@ -19,6 +19,12 @@ export type Group = Model<{
     authenticators: Authenticator[];
 }>;
 
+export type Ownership = {
+    groupId: Group['id'];
+};
+
+export type OwnedByGroup<T> = T & Ownership;
+
 export type Authenticator = {
     credentialId: string;
     credentialPublicKey: string;
@@ -43,3 +49,5 @@ export type Challenge = Model<{
 export type Session = Model<{
     groupId: EntityId;
 }>;
+
+export const getOwnership = ({ groupId }: Session): Ownership => ({ groupId });

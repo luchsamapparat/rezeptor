@@ -11,14 +11,19 @@ const requestBodySchema = z.object({
   registrationResponse: z.object({}).passthrough().transform(value => value as unknown as RegistrationResponseJSON)
 })
 
-const registerAuthenticator: RequestHandler = async request => {
-  const groupRepository = await appEnvironment.get('groupRepository');
-  const challengeRepository = await appEnvironment.get('challengeRepository');
-  const { rpId, allowedOrigin } = appEnvironment.get('authenticationConfig');
+const registerAuthenticator: RequestHandler = async ({ request, env }) => {
+  const groupRepository = await env.get('groupRepository');
+  const challengeRepository = await env.get('challengeRepository');
+  const { rpId, allowedOrigin } = env.get('authenticationConfig');
 
   const { invitationCode, registrationResponse } = requestBodySchema.parse(await request.json());
 
   const group = await groupRepository.findByInvitationCode(invitationCode);
+
+  if (group === null) {
+    throw new Error(`cannot find group for invitation code (${invitationCode})`);
+  }
+
   const challenges = await challengeRepository.findByGroupIdAndType(group.id, 'registration');
 
   const { registrationInfo, verified } = await verifyRegistrationResponse({
@@ -70,5 +75,5 @@ const registerAuthenticator: RequestHandler = async request => {
 app.http('registerAuthenticator', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(registerAuthenticator)
+  handler: createRequestHandler(appEnvironment, registerAuthenticator)
 });

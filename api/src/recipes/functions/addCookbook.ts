@@ -5,10 +5,10 @@ import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
 import { findBook } from '../infrastructure/api/googleBooks';
 
-const addCookbook: AuthenticatedRequestHandler = async request => {
-    const documentAnalysisApi = appEnvironment.get('documentAnalysisApi');
-    const booksApi = appEnvironment.get('booksApi');
-    const cookbookRepository = await appEnvironment.get('cookbookRepository');
+const addCookbook: AuthenticatedRequestHandler = async ({ request, env, requestEnv }) => {
+    const documentAnalysisApi = env.get('documentAnalysisApi');
+    const booksApi = env.get('booksApi');
+    const cookbookRepository = await requestEnv.get('cookbookRepository');
 
     const formData = await request.formData();
 
@@ -36,5 +36,5 @@ const addCookbook: AuthenticatedRequestHandler = async request => {
 app.http('addCookbook', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(addCookbook)
+    handler: createAuthenticatedRequestHandler(appEnvironment, addCookbook)
 });

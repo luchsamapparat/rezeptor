@@ -3,9 +3,9 @@ import { appEnvironment } from '../../appEnvironment';
 import { RequestHandler, createRequestHandler } from '../../handler';
 import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from '../cookie';
 
-const endSession: RequestHandler = async request => {
-  const sessionRepository = await appEnvironment.get('sessionRepository');
-  const { cookieDomain, cookieSecret } = appEnvironment.get('authenticationConfig');
+const endSession: RequestHandler = async ({ request, env }) => {
+  const sessionRepository = await env.get('sessionRepository');
+  const { cookieDomain, cookieSecret } = env.get('authenticationConfig');
 
   const sessionId = getSessionIdFromCookie(request, { cookieSecret });
 
@@ -26,5 +26,5 @@ const endSession: RequestHandler = async request => {
 app.http('endSession', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(endSession)
+  handler: createRequestHandler(appEnvironment, endSession)
 });

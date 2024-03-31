@@ -7,10 +7,10 @@ import { RequestHandler, createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie } from '../cookie';
 import { Group } from '../model';
 
-const getAuthenticationOptions: RequestHandler = async request => {
-  const groupRepository = await appEnvironment.get('groupRepository');
-  const challengeRepository = await appEnvironment.get('challengeRepository');
-  const { rpId, cookieSecret } = appEnvironment.get('authenticationConfig');
+const getAuthenticationOptions: RequestHandler = async ({ request, env }) => {
+  const groupRepository = await env.get('groupRepository');
+  const challengeRepository = await env.get('challengeRepository');
+  const { rpId, cookieSecret } = env.get('authenticationConfig');
 
   const formData = await request.formData();
 
@@ -55,5 +55,5 @@ const getAuthenticationOptions: RequestHandler = async request => {
 app.http('getAuthenticationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(getAuthenticationOptions)
+  handler: createRequestHandler(appEnvironment, getAuthenticationOptions)
 });

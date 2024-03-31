@@ -3,8 +3,8 @@ import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
 
-const editCookbook: AuthenticatedRequestHandler = async request => {
-    const cookbookRepository = await appEnvironment.get('cookbookRepository');
+const editCookbook: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
+    const cookbookRepository = await requestEnv.get('cookbookRepository');
 
     const formData = await request.formData();
 
@@ -27,5 +27,5 @@ const editCookbook: AuthenticatedRequestHandler = async request => {
 app.http('editCookbook', {
     methods: ['POST'],
     authLevel: 'anonymous',
-    handler: createAuthenticatedRequestHandler(editCookbook)
+    handler: createAuthenticatedRequestHandler(appEnvironment, editCookbook)
 });
