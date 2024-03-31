@@ -4,13 +4,13 @@ import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { RequestHandler, createRequestHandler } from '../../handler';
-import { getGroupIdFromCookie } from '../cookie';
+import { getGroupIdFromCookie, invalidateGroupCookie } from '../cookie';
 import { Group } from '../model';
 
-const getAuthenticationOptions: RequestHandler = async ({ request, env }) => {
+const getAuthenticationOptions: RequestHandler = async ({ request, context, env }) => {
   const groupRepository = await env.get('groupRepository');
   const challengeRepository = await env.get('challengeRepository');
-  const { rpId, cookieSecret } = env.get('authenticationConfig');
+  const { rpId, cookieSecret, cookieDomain } = env.get('authenticationConfig');
 
   const formData = await request.formData();
 
@@ -28,7 +28,14 @@ const getAuthenticationOptions: RequestHandler = async ({ request, env }) => {
   }
 
   if (group === null) {
-    throw new Error(`cannot find group by neither group ID (${groupId}) nor invitation code (${invitationCode})`);
+    context.error(`cannot find group by neither group ID (${groupId}) nor invitation code (${invitationCode})`);
+
+    return {
+      status: 400,
+      cookies: [
+        invalidateGroupCookie({ cookieDomain }),
+      ]
+    };
   }
 
   const options = await generateAuthenticationOptions({
