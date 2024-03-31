@@ -1,7 +1,7 @@
 import { IconContext } from "@phosphor-icons/react";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction } from "@remix-run/node"; // or cloudflare/deno
-import { ClientActionFunctionArgs, Links, Meta, Outlet, Scripts, ScrollRestoration, useFetcher } from "@remix-run/react";
+import { ClientActionFunctionArgs, Links, Meta, Outlet, Scripts, ScrollRestoration, redirect, useFetcher } from "@remix-run/react";
 
 import { isNull } from "lodash-es";
 import stylesheet from '~/styles/stylesheet.css?url';
@@ -63,7 +63,7 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 
   if (formData.get('action') === 'logout') {
     await logout();
-    return null;
+    return redirect('/');
   }
 }
 
