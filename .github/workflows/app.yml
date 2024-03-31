@@ -28,11 +28,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: build
-        shell: pwsh
         run: |
           pushd ./app
           npm ci
           npm run build
+          cp ./staticwebapp.config.json ./dist/client/
           popd
 
       - name: zip artifact
