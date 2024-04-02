@@ -13,8 +13,12 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: windows-latest
+    environment:
+      name: 'Production'
+    permissions:
+      id-token: write
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -33,30 +37,30 @@ jobs:
           npm prune --omit=dev
           popd
 
-      - name: zip artifact
-        run: Compress-Archive -Path api/* -Destination api-release.zip
+  #     - name: zip artifact
+  #       run: Compress-Archive -Path api/* -Destination api-release.zip
 
-      - name: upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: api-release
-          path: api-release.zip
+  #     - name: upload artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: api-release
+  #         path: api-release.zip
 
-  deploy:
-    runs-on: windows-latest
-    needs: build
-    environment:
-      name: 'Production'
-    permissions:
-      id-token: write
-    steps:
-      - name: download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: api-release
+  # deploy:
+  #   runs-on: windows-latest
+  #   needs: build
+  #   environment:
+  #     name: 'Production'
+  #   permissions:
+  #     id-token: write
+  #   steps:
+  #     - name: download artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: api-release
 
-      - name: unzip artifact
-        run: Expand-Archive -Path api-release.zip -DestinationPath ./api
+  #     - name: unzip artifact
+  #       run: Expand-Archive -Path api-release.zip -DestinationPath ./api
       
       - name: login to Azure
         uses: azure/login@v2
