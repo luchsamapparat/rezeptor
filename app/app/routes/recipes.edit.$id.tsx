@@ -64,7 +64,7 @@ export default function EditRecipe() {
                         Kochbuch
                         <select name="cookbookId">
                             {cookbooks.map(cookbook => (
-                                <option value={cookbook.id} key={cookbook.id}>{cookbook.title}</option>
+                                <option value={cookbook.id} key={cookbook.id} selected={cookbook.id === recipe.cookbook.id}>{cookbook.title}</option>
                             ))}
                         </select>
                     </label>
