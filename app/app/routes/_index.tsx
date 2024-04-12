@@ -68,7 +68,7 @@ export default function Index() {
       > */}
       {recipes.map(recipe => (
         // <SwiperSlide key={recipe.id}>
-        <article key={recipe.id} className={classes.recipe} title={recipe.photoFileUrl ?? 'huh'} style={{ backgroundImage: isNull(recipe.photoFileUrl) ? undefined : `url('${recipe.photoFileUrl}')` }}>
+        <article key={recipe.id} className={classes.recipe} style={{ backgroundImage: isNull(recipe.photoFileUrl) ? undefined : `url('${recipe.photoFileUrl}')` }}>
           <header>
             <h2>{isEmpty(recipe.title) ? 'ohne Titel' : recipe.title}</h2>
             <p>
