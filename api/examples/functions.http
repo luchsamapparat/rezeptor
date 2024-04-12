@@ -1,9 +1,11 @@
 # @baseUrl = https://rezeptor.azurewebsites.net
 @baseUrl = http://localhost:7071
+@sessionKey = 
 
 ###
 
 POST {{baseUrl}}/api/addCookbook
+Cookie: session-key={{sessionKey}}
 Content-Type: multipart/form-data;boundary="boundary"
 
 --boundary
@@ -16,10 +18,12 @@ Content-Type: image/jpeg
 ###
 
 GET {{baseUrl}}/api/getCookbook?id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc
+Cookie: session-key={{sessionKey}}
 
 ###
 
 POST {{baseUrl}}/api/editCookbook
+Cookie: session-key={{sessionKey}}
 Content-Type: application/x-www-form-urlencoded
 
 id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc&title=Simple&authors=Yotam%20Ottolenghi
@@ -27,10 +31,12 @@ id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc&title=Simple&authors=Yotam%20Ottolenghi
 ###
 
 GET {{baseUrl}}/api/getCookbooks
+Cookie: session-key={{sessionKey}}
 
 ###
 
 POST {{baseUrl}}/api/addRecipe
+Cookie: session-key={{sessionKey}}
 Content-Type: multipart/form-data;boundary="boundary"
 
 --boundary
@@ -41,20 +47,23 @@ Content-Disposition: form-data; name="cookbookId"
 Content-Disposition: form-data; name="recipeFile"; filename="example.jpg"
 Content-Type: image/jpeg
 
-< ./recipe4.jpg
+< ./recipe3.jpg
 --boundary--
 
 ###
 
 GET {{baseUrl}}/api/getRecipe?id=1a469355-7211-42f6-8a48-314ffeabaffa
+Cookie: session-key={{sessionKey}}
 
 ###
 
 GET {{baseUrl}}/api/getRecipes
+Cookie: session-key={{sessionKey}}
 
 ###
 
 POST {{baseUrl}}/api/editRecipe
+Cookie: session-key={{sessionKey}}
 Content-Type: application/x-www-form-urlencoded
 
 id=1a469355-7211-42f6-8a48-314ffeabaffa&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20Kartoffeln&pageNumber=238
@@ -62,6 +71,7 @@ id=1a469355-7211-42f6-8a48-314ffeabaffa&title=Involtini%20von%20Putenbrust%20und
 ###
 
 POST {{baseUrl}}/api/replaceRecipePhoto
+Cookie: session-key={{sessionKey}}
 Content-Type: multipart/form-data;boundary="boundary"
 
 --boundary
@@ -78,7 +88,9 @@ Content-Type: image/jpeg
 ###
 
 GET {{baseUrl}}/api/getRecipePhoto?id=bf8515b0-8838-4a6f-85f6-0f7b6149dc79
+Cookie: session-key={{sessionKey}}
 
 ###
 
 GET https://www.googleapis.com/books/v1/volumes?q=isbn:9783831046362
+Cookie: session-key={{sessionKey}}
