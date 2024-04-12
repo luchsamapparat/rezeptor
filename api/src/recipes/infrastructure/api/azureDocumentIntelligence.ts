@@ -8,20 +8,22 @@ export const createAzureDocumentAnalysisApiClient = (endpoint: string, key: stri
     new AzureKeyCredential(key)
 );
 
-type Metadata = {
+type DocumentContents = {
     title: string | null;
     pageNumber: number | null;
+    content: string;
 }
 
-export async function extractMetadata(apiClient: DocumentAnalysisClient, file: File): Promise<Metadata> {
-    const result = await analyzeDocument(apiClient, file);
+export async function extractDocumentContents(apiClient: DocumentAnalysisClient, file: File): Promise<DocumentContents> {
+    const { content, paragraphs } = await analyzeDocument(apiClient, file);
 
-    const title = result.paragraphs?.find(({ role }) => role === 'title')?.content ?? null;
-    const pageNumber = result.paragraphs?.filter(({ role, content }) => role === 'pageNumber' && /\d+/.test(content))[0]?.content ?? null;
+    const title = paragraphs?.find(({ role }) => role === 'title')?.content ?? null;
+    const pageNumber = paragraphs?.filter(({ role, content }) => role === 'pageNumber' && /\d+/.test(content))[0]?.content ?? null;
 
     return {
         title: (title === null) ? null : sanitizeString(title),
-        pageNumber: (pageNumber === null) ? null : parseInt(pageNumber)
+        pageNumber: (pageNumber === null) ? null : parseInt(pageNumber),
+        content
     }
 }
 

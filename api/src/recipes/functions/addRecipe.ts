@@ -2,7 +2,7 @@ import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import { AuthenticatedRequestHandler, createAuthenticatedRequestHandler } from '../../handler';
-import { extractMetadata } from '../infrastructure/api/azureDocumentIntelligence';
+import { extractDocumentContents } from '../infrastructure/api/azureDocumentIntelligence';
 
 const addRecipe: AuthenticatedRequestHandler = async ({ request, env, requestEnv }) => {
     const recipeRepository = await requestEnv.get('recipeRepository');
@@ -15,10 +15,11 @@ const addRecipe: AuthenticatedRequestHandler = async ({ request, env, requestEnv
 
     const recipeFileId = await recipeRepository.uploadRecipeFile(recipeFile);
 
-    const { title, pageNumber } = await extractMetadata(documentAnalysisApi, recipeFile);
+    const { title, pageNumber, content } = await extractDocumentContents(documentAnalysisApi, recipeFile);
 
     const { id: recipeId } = await recipeRepository.create({
         title: title ?? '',
+        content,
         photoFileId: null,
         recipeFileId,
         cookbookId,
