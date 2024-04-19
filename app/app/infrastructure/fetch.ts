@@ -7,7 +7,6 @@ export async function authenticatedFetch(path: string, init: RequestInit = {}) {
             ...init,
             headers: {
                 ...init.headers,
-                // Authorization: `bearer ${accessToken}`,
             }
         }
     );

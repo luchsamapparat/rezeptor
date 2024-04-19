@@ -10,6 +10,12 @@ const getRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }) =
 
     const recipe = await recipeRepository.get(id);
 
+    if (recipe === null) {
+        return {
+            status: 404
+        };
+    }
+
     return {
         jsonBody: recipe
     };
