@@ -1,7 +1,7 @@
-import { isoBase64URL } from "@simplewebauthn/server/helpers";
-import { AuthenticatorDevice, AuthenticatorTransportFuture, CredentialDeviceType } from "@simplewebauthn/types";
-import { EntityId } from "../common/infrastructure/persistence/azureCosmosDb";
-import { Model } from "../common/model";
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
+import type { AuthenticatorDevice, AuthenticatorTransportFuture, CredentialDeviceType } from '@simplewebauthn/types';
+import type { EntityId } from '../common/infrastructure/persistence/azureCosmosDb';
+import type { Model } from '../common/model';
 
 export type AuthenticationConfig = {
     rpName: string;
@@ -35,9 +35,9 @@ export type Authenticator = {
 };
 
 export const toAuthenticatorDevice = ({ credentialId, credentialPublicKey, ...authenticator }: Authenticator): AuthenticatorDevice => ({
-    ...authenticator,
-    credentialID: isoBase64URL.toBuffer(credentialId),
-    credentialPublicKey: isoBase64URL.toBuffer(credentialPublicKey)
+  ...authenticator,
+  credentialID: isoBase64URL.toBuffer(credentialId),
+  credentialPublicKey: isoBase64URL.toBuffer(credentialPublicKey)
 });
 
 export type Challenge = Model<{
@@ -52,7 +52,7 @@ export type Session = Model<{
 
 
 export const getOwnership = ({ groupId }: Session): Ownership => [
-    ['groupId', groupId]
+  ['groupId', groupId]
 ];
 
 export const toOwnershipProperties = (ownership: Ownership) => Object.fromEntries(ownership);

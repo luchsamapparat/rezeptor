@@ -1,15 +1,17 @@
 import { app } from '@azure/functions';
 import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
-import { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
+import type { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
-import { RequestHandler, createRequestHandler } from '../../handler';
+import type { RequestHandler } from '../../handler';
+import { createRequestHandler } from '../../handler';
 
 const requestBodySchema = z.object({
   invitationCode: z.string(),
-  registrationResponse: z.object({}).passthrough().transform(value => value as unknown as RegistrationResponseJSON)
-})
+  registrationResponse: z.object({}).passthrough()
+    .transform(value => value as unknown as RegistrationResponseJSON)
+});
 
 const registerAuthenticator: RequestHandler = async ({ request, env }) => {
   const groupRepository = await env.get('groupRepository');
@@ -64,7 +66,7 @@ const registerAuthenticator: RequestHandler = async ({ request, env }) => {
           transports: registrationResponse.response.transports,
         }
       ]
-    })
+    });
   }
 
   return {

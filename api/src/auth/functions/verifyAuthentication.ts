@@ -1,17 +1,20 @@
 import { app } from '@azure/functions';
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
-import { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
+import type { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
-import { RequestHandler, createRequestHandler } from '../../handler';
+import type { RequestHandler } from '../../handler';
+import { createRequestHandler } from '../../handler';
 import { createGroupCookie, createSessionCookie, createSessionKeyCookie, getGroupIdFromCookie } from '../cookie';
 import { toAuthenticatorDevice } from '../model';
 
 const requestBodySchema = z.object({
-  groupId: z.string().uuid().optional(),
-  authenticationResponse: z.object({}).passthrough().transform(value => value as unknown as AuthenticationResponseJSON)
-})
+  groupId: z.string().uuid()
+    .optional(),
+  authenticationResponse: z.object({}).passthrough()
+    .transform(value => value as unknown as AuthenticationResponseJSON)
+});
 
 const verifyAuthentication: RequestHandler = async ({ request, env }) => {
   const groupRepository = await env.get('groupRepository');
@@ -24,7 +27,7 @@ const verifyAuthentication: RequestHandler = async ({ request, env }) => {
   const groupId = groupIdFromRequestBody ?? getGroupIdFromCookie(request, { cookieSecret });
 
   if (groupId === null) {
-    throw new Error(`group ID provided`);
+    throw new Error('group ID provided');
   }
 
   const group = await groupRepository.get(groupId);

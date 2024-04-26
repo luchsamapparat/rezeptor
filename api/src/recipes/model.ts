@@ -1,4 +1,4 @@
-import { Model, ModelId } from "../common/model";
+import type { Model, ModelId } from '../common/model';
 
 export type Recipe = Model<{
     title: string;

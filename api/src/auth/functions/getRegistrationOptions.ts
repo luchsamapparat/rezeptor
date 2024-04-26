@@ -3,7 +3,8 @@ import { generateRegistrationOptions } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
-import { RequestHandler, createRequestHandler } from '../../handler';
+import type { RequestHandler } from '../../handler';
+import { createRequestHandler } from '../../handler';
 
 const getRegistrationOptions: RequestHandler = async ({ request, env }) => {
   const groupRepository = await env.get('groupRepository');

@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import { appEnvironment } from '../../appEnvironment';
-import { RequestHandler, createRequestHandler } from '../../handler';
+import type { RequestHandler } from '../../handler';
+import { createRequestHandler } from '../../handler';
 import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from '../cookie';
 
 const endSession: RequestHandler = async ({ request, env }) => {

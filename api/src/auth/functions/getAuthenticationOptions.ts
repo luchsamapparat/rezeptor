@@ -3,9 +3,10 @@ import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
-import { RequestHandler, createRequestHandler } from '../../handler';
+import type { RequestHandler } from '../../handler';
+import { createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie, invalidateGroupCookie } from '../cookie';
-import { Group } from '../model';
+import type { Group } from '../model';
 
 const getAuthenticationOptions: RequestHandler = async ({ request, context, env }) => {
   const groupRepository = await env.get('groupRepository');
