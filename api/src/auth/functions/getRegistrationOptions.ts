@@ -1,6 +1,6 @@
 import { app } from '@azure/functions';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
-import { isoBase64URL } from '@simplewebauthn/server/helpers';
+import { isoUint8Array } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import type { RequestHandler } from '../../handler';
@@ -24,13 +24,12 @@ const getRegistrationOptions: RequestHandler = async ({ request, env }) => {
   const options = await generateRegistrationOptions({
     rpName,
     rpID: rpId,
-    userID: group.id,
+    userID: isoUint8Array.fromUTF8String(group.id),
     userName: group.name,
     attestationType: 'none',
     // Prevent users from re-registering existing authenticators
     excludeCredentials: group.authenticators.map(({ credentialId, transports }) => ({
-      id: isoBase64URL.toBuffer(credentialId),
-      type: 'public-key',
+      id: credentialId,
       transports: transports
     })),
     authenticatorSelection: {

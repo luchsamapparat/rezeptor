@@ -51,14 +51,13 @@ const registerAuthenticator: RequestHandler = async ({ request, env }) => {
       credentialBackedUp,
     } = registrationInfo;
 
-    const serializedCredentialId = isoBase64URL.fromBuffer(credentialID);
     const serializedCredentialPublicKey = isoBase64URL.fromBuffer(credentialPublicKey);
 
     await groupRepository.update(group.id, {
       authenticators: [
         ...group.authenticators,
         {
-          credentialId: serializedCredentialId,
+          credentialId: credentialID,
           credentialPublicKey: serializedCredentialPublicKey,
           counter,
           credentialDeviceType,

@@ -1,13 +1,12 @@
 import { app } from '@azure/functions';
 import { verifyAuthenticationResponse } from '@simplewebauthn/server';
-import { isoBase64URL, isoUint8Array } from '@simplewebauthn/server/helpers';
+import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
 import { appEnvironment } from '../../appEnvironment';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { createGroupCookie, createSessionCookie, createSessionKeyCookie, getGroupIdFromCookie } from '../cookie';
-import { toAuthenticatorDevice } from '../model';
 
 const requestBodySchema = z.object({
   groupId: z.string().uuid()
@@ -36,11 +35,7 @@ const verifyAuthentication: RequestHandler = async ({ request, env }) => {
     throw new Error(`unknown group ID ${groupId}`);
   }
 
-  const authenticatedCredentialId = isoBase64URL.toBuffer(authenticationResponse.rawId);
-
-  const usedAuthenticator = group.authenticators.find(({ credentialId }) => {
-    return isoUint8Array.areEqual(authenticatedCredentialId, isoBase64URL.toBuffer(credentialId));
-  });
+  const usedAuthenticator = group.authenticators.find(({ credentialId }) => credentialId === authenticationResponse.id);
 
   if (usedAuthenticator === undefined) {
     throw new Error(`unknown credential ID ${authenticationResponse.rawId}`);
@@ -59,7 +54,11 @@ const verifyAuthentication: RequestHandler = async ({ request, env }) => {
     }),
     expectedOrigin: allowedOrigin,
     expectedRPID: rpId,
-    authenticator: toAuthenticatorDevice(usedAuthenticator)
+    authenticator: {
+      ...usedAuthenticator,
+      credentialID: usedAuthenticator.credentialId,
+      credentialPublicKey: isoBase64URL.toBuffer(usedAuthenticator.credentialPublicKey),
+    }
   });
 
   if (!verified) {

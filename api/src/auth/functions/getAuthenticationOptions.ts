@@ -1,6 +1,5 @@
 import { app } from '@azure/functions';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
-import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import { appEnvironment } from '../../appEnvironment';
 import { getStringValue } from '../../common/util/form';
 import type { RequestHandler } from '../../handler';
@@ -42,8 +41,7 @@ const getAuthenticationOptions: RequestHandler = async ({ request, context, env 
   const options = await generateAuthenticationOptions({
     rpID: rpId,
     allowCredentials: group.authenticators.map(authenticator => ({
-      id: isoBase64URL.toBuffer(authenticator.credentialId),
-      type: 'public-key',
+      id: authenticator.credentialId,
       transports: authenticator.transports
     } as const)),
     userVerification: 'preferred',
