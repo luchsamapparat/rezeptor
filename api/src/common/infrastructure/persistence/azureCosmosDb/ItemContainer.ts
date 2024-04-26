@@ -6,13 +6,13 @@ import type { EntityId } from './Entity';
 import { createOrGetDatabaseContainer } from './database';
 
 export type ItemContainer = {
-    createItem: <T extends ItemDefinition>(body: T) => Promise<ItemDefinition & Resource>;
-    updateItem: <T extends ItemDefinition>(id: EntityId, updatedBody: T) => Promise<ItemDefinition & Resource>;
-    deleteItem: <T extends ItemDefinition>(id: EntityId, partitionKey?: PartitionKey) => Promise<void>;
-    getItem: <T extends ItemDefinition>(id: EntityId, partitionKey?: PartitionKey) => Promise<(T & Resource) | null>;
-    getItems: <T extends ItemDefinition>(partitionKey?: PartitionKey) => Promise<T[]>;
-    queryItems: <T extends ItemDefinition>(query: SqlQuerySpec) => Promise<T[]>;
-    queryItem: <T extends ItemDefinition>(query: SqlQuerySpec) => Promise<T | null>;
+  createItem: <T extends ItemDefinition>(body: T) => Promise<ItemDefinition & Resource>;
+  updateItem: <T extends ItemDefinition>(id: EntityId, updatedBody: T) => Promise<ItemDefinition & Resource>;
+  deleteItem: (id: EntityId, partitionKey?: PartitionKey) => Promise<void>;
+  getItem: <T extends ItemDefinition>(id: EntityId, partitionKey?: PartitionKey) => Promise<(T & Resource) | null>;
+  getItems: <T extends ItemDefinition>(partitionKey?: PartitionKey) => Promise<T[]>;
+  queryItems: <T extends ItemDefinition>(query: SqlQuerySpec) => Promise<T[]>;
+  queryItem: <T extends ItemDefinition>(query: SqlQuerySpec) => Promise<T | null>;
 };
 
 export const createGenericItemContainer = async (
@@ -28,8 +28,8 @@ export const createGenericItemContainer = async (
 export class GenericItemContainer {
 
   constructor(
-        public readonly container: Container,
-        private readonly telemetry?: TelemetryClient
+    public readonly container: Container,
+    private readonly telemetry?: TelemetryClient
   ) { }
 
   async createItem<T extends ItemDefinition>(body: T) {
@@ -129,7 +129,7 @@ export class GenericItemContainer {
     return resources[0] ?? null;
   }
 
-  private async trackContainerOperation<T>(operation: () => T, additionalProperties: Record<string, any>) {
+  private async trackContainerOperation<T>(operation: () => T, additionalProperties: Record<string, unknown>) {
     const properties = {
       ...additionalProperties,
       container: this.container.id

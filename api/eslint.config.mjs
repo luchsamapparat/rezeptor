@@ -17,7 +17,7 @@ export default tseslint.config(
       unusedImportsPlugin
     },
     linterOptions: {
-      reportUnusedDisableDirectives: "warn"
+      reportUnusedDisableDirectives: 'warn'
     },
     languageOptions: {
       parserOptions: {
@@ -326,9 +326,6 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-asserted-optional-chain': [
         'warn'
       ],
-
-      // Disallow non-null assertions using the ! postfix operator. (https://typescript-eslint.io/rules/no-non-null-assertion)
-      '@typescript-eslint/no-non-null-assertion': ['warn'],
 
       // Disallow aliasing this (https://typescript-eslint.io/rules/no-this-alias)
       '@typescript-eslint/no-this-alias': ['warn'],

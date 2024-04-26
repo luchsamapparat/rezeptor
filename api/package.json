@@ -11,7 +11,8 @@
     "start": "func start",
     "predeploy": "npm prune --omit=dev",
     "deploy": "func azure functionapp publish rezeptor",
-    "postdeploy": "npm install"
+    "postdeploy": "npm install",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@azure/ai-form-recognizer": "5.0.0",

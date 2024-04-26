@@ -16,9 +16,9 @@ const createOwnershipIdentifier = <O extends GenericOwnership>(ownership: O): st
 
 export class FileContainer {
   constructor(
-        private readonly containerClient: ContainerClient,
-        private readonly ownershipIdentifier: string,
-        private readonly telemetry?: TelemetryClient
+    private readonly containerClient: ContainerClient,
+    private readonly ownershipIdentifier: string,
+    private readonly telemetry?: TelemetryClient
   ) { }
 
   async uploadFile(fileName: string, file: File) {
@@ -77,7 +77,7 @@ export class FileContainer {
     );
   }
 
-  private async trackStorageOperation<T>(operation: () => T, additionalProperties: Record<string, any>) {
+  private async trackStorageOperation<T>(operation: () => T, additionalProperties: Record<string, unknown>) {
     const properties = {
       ...additionalProperties,
       container: this.containerClient.containerName
