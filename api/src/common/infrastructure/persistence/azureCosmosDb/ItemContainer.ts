@@ -150,7 +150,7 @@ export class GenericItemContainer {
             throw error;
         }
         const end = performance.now();
-        const executionTime = start - end;
+        const executionTime = end - start;
         this.telemetry?.trackMetric({
             name: 'database operation execution time',
             value: executionTime,
