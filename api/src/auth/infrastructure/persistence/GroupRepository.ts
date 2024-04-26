@@ -2,10 +2,11 @@ import type { EntityId, ItemContainer } from '../../../common/infrastructure/per
 import type { WithoutModelId } from '../../../common/model';
 import type { Group } from '../../model';
 
+/** @scope * */
 export class GroupRepository {
 
   constructor(
-        private groupContainer: ItemContainer
+    private groupContainer: ItemContainer
   ) { }
 
   async create(group: WithoutModelId<Group>) {

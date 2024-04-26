@@ -67,11 +67,12 @@ export function createGroupCookie(groupId: Group['id'], { cookieDomain, cookieSe
   });
 }
 
-
+/** @scope * */
 export function invalidateSessionKeyCookie(config: Pick<AuthenticationConfig, 'cookieDomain'>) {
   return invalidateCookie(sessionKeyCookieName, config);
 }
 
+/** @scope * */
 export function invalidateSessionCookie(config: Pick<AuthenticationConfig, 'cookieDomain'>) {
   return invalidateCookie(sessionCookieName, config);
 }

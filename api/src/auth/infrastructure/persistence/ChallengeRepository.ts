@@ -2,10 +2,11 @@ import type { EntityId, ItemContainer } from '../../../common/infrastructure/per
 import type { WithoutModelId } from '../../../common/model';
 import type { Challenge } from '../../model';
 
+/** @scope * */
 export class ChallengeRepository {
 
   constructor(
-        private challengeContainer: ItemContainer
+    private challengeContainer: ItemContainer
   ) { }
 
   async create(challenge: WithoutModelId<Challenge>) {

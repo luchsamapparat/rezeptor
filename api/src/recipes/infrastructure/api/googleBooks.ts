@@ -2,14 +2,16 @@ import type { books_v1 } from '@googleapis/books';
 import { books } from '@googleapis/books';
 
 type Book = {
-    title: string;
-    authors: string[];
-    isbn10: string | null;
-    isbn13: string | null;
+  title: string;
+  authors: string[];
+  isbn10: string | null;
+  isbn13: string | null;
 };
 
+/** @scope * */
 export const createbooksApi = (key: string) => books({ version: 'v1', key });
 
+/** @scope * */
 export async function findBook(apiClient: books_v1.Books, isbn: string): Promise<Book | null> {
   const sanitizedIsbn = isbn.replace(/\D/g, '');
 
@@ -23,7 +25,7 @@ export async function findBook(apiClient: books_v1.Books, isbn: string): Promise
 
   if (
     volumes.data.items?.length === 0 ||
-        volumes.data.items === undefined
+    volumes.data.items === undefined
   ) {
     return null;
   }
@@ -32,7 +34,7 @@ export async function findBook(apiClient: books_v1.Books, isbn: string): Promise
 
   if (
     volumeInfo === undefined ||
-        volumeInfo?.title === undefined
+    volumeInfo?.title === undefined
   ) {
     return null;
   }

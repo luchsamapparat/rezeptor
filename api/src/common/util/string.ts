@@ -3,6 +3,7 @@ import * as stopword from 'stopword';
 
 const stopwordList = stopword.deu;
 
+/** @scope * */
 export function sanitizeString(string: string) {
   if (/[a-z]/.test(string)) {
     return string;

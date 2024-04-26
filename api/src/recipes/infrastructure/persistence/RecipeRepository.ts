@@ -3,12 +3,13 @@ import type { FileContainer } from '../../../common/infrastructure/persistence/a
 import type { WithoutModelId } from '../../../common/model';
 import type { Recipe } from '../../model';
 
+/** @scope * */
 export class RecipeRepository {
 
   constructor(
-        private recipeContainer: ItemContainer,
-        private recipeFileRepository: FileContainer,
-        private photoFileRepository: FileContainer
+    private recipeContainer: ItemContainer,
+    private recipeFileRepository: FileContainer,
+    private photoFileRepository: FileContainer
   ) { }
 
   async create(recipe: WithoutModelId<Recipe>) {

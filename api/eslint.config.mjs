@@ -1,6 +1,7 @@
 // @ts-check
 
 import eslint from '@eslint/js';
+import exportScopePlugin from 'eslint-plugin-export-scope';
 import * as importPlugin from 'eslint-plugin-import';
 import * as unusedImportsPlugin from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
@@ -13,8 +14,10 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     plugins: {
-      importPlugin,
-      unusedImportsPlugin
+      // spreading is a workaround for Error: Key "plugins": Key "export-scope": Expected an object.
+      'export-scope': { ...exportScopePlugin },
+      'import': importPlugin,
+      'unused-imports': unusedImportsPlugin
     },
     linterOptions: {
       reportUnusedDisableDirectives: 'warn'
@@ -25,6 +28,9 @@ export default tseslint.config(
       }
     },
     rules: {
+      // Don't leak local utils, states, contexts, components into the global scope (https://github.com/A-Shleifman/eslint-plugin-export-scope)
+      'export-scope/no-imports-outside-export-scope': 'error',
+
       // Enforce linebreaks after opening and before closing array brackets (https://eslint.org/docs/latest/rules/array-bracket-newline)
       'array-bracket-newline': ['warn', 'consistent'],
 
@@ -252,10 +258,10 @@ export default tseslint.config(
       ],
 
       // Reports if a resolved path is imported more than once (https://github.com/import-js/eslint-plugin-import/blob/9fd3c42707d71987e439a847f2e213f55c84f734/docs/rules/no-duplicates.md)
-      'importPlugin/no-duplicates': ['warn'],
+      'import/no-duplicates': ['warn'],
 
       // Do not allow unused imports (https://github.com/sweepline/eslint-plugin-unused-imports/blob/master/docs/rules/no-unused-imports.md)
-      'unusedImportsPlugin/no-unused-imports': 'error',
+      'unused-imports/no-unused-imports': 'error',
 
       // Require that function overload signatures be consecutive (https://typescript-eslint.io/rules/adjacent-overload-signatures)
       '@typescript-eslint/adjacent-overload-signatures': ['warn'],

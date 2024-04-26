@@ -2,6 +2,7 @@ import type { AuthenticatorTransportFuture, CredentialDeviceType } from '@simple
 import type { EntityId } from '../common/infrastructure/persistence/azureCosmosDb';
 import type { Model } from '../common/model';
 
+/** @scope * */
 export type AuthenticationConfig = {
   rpName: string;
   rpId: string;
@@ -39,13 +40,15 @@ export type Challenge = Model<{
   type: 'registration' | 'authentication';
 }>;
 
+/** @scope * */
 export type Session = Model<{
   groupId: EntityId;
 }>;
 
-
+/** @scope * */
 export const getOwnership = ({ groupId }: Session): Ownership => [
   ['groupId', groupId]
 ];
 
+/** @scope * */
 export const toOwnershipProperties = (ownership: Ownership) => Object.fromEntries(ownership);

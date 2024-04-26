@@ -4,17 +4,19 @@ import { getFileSize } from '../../../common/util/file';
 import { resizeImage } from '../../../common/util/image';
 import { sanitizeString } from '../../../common/util/string';
 
+/** @scope * */
 export const createAzureDocumentAnalysisApiClient = (endpoint: string, key: string) => new DocumentAnalysisClient(
   endpoint,
   new AzureKeyCredential(key)
 );
 
 type DocumentContents = {
-    title: string | null;
-    pageNumber: number | null;
-    content: string;
+  title: string | null;
+  pageNumber: number | null;
+  content: string;
 };
 
+/** @scope * */
 export async function extractDocumentContents(apiClient: DocumentAnalysisClient, file: File): Promise<DocumentContents> {
   const { content, paragraphs } = await analyzeDocument(apiClient, file);
 
@@ -29,9 +31,10 @@ export async function extractDocumentContents(apiClient: DocumentAnalysisClient,
 }
 
 type Barcode = {
-    ean13: string | null;
+  ean13: string | null;
 };
 
+/** @scope * */
 export async function extractBarcode(apiClient: DocumentAnalysisClient, file: File): Promise<Barcode> {
   const result = await analyzeDocument(apiClient, file, ['barcodes']);
 

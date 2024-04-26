@@ -2,10 +2,11 @@ import type { EntityId, ItemContainer } from '../../../common/infrastructure/per
 import type { WithoutModelId } from '../../../common/model';
 import type { Session } from '../../model';
 
+/** @scope * */
 export class SessionRepository {
 
   constructor(
-        private sessionContainer: ItemContainer
+    private sessionContainer: ItemContainer
   ) { }
 
   async create(session: WithoutModelId<Session>) {

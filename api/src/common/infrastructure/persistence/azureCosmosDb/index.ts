@@ -1,3 +1,5 @@
+/** @scopeDefault * */
+
 export { EntityId } from './Entity';
 export { ItemContainer } from './ItemContainer';
 export { createNonPartitionedItemContainer } from './NonPartitionedItemContainer';

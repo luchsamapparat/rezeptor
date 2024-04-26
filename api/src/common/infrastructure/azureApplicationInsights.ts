@@ -1,5 +1,6 @@
 import { DistributedTracingModes, defaultClient, setup } from 'applicationinsights';
 
+/** @scope * */
 export function setupApplicationInsights(connectionString?: string) {
   if (connectionString === undefined) {
     console.warn('Connection string for Application Insights missing. Telemetry disabled.');

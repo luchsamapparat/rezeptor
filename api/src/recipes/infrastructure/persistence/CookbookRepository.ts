@@ -2,10 +2,11 @@ import type { EntityId, ItemContainer } from '../../../common/infrastructure/per
 import type { WithoutModelId } from '../../../common/model';
 import type { Cookbook } from '../../model';
 
+/** @scope * */
 export class CookbookRepository {
 
   constructor(
-        private cookbookContainer: ItemContainer
+    private cookbookContainer: ItemContainer
   ) { }
 
   async create(cookbook: WithoutModelId<Cookbook>) {

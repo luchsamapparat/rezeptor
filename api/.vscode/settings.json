@@ -10,4 +10,5 @@
     "--ignore-revs-file",
     ".git-blame-ignore-revs"
   ],
+  "eslint.experimental.useFlatConfig": true
 }
