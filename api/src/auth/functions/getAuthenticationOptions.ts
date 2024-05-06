@@ -1,7 +1,8 @@
 import { app } from '@azure/functions';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { appEnvironment } from '../../appEnvironment';
-import { getStringValue } from '../../common/util/form';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie, invalidateGroupCookie } from '../cookie';
@@ -12,10 +13,9 @@ const getAuthenticationOptions: RequestHandler = async ({ request, context, env 
   const challengeRepository = await env.get('challengeRepository');
   const { rpId, cookieSecret, cookieDomain } = env.get('authenticationConfig');
 
-  const formData = await request.formData();
+  const { invitationCode, ...formData } = getAuthenticationOptionsRequestBodySchema.parse(await request.formData());
 
-  const groupId = getStringValue(formData, 'groupId', false) ?? getGroupIdFromCookie(request, { cookieSecret });
-  const invitationCode = getStringValue(formData, 'invitationCode', false);
+  const groupId = formData.groupId ?? getGroupIdFromCookie(request, { cookieSecret });
 
   let group: Group | null = null;
 
@@ -23,7 +23,7 @@ const getAuthenticationOptions: RequestHandler = async ({ request, context, env 
     group = await groupRepository.get(groupId);
   }
 
-  if (invitationCode !== null) {
+  if (invitationCode !== undefined) {
     group = await groupRepository.findByInvitationCode(invitationCode);
   }
 
@@ -62,4 +62,12 @@ app.http('getAuthenticationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
   handler: createRequestHandler(appEnvironment, getAuthenticationOptions)
+});
+
+const getAuthenticationOptionsRequestBodySchema = zfd.formData({
+  groupId: z.string()
+    .uuid()
+    .optional(),
+  invitationCode: zfd.text()
+    .optional()
 });

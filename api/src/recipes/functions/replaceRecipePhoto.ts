@@ -1,16 +1,14 @@
 import { app } from '@azure/functions';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { appEnvironment } from '../../appEnvironment';
-import { getStringValue } from '../../common/util/form';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const replaceRecipePhoto: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
   const recipeRepository = await requestEnv.get('recipeRepository');
 
-  const formData = await request.formData();
-
-  const id = getStringValue(formData, 'id');
-  const photoFile = formData.get('photoFile') as unknown as File;
+  const { id, photoFile } = addReplaceRecipePhotoBodySchema.parse(await request.formData());
 
   const photoFileId = await recipeRepository.uploadPhotoFile(photoFile);
 
@@ -27,4 +25,9 @@ app.http('replaceRecipePhoto', {
   methods: ['POST'],
   authLevel: 'anonymous',
   handler: createAuthenticatedRequestHandler(appEnvironment, replaceRecipePhoto)
+});
+
+const addReplaceRecipePhotoBodySchema = zfd.formData({
+  id: z.string().uuid(),
+  photoFile: zfd.file()
 });

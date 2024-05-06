@@ -1,7 +1,7 @@
 import { app } from '@azure/functions';
+import { zfd } from 'zod-form-data';
 import { appEnvironment } from '../../appEnvironment';
 import type { WithoutModelId } from '../../common/model';
-import { getFile } from '../../common/util/form';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence';
@@ -13,9 +13,7 @@ const addCookbook: AuthenticatedRequestHandler = async ({ request, env, requestE
   const booksApi = env.get('booksApi');
   const cookbookRepository = await requestEnv.get('cookbookRepository');
 
-  const formData = await request.formData();
-
-  const backCoverFile = getFile(formData, 'backCoverFile');
+  const { backCoverFile } = addCookbookRequestBodySchema.parse(await request.formData());
 
   const { ean13 } = await extractBarcode(documentAnalysisApi, backCoverFile);
 
@@ -45,4 +43,8 @@ app.http('addCookbook', {
   methods: ['POST'],
   authLevel: 'anonymous',
   handler: createAuthenticatedRequestHandler(appEnvironment, addCookbook)
+});
+
+const addCookbookRequestBodySchema = zfd.formData({
+  backCoverFile: zfd.file()
 });

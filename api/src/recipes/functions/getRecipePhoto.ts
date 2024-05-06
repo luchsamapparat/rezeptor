@@ -1,13 +1,14 @@
 import { app } from '@azure/functions';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { appEnvironment } from '../../appEnvironment';
-import { getStringValue } from '../../common/util/form';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const getRecipePhoto: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
   const recipeRepository = await requestEnv.get('recipeRepository');
 
-  const id = getStringValue(request.query, 'id');
+  const { id } = getRecipePhotoQuerySchema.parse(request.query);
 
   const recipePhotoFile = await recipeRepository.downloadPhotoFile(id);
 
@@ -33,4 +34,8 @@ app.http('getRecipePhoto', {
   methods: ['GET'],
   authLevel: 'anonymous',
   handler: createAuthenticatedRequestHandler(appEnvironment, getRecipePhoto)
+});
+
+const getRecipePhotoQuerySchema = zfd.formData({
+  id: z.string().uuid(),
 });

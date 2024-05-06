@@ -1,6 +1,6 @@
 # @baseUrl = https://rezeptor.azurewebsites.net
 @baseUrl = http://localhost:7071
-@sessionKey = 
+@sessionKey = 3ed292e765462ac233f6d726e8af67f4%3A863ff9c498f7cfc46c0e34f90e33b3dabf1e76a54a8c6cd11352aaea58248caa604e9af4e518c279f318301536398960
 
 ###
 
@@ -12,12 +12,12 @@ Content-Type: multipart/form-data;boundary="boundary"
 Content-Disposition: form-data; name="backCoverFile"; filename="example.jpg"
 Content-Type: image/jpeg
 
-< ./backcover.jpg
+< ./backcover1.jpg
 --boundary--
 
 ###
 
-GET {{baseUrl}}/api/getCookbook?id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc
+GET {{baseUrl}}/api/getCookbook?id=2ec198a6-2dc9-4f6f-8f90-adb2c00eaa00
 Cookie: session-key={{sessionKey}}
 
 ###
@@ -26,7 +26,7 @@ POST {{baseUrl}}/api/editCookbook
 Cookie: session-key={{sessionKey}}
 Content-Type: application/x-www-form-urlencoded
 
-id=4f357e2c-77ff-407d-97c1-6d5c1cb15cbc&title=Simple&authors=Yotam%20Ottolenghi
+id=2ec198a6-2dc9-4f6f-8f90-adb2c00eaa00&title=Simple&authors=Yotam%20Ottolenghi
 
 ###
 
@@ -42,7 +42,7 @@ Content-Type: multipart/form-data;boundary="boundary"
 --boundary
 Content-Disposition: form-data; name="cookbookId"
 
-50de9498-4f93-4371-9082-0c4622d4e469
+2ec198a6-2dc9-4f6f-8f90-adb2c00eaa00
 --boundary
 Content-Disposition: form-data; name="recipeFile"; filename="example.jpg"
 Content-Type: image/jpeg
@@ -52,7 +52,7 @@ Content-Type: image/jpeg
 
 ###
 
-GET {{baseUrl}}/api/getRecipe?id=1a469355-7211-42f6-8a48-314ffeabaffa
+GET {{baseUrl}}/api/getRecipe?id=b1407271-1100-4713-b0bc-58419676eb65
 Cookie: session-key={{sessionKey}}
 
 ###
@@ -66,7 +66,7 @@ POST {{baseUrl}}/api/editRecipe
 Cookie: session-key={{sessionKey}}
 Content-Type: application/x-www-form-urlencoded
 
-id=1a469355-7211-42f6-8a48-314ffeabaffa&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20Kartoffeln&pageNumber=238
+id=b1407271-1100-4713-b0bc-58419676eb65&title=Involtini%20von%20Putenbrust%20und%20Fr%C3%BChlingskr%C3%A4utern%20mit%20Spinatsalat%20und%20ger%C3%B6steten%20Kartoffeln&pageNumber=238&cookbookId=2ec198a6-2dc9-4f6f-8f90-adb2c00eaa00
 
 ###
 
@@ -77,7 +77,7 @@ Content-Type: multipart/form-data;boundary="boundary"
 --boundary
 Content-Disposition: form-data; name="id"
 
-1a469355-7211-42f6-8a48-314ffeabaffa
+b1407271-1100-4713-b0bc-58419676eb65
 --boundary
 Content-Disposition: form-data; name="photoFile"; filename="example.jpg"
 Content-Type: image/jpeg
@@ -87,7 +87,7 @@ Content-Type: image/jpeg
 
 ###
 
-GET {{baseUrl}}/api/getRecipePhoto?id=bf8515b0-8838-4a6f-85f6-0f7b6149dc79
+GET {{baseUrl}}/api/getRecipePhoto?id=5bef21b9-5d05-42ad-8a9b-93592cd232bd
 Cookie: session-key={{sessionKey}}
 
 ###

@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
+import { z } from 'zod';
+import { zfd } from 'zod-form-data';
 import { appEnvironment } from '../../appEnvironment';
-import { getStringValue } from '../../common/util/form';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 import { extractDocumentContents } from '../infrastructure/api/azureDocumentIntelligence';
@@ -9,10 +10,7 @@ const addRecipe: AuthenticatedRequestHandler = async ({ request, env, requestEnv
   const recipeRepository = await requestEnv.get('recipeRepository');
   const documentAnalysisApi = env.get('documentAnalysisApi');
 
-  const formData = await request.formData();
-
-  const cookbookId = getStringValue(formData, 'cookbookId');
-  const recipeFile = formData.get('recipeFile') as unknown as File;
+  const { cookbookId, recipeFile } = addRecipeRequestBodySchema.parse(await request.formData());
 
   const recipeFileId = await recipeRepository.uploadRecipeFile(recipeFile);
 
@@ -36,4 +34,9 @@ app.http('addRecipe', {
   methods: ['POST'],
   authLevel: 'anonymous',
   handler: createAuthenticatedRequestHandler(appEnvironment, addRecipe)
+});
+
+const addRecipeRequestBodySchema = zfd.formData({
+  cookbookId: z.string().uuid(),
+  recipeFile: zfd.file()
 });
