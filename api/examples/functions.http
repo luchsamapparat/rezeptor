@@ -93,4 +93,3 @@ Cookie: session-key={{sessionKey}}
 ###
 
 GET https://www.googleapis.com/books/v1/volumes?q=isbn:9783831046362
-Cookie: session-key={{sessionKey}}
