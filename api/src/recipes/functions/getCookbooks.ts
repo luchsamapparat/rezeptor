@@ -1,10 +1,10 @@
 import { app } from '@azure/functions';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
-const getCookbooks: AuthenticatedRequestHandler = async ({ requestEnv }) => {
-  const cookbookRepository = await requestEnv.get('cookbookRepository');
+const getCookbooks: AuthenticatedRequestHandler = async ({ requestContext }) => {
+  const cookbookRepository = await requestContext.get('cookbookRepository');
 
   const cookbooks = await cookbookRepository.getAll();
 
@@ -16,5 +16,5 @@ const getCookbooks: AuthenticatedRequestHandler = async ({ requestEnv }) => {
 app.http('getCookbooks', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  handler: createAuthenticatedRequestHandler(appEnvironment, getCookbooks)
+  handler: createAuthenticatedRequestHandler(appContext, getCookbooks)
 });

@@ -3,7 +3,7 @@ import { verifyAuthenticationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import type { AuthenticationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { createGroupCookie, createSessionCookie, createSessionKeyCookie, getGroupIdFromCookie } from '../cookie';
@@ -15,7 +15,7 @@ const requestBodySchema = z.object({
     .transform(value => value as unknown as AuthenticationResponseJSON)
 });
 
-const verifyAuthentication: RequestHandler = async ({ request, env }) => {
+const verifyAuthentication: RequestHandler = async ({ request, appContext: env }) => {
   const groupRepository = await env.get('groupRepository');
   const challengeRepository = await env.get('challengeRepository');
   const sessionRepository = await env.get('sessionRepository');
@@ -94,5 +94,5 @@ const verifyAuthentication: RequestHandler = async ({ request, env }) => {
 app.http('verifyAuthentication', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(appEnvironment, verifyAuthentication)
+  handler: createRequestHandler(appContext, verifyAuthentication)
 });

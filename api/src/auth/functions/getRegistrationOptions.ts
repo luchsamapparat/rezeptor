@@ -2,11 +2,11 @@ import { app } from '@azure/functions';
 import { generateRegistrationOptions } from '@simplewebauthn/server';
 import { isoUint8Array } from '@simplewebauthn/server/helpers';
 import { zfd } from 'zod-form-data';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 
-const getRegistrationOptions: RequestHandler = async ({ request, env }) => {
+const getRegistrationOptions: RequestHandler = async ({ request, appContext: env }) => {
   const groupRepository = await env.get('groupRepository');
   const challengeRepository = await env.get('challengeRepository');
   const { rpName, rpId } = env.get('authenticationConfig');
@@ -51,7 +51,7 @@ const getRegistrationOptions: RequestHandler = async ({ request, env }) => {
 app.http('getRegistrationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(appEnvironment, getRegistrationOptions)
+  handler: createRequestHandler(appContext, getRegistrationOptions)
 });
 
 const getRegistrationOptionsRequestBodySchema = zfd.formData({

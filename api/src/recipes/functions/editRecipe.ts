@@ -1,12 +1,12 @@
 import { app } from '@azure/functions';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
-const editRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
-  const recipeRepository = await requestEnv.get('recipeRepository');
+const editRecipe: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
+  const recipeRepository = await requestContext.get('recipeRepository');
 
   const { id, title, pageNumber, cookbookId } = editRecipeRequestBodySchema.parse(await request.formData());
 
@@ -24,7 +24,7 @@ const editRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }) 
 app.http('editRecipe', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createAuthenticatedRequestHandler(appEnvironment, editRecipe)
+  handler: createAuthenticatedRequestHandler(appContext, editRecipe)
 });
 
 const editRecipeRequestBodySchema = zfd.formData({

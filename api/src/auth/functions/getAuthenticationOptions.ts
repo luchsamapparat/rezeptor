@@ -2,13 +2,13 @@ import { app } from '@azure/functions';
 import { generateAuthenticationOptions } from '@simplewebauthn/server';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie, invalidateGroupCookie } from '../cookie';
 import type { Group } from '../model';
 
-const getAuthenticationOptions: RequestHandler = async ({ request, context, env }) => {
+const getAuthenticationOptions: RequestHandler = async ({ request, context, appContext: env }) => {
   const groupRepository = await env.get('groupRepository');
   const challengeRepository = await env.get('challengeRepository');
   const { rpId, cookieSecret, cookieDomain } = env.get('authenticationConfig');
@@ -61,7 +61,7 @@ const getAuthenticationOptions: RequestHandler = async ({ request, context, env 
 app.http('getAuthenticationOptions', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(appEnvironment, getAuthenticationOptions)
+  handler: createRequestHandler(appContext, getAuthenticationOptions)
 });
 
 const getAuthenticationOptionsRequestBodySchema = zfd.formData({

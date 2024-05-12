@@ -33,7 +33,7 @@ const environmentSchema = z.object({
 
 type EnvironmentVars = z.infer<typeof environmentSchema>;
 
-const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
+const createAppContext = (processEnv: NodeJS.ProcessEnv) => {
   const env: EnvironmentVars = environmentSchema.parse(processEnv);
 
   const appContainer = createContainer()
@@ -100,6 +100,6 @@ const createAppEnvironment = (processEnv: NodeJS.ProcessEnv) => {
   return appContainer;
 };
 
-export const appEnvironment = createAppEnvironment(process.env);
+export const appContext = createAppContext(process.env);
 
-export type AppEnvironment = typeof appEnvironment;
+export type AppContext = typeof appContext;

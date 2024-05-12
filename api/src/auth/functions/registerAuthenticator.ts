@@ -3,7 +3,7 @@ import { verifyRegistrationResponse } from '@simplewebauthn/server';
 import { isoBase64URL } from '@simplewebauthn/server/helpers';
 import type { RegistrationResponseJSON } from '@simplewebauthn/server/script/deps';
 import { z } from 'zod';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 
@@ -13,7 +13,7 @@ const requestBodySchema = z.object({
     .transform(value => value as unknown as RegistrationResponseJSON)
 });
 
-const registerAuthenticator: RequestHandler = async ({ request, env }) => {
+const registerAuthenticator: RequestHandler = async ({ request, appContext: env }) => {
   const groupRepository = await env.get('groupRepository');
   const challengeRepository = await env.get('challengeRepository');
   const { rpId, allowedOrigin } = env.get('authenticationConfig');
@@ -76,5 +76,5 @@ const registerAuthenticator: RequestHandler = async ({ request, env }) => {
 app.http('registerAuthenticator', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(appEnvironment, registerAuthenticator)
+  handler: createRequestHandler(appContext, registerAuthenticator)
 });

@@ -1,10 +1,10 @@
 import { app } from '@azure/functions';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from '../cookie';
 
-const endSession: RequestHandler = async ({ request, env }) => {
+const endSession: RequestHandler = async ({ request, appContext: env }) => {
   const sessionRepository = await env.get('sessionRepository');
   const { cookieDomain, cookieSecret } = env.get('authenticationConfig');
 
@@ -27,5 +27,5 @@ const endSession: RequestHandler = async ({ request, env }) => {
 app.http('endSession', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createRequestHandler(appEnvironment, endSession)
+  handler: createRequestHandler(appContext, endSession)
 });

@@ -1,12 +1,12 @@
 import { app } from '@azure/functions';
 import { z } from 'zod';
 import { zfd } from 'zod-form-data';
-import { appEnvironment } from '../../appEnvironment';
+import { appContext } from '../../appContext';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
-const removeRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }) => {
-  const recipeRepository = await requestEnv.get('recipeRepository');
+const removeRecipe: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
+  const recipeRepository = await requestContext.get('recipeRepository');
 
   const formData = await request.formData();
 
@@ -35,7 +35,7 @@ const removeRecipe: AuthenticatedRequestHandler = async ({ request, requestEnv }
 app.http('removeRecipe', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  handler: createAuthenticatedRequestHandler(appEnvironment, removeRecipe)
+  handler: createAuthenticatedRequestHandler(appContext, removeRecipe)
 });
 
 const getRemoveRecipeQuerySchema = zfd.formData({

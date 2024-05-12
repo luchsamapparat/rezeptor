@@ -1,6 +1,6 @@
 import type { HttpRequest } from '@azure/functions';
 import { createContainer } from 'iti';
-import type { AppEnvironment } from './appEnvironment';
+import type { AppContext } from './appContext';
 import { getOwnership, toOwnershipProperties } from './auth/model';
 import { getSessionFromRequest } from './auth/session';
 import { createOwnedItemContainer } from './common/infrastructure/persistence/azureCosmosDb';
@@ -8,12 +8,12 @@ import { createFileContainer } from './common/infrastructure/persistence/azureSt
 import { CookbookRepository } from './recipes/infrastructure/persistence/CookbookRepository';
 import { RecipeRepository } from './recipes/infrastructure/persistence/RecipeRepository';
 
-export const createRequestEnvironment = (request: HttpRequest, appEnvironment: AppEnvironment) => {
+export const createRequestContext = (request: HttpRequest, appContext: AppContext) => {
   return createContainer()
     .add({
       session: async () => getSessionFromRequest(
-        await appEnvironment.get('sessionRepository'),
-        appEnvironment.get('authenticationConfig'),
+        await appContext.get('sessionRepository'),
+        appContext.get('authenticationConfig'),
         request
       )
     })
@@ -31,23 +31,23 @@ export const createRequestEnvironment = (request: HttpRequest, appEnvironment: A
     .add(ctx => ({
       cookbookRepository: async () => new CookbookRepository(
         await createOwnedItemContainer(
-          await appEnvironment.get('database'),
+          await appContext.get('database'),
           'cookbook',
           toOwnershipProperties(await ctx.ownership),
-          appEnvironment.get('telemetry')
+          appContext.get('telemetry')
         )
       ),
       recipeRepository: async () => new RecipeRepository(
         await createOwnedItemContainer(
-          await appEnvironment.get('database'),
+          await appContext.get('database'),
           'recipe',
           toOwnershipProperties(await ctx.ownership),
-          appEnvironment.get('telemetry')
+          appContext.get('telemetry')
         ),
-        await createFileContainer(appEnvironment.get('blobService'), 'recipe', await ctx.ownership),
-        await createFileContainer(appEnvironment.get('blobService'), 'photo', await ctx.ownership),
+        await createFileContainer(appContext.get('blobService'), 'recipe', await ctx.ownership),
+        await createFileContainer(appContext.get('blobService'), 'photo', await ctx.ownership),
       ),
     }));
 };
 
-export type RequestEnvironment = ReturnType<typeof createRequestEnvironment>;
+export type RequestContext = ReturnType<typeof createRequestContext>;
