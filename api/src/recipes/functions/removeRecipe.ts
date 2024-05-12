@@ -6,7 +6,7 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const removeRecipe: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
-  const recipeRepository = await requestContext.get('recipeRepository');
+  const recipeRepository = await requestContext.recipeRepository;
 
   const formData = await request.formData();
 

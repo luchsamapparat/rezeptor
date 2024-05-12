@@ -4,9 +4,9 @@ import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 import { getSessionIdFromCookie, invalidateGroupCookie, invalidateSessionCookie, invalidateSessionKeyCookie } from '../cookie';
 
-const endSession: RequestHandler = async ({ request, appContext: env }) => {
-  const sessionRepository = await env.get('sessionRepository');
-  const { cookieDomain, cookieSecret } = env.get('authenticationConfig');
+const endSession: RequestHandler = async ({ request, appContext }) => {
+  const sessionRepository = await appContext.sessionRepository;
+  const { cookieDomain, cookieSecret } = appContext.authenticationConfig;
 
   const sessionId = getSessionIdFromCookie(request, { cookieSecret });
 

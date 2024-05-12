@@ -6,9 +6,9 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 import { extractDocumentContents } from '../infrastructure/api/azureDocumentIntelligence';
 
-const addRecipe: AuthenticatedRequestHandler = async ({ request, appContext: env, requestContext }) => {
-  const recipeRepository = await requestContext.get('recipeRepository');
-  const documentAnalysisApi = env.get('documentAnalysisApi');
+const addRecipe: AuthenticatedRequestHandler = async ({ request, appContext, requestContext }) => {
+  const recipeRepository = await requestContext.recipeRepository;
+  const documentAnalysisApi = appContext.documentAnalysisApi;
 
   const { cookbookId, recipeFile } = addRecipeRequestBodySchema.parse(await request.formData());
 

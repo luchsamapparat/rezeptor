@@ -8,12 +8,21 @@ import { createFileContainer } from './common/infrastructure/persistence/azureSt
 import { CookbookRepository } from './recipes/infrastructure/persistence/CookbookRepository';
 import { RecipeRepository } from './recipes/infrastructure/persistence/RecipeRepository';
 
-export const createRequestContext = (request: HttpRequest, appContext: AppContext) => {
-  return createContainer()
+export const createRequestContext = (
+  request: HttpRequest,
+  {
+    authenticationConfig,
+    blobService,
+    database,
+    sessionRepository,
+    telemetry,
+  }: AppContext
+) => {
+  const requestContainer = createContainer()
     .add({
       session: async () => getSessionFromRequest(
-        await appContext.get('sessionRepository'),
-        appContext.get('authenticationConfig'),
+        await sessionRepository,
+        authenticationConfig,
         request
       )
     })
@@ -31,23 +40,25 @@ export const createRequestContext = (request: HttpRequest, appContext: AppContex
     .add(ctx => ({
       cookbookRepository: async () => new CookbookRepository(
         await createOwnedItemContainer(
-          await appContext.get('database'),
+          await database,
           'cookbook',
           toOwnershipProperties(await ctx.ownership),
-          appContext.get('telemetry')
+          telemetry
         )
       ),
       recipeRepository: async () => new RecipeRepository(
         await createOwnedItemContainer(
-          await appContext.get('database'),
+          await database,
           'recipe',
           toOwnershipProperties(await ctx.ownership),
-          appContext.get('telemetry')
+          telemetry
         ),
-        await createFileContainer(appContext.get('blobService'), 'recipe', await ctx.ownership),
-        await createFileContainer(appContext.get('blobService'), 'photo', await ctx.ownership),
+        await createFileContainer(blobService, 'recipe', await ctx.ownership),
+        await createFileContainer(blobService, 'photo', await ctx.ownership),
       ),
     }));
+
+  return requestContainer.items;
 };
 
 export type RequestContext = ReturnType<typeof createRequestContext>;

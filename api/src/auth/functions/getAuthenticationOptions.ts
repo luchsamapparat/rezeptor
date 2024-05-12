@@ -8,10 +8,10 @@ import { createRequestHandler } from '../../handler';
 import { getGroupIdFromCookie, invalidateGroupCookie } from '../cookie';
 import type { Group } from '../model';
 
-const getAuthenticationOptions: RequestHandler = async ({ request, context, appContext: env }) => {
-  const groupRepository = await env.get('groupRepository');
-  const challengeRepository = await env.get('challengeRepository');
-  const { rpId, cookieSecret, cookieDomain } = env.get('authenticationConfig');
+const getAuthenticationOptions: RequestHandler = async ({ request, context, appContext }) => {
+  const groupRepository = await appContext.groupRepository;
+  const challengeRepository = await appContext.challengeRepository;
+  const { rpId, cookieSecret, cookieDomain } = appContext.authenticationConfig;
 
   const { invitationCode, ...formData } = getAuthenticationOptionsRequestBodySchema.parse(await request.formData());
 

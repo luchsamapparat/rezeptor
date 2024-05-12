@@ -15,11 +15,11 @@ const requestBodySchema = z.object({
     .transform(value => value as unknown as AuthenticationResponseJSON)
 });
 
-const verifyAuthentication: RequestHandler = async ({ request, appContext: env }) => {
-  const groupRepository = await env.get('groupRepository');
-  const challengeRepository = await env.get('challengeRepository');
-  const sessionRepository = await env.get('sessionRepository');
-  const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = env.get('authenticationConfig');
+const verifyAuthentication: RequestHandler = async ({ request, appContext }) => {
+  const groupRepository = await appContext.groupRepository;
+  const challengeRepository = await appContext.challengeRepository;
+  const sessionRepository = await appContext.sessionRepository;
+  const { rpId, allowedOrigin, sessionTtl, cookieDomain, cookieSecret } = appContext.authenticationConfig;
 
   const { groupId: groupIdFromRequestBody, authenticationResponse } = requestBodySchema.parse(await request.json());
 

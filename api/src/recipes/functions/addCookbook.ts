@@ -8,10 +8,10 @@ import { extractBarcode } from '../infrastructure/api/azureDocumentIntelligence'
 import { findBook } from '../infrastructure/api/googleBooks';
 import type { Cookbook } from '../model';
 
-const addCookbook: AuthenticatedRequestHandler = async ({ request, appContext: env, requestContext }) => {
-  const documentAnalysisApi = env.get('documentAnalysisApi');
-  const booksApi = env.get('booksApi');
-  const cookbookRepository = await requestContext.get('cookbookRepository');
+const addCookbook: AuthenticatedRequestHandler = async ({ request, appContext, requestContext }) => {
+  const documentAnalysisApi = appContext.documentAnalysisApi;
+  const booksApi = appContext.booksApi;
+  const cookbookRepository = await requestContext.cookbookRepository;
 
   const { backCoverFile } = addCookbookRequestBodySchema.parse(await request.formData());
 

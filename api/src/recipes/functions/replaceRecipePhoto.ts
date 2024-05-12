@@ -6,7 +6,7 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const replaceRecipePhoto: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
-  const recipeRepository = await requestContext.get('recipeRepository');
+  const recipeRepository = await requestContext.recipeRepository;
 
   const { id, photoFile } = addReplaceRecipePhotoBodySchema.parse(await request.formData());
 

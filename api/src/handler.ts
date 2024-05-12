@@ -38,10 +38,10 @@ export function createRequestHandler(appContext: AppContext, handler: RequestHan
 
 export function createAuthenticatedRequestHandler(appContext: AppContext, handler: AuthenticatedRequestHandler): HttpHandler {
   return async (request, context) => {
-    const authenticationConfig = appContext.get('authenticationConfig');
+    const { authenticationConfig } = appContext;
     const requestContext = createRequestContext(request, appContext);
 
-    const session = await requestContext.get('session');
+    const session = await requestContext.session;
 
     if (session === null) {
       context.error(`Failed to authenticate ${request.method.toUpperCase()} ${request.url}. No session found.`);

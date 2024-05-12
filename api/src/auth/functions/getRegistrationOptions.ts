@@ -6,10 +6,10 @@ import { appContext } from '../../appContext';
 import type { RequestHandler } from '../../handler';
 import { createRequestHandler } from '../../handler';
 
-const getRegistrationOptions: RequestHandler = async ({ request, appContext: env }) => {
-  const groupRepository = await env.get('groupRepository');
-  const challengeRepository = await env.get('challengeRepository');
-  const { rpName, rpId } = env.get('authenticationConfig');
+const getRegistrationOptions: RequestHandler = async ({ request, appContext }) => {
+  const groupRepository = await appContext.groupRepository;
+  const challengeRepository = await appContext.challengeRepository;
+  const { rpName, rpId } = appContext.authenticationConfig;
 
   const { invitationCode } = getRegistrationOptionsRequestBodySchema.parse(await request.formData());
 

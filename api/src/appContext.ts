@@ -97,7 +97,7 @@ const createAppContext = (processEnv: NodeJS.ProcessEnv) => {
       ),
     }));
 
-  return appContainer;
+  return appContainer.items;
 };
 
 export const appContext = createAppContext(process.env);

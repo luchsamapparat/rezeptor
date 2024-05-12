@@ -6,7 +6,7 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const getCookbook: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
-  const cookbookRepository = await requestContext.get('cookbookRepository');
+  const cookbookRepository = await requestContext.cookbookRepository;
 
   const { id } = getCookbookQuerySchema.parse(request.query);
 

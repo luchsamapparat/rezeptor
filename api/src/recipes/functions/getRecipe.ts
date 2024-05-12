@@ -6,7 +6,7 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const getRecipe: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
-  const recipeRepository = await requestContext.get('recipeRepository');
+  const recipeRepository = await requestContext.recipeRepository;
 
   const { id } = getRecipeQuerySchema.parse(request.query);
 

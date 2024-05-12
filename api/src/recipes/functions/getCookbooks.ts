@@ -4,7 +4,7 @@ import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
 const getCookbooks: AuthenticatedRequestHandler = async ({ requestContext }) => {
-  const cookbookRepository = await requestContext.get('cookbookRepository');
+  const cookbookRepository = await requestContext.cookbookRepository;
 
   const cookbooks = await cookbookRepository.getAll();
 

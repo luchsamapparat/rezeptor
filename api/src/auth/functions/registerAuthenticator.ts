@@ -13,10 +13,10 @@ const requestBodySchema = z.object({
     .transform(value => value as unknown as RegistrationResponseJSON)
 });
 
-const registerAuthenticator: RequestHandler = async ({ request, appContext: env }) => {
-  const groupRepository = await env.get('groupRepository');
-  const challengeRepository = await env.get('challengeRepository');
-  const { rpId, allowedOrigin } = env.get('authenticationConfig');
+const registerAuthenticator: RequestHandler = async ({ request, appContext }) => {
+  const groupRepository = await appContext.groupRepository;
+  const challengeRepository = await appContext.challengeRepository;
+  const { rpId, allowedOrigin } = appContext.authenticationConfig;
 
   const { invitationCode, registrationResponse } = requestBodySchema.parse(await request.json());
 
