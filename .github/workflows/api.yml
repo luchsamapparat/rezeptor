@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  NODE_VERSION: '20.x'
+  NODE_VERSION: '22.x'
 
 jobs:
   build-and-deploy:
@@ -65,9 +65,7 @@ jobs:
       - name: login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_862DA8CF642447A0AF58221280F0EBEB }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C355C14F9E574A95BBA1AEDA831E98B1 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_5E2494EA06DF477B8025635EF7EB0329 }}
+          creds: '{"clientId":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTID }}","clientSecret":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTSECRETID }}","subscriptionId":"${{ secrets.AZURESERVICEPRINCIPAL_SUBSCRIPTIONID }}","tenantId":"${{ secrets.AZURESERVICEPRINCIPAL_TENANTID }}"}'
 
       - name: deploy
         uses: Azure/functions-action@v1
