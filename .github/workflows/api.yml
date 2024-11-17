@@ -65,7 +65,7 @@ jobs:
       - name: login to Azure
         uses: azure/login@v2
         with:
-          creds: '{"clientId":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTID }}","clientSecret":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTSECRETID }}","subscriptionId":"${{ secrets.AZURESERVICEPRINCIPAL_SUBSCRIPTIONID }}","tenantId":"${{ secrets.AZURESERVICEPRINCIPAL_TENANTID }}"}'
+          creds: '{"clientId":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTID }}","clientSecret":"${{ secrets.AZURESERVICEPRINCIPAL_CLIENTSECRET }}","subscriptionId":"${{ secrets.AZURESERVICEPRINCIPAL_SUBSCRIPTIONID }}","tenantId":"${{ secrets.AZURESERVICEPRINCIPAL_TENANTID }}"}'
 
       - name: deploy
         uses: Azure/functions-action@v1
