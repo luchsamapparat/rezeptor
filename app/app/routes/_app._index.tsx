@@ -1,23 +1,27 @@
-import { BookBookmark, Books, Camera, PencilSimple, Trash } from "@phosphor-icons/react";
-import { ClientActionFunctionArgs, Link, useFetcher, useLoaderData } from "@remix-run/react";
+import { BookBookmark, Books, Camera, FunnelX, PencilSimple, Trash } from "@phosphor-icons/react";
+import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Link, useFetcher, useLoaderData, useSearchParams } from "@remix-run/react";
 import { isEmpty, isNull } from "lodash-es";
 // import 'swiper/css';
 // import 'swiper/css/effect-creative';
 // import { EffectCreative } from 'swiper/modules';
 // import { Swiper, SwiperSlide } from 'swiper/react';
 import { getApiBaseUrl } from "~/environment";
-import { isAuthenticated } from "~/infrastructure/authentication";
 import { authenticatedFetch } from "~/infrastructure/fetch";
 import { Cookbook, RecipeDto, getRecipeMapper } from "~/model";
 import classes from '~/styles/index.module.css';
 
-export async function clientLoader() {
-  if (!isAuthenticated()) {
-    return null;
+export async function clientLoader({ request }: ClientLoaderFunctionArgs) {
+  const requestUrl = new URL(request.url);
+
+  const recipeQueryParams = new URLSearchParams();
+  const cookbookId = requestUrl.searchParams.get('cookbookId');
+
+  if (!isNull(cookbookId)) {
+    recipeQueryParams.set('cookbookId', cookbookId);
   }
 
   const [recipeDtos, cookbooks] = await Promise.all([
-    authenticatedFetch(`/getRecipes`)
+    authenticatedFetch(`/getRecipes?${recipeQueryParams}`)
       .then(response => response.json() as Promise<RecipeDto[]>),
 
     authenticatedFetch(`/getCookbooks`)
@@ -36,17 +40,19 @@ export async function clientAction({ request }: ClientActionFunctionArgs) {
 }
 
 export default function Index() {
+  const [searchParams] = useSearchParams();
   const recipes = useLoaderData<typeof clientLoader>();
+
+  const isFiltered = searchParams.size > 0;
 
   const fetcher = useFetcher();
   const submitting = fetcher.state === 'submitting';
 
-  if (isNull(recipes)) {
-    return null;
-  }
-
   return (<>
     <nav className={classes.navigation}>
+      {isFiltered ? (
+        <Link to={`/`}><FunnelX /> alle anzeigen</Link>
+      ) : null}
       <Link to="/cookbooks"><Books /> Kochbücher</Link>
       <Link to="/recipes/new"><BookBookmark /> Rezept merken</Link>
     </nav>

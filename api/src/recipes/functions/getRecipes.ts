@@ -3,10 +3,12 @@ import { appContext } from '../../appContext';
 import type { AuthenticatedRequestHandler } from '../../handler';
 import { createAuthenticatedRequestHandler } from '../../handler';
 
-const getRecipes: AuthenticatedRequestHandler = async ({ requestContext }) => {
+const getRecipes: AuthenticatedRequestHandler = async ({ request, requestContext }) => {
   const recipeRepository = await requestContext.recipeRepository;
 
-  const recipes = await recipeRepository.getAll();
+  const cookbookId = request.query.get('cookbookId');
+
+  const recipes = (cookbookId === null) ? await recipeRepository.getAll() : await recipeRepository.findByCookbookId(cookbookId);
 
   return {
     jsonBody: recipes

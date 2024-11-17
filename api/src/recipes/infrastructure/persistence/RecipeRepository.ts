@@ -1,7 +1,7 @@
 import type { EntityId, ItemContainer } from '../../../common/infrastructure/persistence/azureCosmosDb';
 import type { FileContainer } from '../../../common/infrastructure/persistence/azureStorageAccount';
 import type { WithoutModelId } from '../../../common/model';
-import type { Recipe } from '../../model';
+import type { Cookbook, Recipe } from '../../model';
 
 /** @scope * */
 export class RecipeRepository {
@@ -30,6 +30,15 @@ export class RecipeRepository {
 
   async getAll() {
     return this.recipeContainer.getItems<Recipe>();
+  }
+
+  async findByCookbookId(cookbookId: Cookbook['id']) {
+    return this.recipeContainer.queryItems<Recipe>({
+      query: 'SELECT * FROM r WHERE r.cookbookId = @cookbookId',
+      parameters: [
+        { name: '@cookbookId', value: cookbookId }
+      ]
+    });
   }
 
   async uploadRecipeFile(file: File) {

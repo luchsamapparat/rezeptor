@@ -67,7 +67,7 @@ async function register(invitationCode: string) {
         console.error('Registration failed.', error);
 
         if (isInvalidStateError(error, 'ERROR_AUTHENTICATOR_PREVIOUSLY_REGISTERED')) {
-            const groupId = publicKeyCredentialCreationOptions.user.id;
+            const groupId = atob(publicKeyCredentialCreationOptions.user.id);
             return groupId;
         }
 

@@ -1,4 +1,4 @@
-import { Book, BookBookmark, Bookmarks, CaretLeft } from "@phosphor-icons/react";
+import { Book, BookBookmark, Bookmarks, CaretLeft, PencilSimple } from "@phosphor-icons/react";
 import { Link, useLoaderData } from "@remix-run/react";
 import { authenticatedFetch } from "~/infrastructure/fetch";
 import { Cookbook } from "~/model";
@@ -25,6 +25,7 @@ export default function Cookbooks() {
                             <footer>
                                 <Link to={`/?cookbookId=${cookbook.id}`}><Bookmarks /> Rezepte anzeigen</Link>
                                 <Link to={`/recipes/new?cookbookId=${cookbook.id}`}><BookBookmark /> Rezept merken</Link>
+                                <Link to={`/cookbooks/edit/${cookbook.id}`}><PencilSimple /> bearbeiten</Link>
                             </footer>
                         </article>
                     </li>

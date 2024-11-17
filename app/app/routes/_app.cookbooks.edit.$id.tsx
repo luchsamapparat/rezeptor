@@ -32,7 +32,7 @@ export default function EditCookbook() {
     const submitting = fetcher.state === 'submitting';
 
     return (<>
-        <Link to="/"><CaretLeft /> zurück</Link>
+        <Link to="/cookbooks"><CaretLeft /> zurück</Link>
         <main>
             <fetcher.Form method="post">
                 <fieldset disabled={submitting}>

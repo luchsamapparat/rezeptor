@@ -1,11 +1,9 @@
 import { IconContext } from "@phosphor-icons/react";
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction } from "@remix-run/node"; // or cloudflare/deno
-import { ClientActionFunctionArgs, Links, Meta, Outlet, Scripts, ScrollRestoration, redirect, useFetcher } from "@remix-run/react";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "@remix-run/react";
 
-import { isNull } from "lodash-es";
 import stylesheet from '~/styles/stylesheet.css?url';
-import { isAuthenticated, isRegisteredClient, loginWithCookie, loginWithInvitationCode, logout } from "./infrastructure/authentication";
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref
@@ -42,50 +40,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export async function clientAction({ request }: ClientActionFunctionArgs) {
-  const formData = await request.formData();
-
-  if (formData.get('action') === 'login') {
-    if (isRegisteredClient()) {
-      await loginWithCookie();
-      return null;
-    }
-
-    const invitationCode = formData.get('invitationCode') as string | null;
-
-    if (!isNull(invitationCode)) {
-      await loginWithInvitationCode(invitationCode);
-      return null;
-    }
-
-    throw new Error(`invitation code or group cookie required to login`)
-  }
-
-  if (formData.get('action') === 'logout') {
-    await logout();
-    return redirect('/');
-  }
-}
-
 export default function App() {
-  const fetcher = useFetcher();
-
-  return (<>
-    {isAuthenticated() ? (<>
-      <fetcher.Form method="post">
-        <button type="submit" name="action" value="logout">Abmelden</button>
-      </fetcher.Form>
-      <Outlet />
-    </>) : (<>
-      <fetcher.Form method="post">
-        {isRegisteredClient() ? null : (
-          <input type="text" name="invitationCode" defaultValue="HHL1635" />
-        )}
-
-        <button type="submit" name="action" value="login">Anmelden</button>
-      </fetcher.Form>
-    </>)}
-  </>);
+  return (
+    <Outlet />
+  );
 }
 
 export function HydrateFallback() {
