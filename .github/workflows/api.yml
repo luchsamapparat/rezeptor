@@ -37,31 +37,6 @@ jobs:
           npm prune --omit=dev
           popd
 
-  #     - name: zip artifact
-  #       run: Compress-Archive -Path api/* -Destination api-release.zip
-
-  #     - name: upload artifact
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: api-release
-  #         path: api-release.zip
-
-  # deploy:
-  #   runs-on: windows-latest
-  #   needs: build
-  #   environment:
-  #     name: 'Production'
-  #   permissions:
-  #     id-token: write
-  #   steps:
-  #     - name: download artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: api-release
-
-  #     - name: unzip artifact
-  #       run: Expand-Archive -Path api-release.zip -DestinationPath ./api
-      
       - name: login to Azure
         uses: azure/login@v2
         with:
