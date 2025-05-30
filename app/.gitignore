@@ -1,7 +1,0 @@
-node_modules
-
-/.cache
-/dist
-/public/build
-.env
-.env.production

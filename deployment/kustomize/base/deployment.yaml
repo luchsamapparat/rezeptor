@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app-name
+  template:
+    spec:
+      containers:
+        - name: app-name
+          image: IMAGE
+          ports:
+            - containerPort: 80
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: PORT
+              value: "80"
+            - name: DB_CONNECTION_STRING
+              value: file:/data/database.sqlite
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          volumeMounts:
+            - mountPath: /data
+              name: data
+          # livenessProbe:
+          #   httpGet:
+          #     path: /healthz/live
+          #     port: 80
+          # readinessProbe:
+          #   httpGet:
+          #     path: /healthz/ready
+          #     port: 80
+        - name: oauth2-proxy
+          image: quay.io/oauth2-proxy/oauth2-proxy
+          args:
+            - --provider=oidc
+            - --oidc-issuer-url=https://keycloak.luchsamappar.at/realms/apps
+            - --client-id=rezeptor
+            - --email-domain=*
+            - --upstream=http://127.0.0.1:80
+            - --http-address=0.0.0.0:4180
+            - --cookie-secure=true
+            - --skip-provider-button
+            - --set-xauthrequest
+            - --pass-authorization-header=true
+            - --pass-user-headers
+          env:
+            - name: OAUTH2_PROXY_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: OAUTH2_PROXY_CLIENT_SECRET
+            - name: OAUTH2_PROXY_COOKIE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: oauth2-proxy
+                  key: OAUTH2_PROXY_COOKIE_SECRET
+          ports:
+            - containerPort: 4180
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: app-name

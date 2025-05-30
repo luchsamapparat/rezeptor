@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "server.js",
+    "vite.config.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "strict": true,
+    "types": [
+      "node"
+    ],
+    "lib": [
+      "ESNext"
+    ],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  }
+}

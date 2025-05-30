@@ -1,0 +1,44 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    ".react-router/types/**/*",
+    "src/app/**/*",
+    "src/app/**/.server/**/*",
+    "src/app/**/.client/**/*",
+    "src/database/**/*",
+    "src/server/**/*",
+    "src/routes.ts",
+    "src/root.tsx"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "strict": true,
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ESNext"
+    ],
+    "types": [
+      "vite/client"
+    ],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "rootDirs": [
+      ".",
+      "./.react-router/types"
+    ],
+    "paths": {
+      "~/database/*": [
+        "src/database/*"
+      ],
+      "~/*": [
+        "src/app/*"
+      ]
+    },
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  }
+}
