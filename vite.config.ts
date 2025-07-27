@@ -4,6 +4,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ isSsrBuild }) => ({
   build: {
+    target: 'esnext',
     rollupOptions: isSsrBuild
       ? { input: './src/server.ts' }
       : undefined,
