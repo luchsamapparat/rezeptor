@@ -15,9 +15,4 @@ export default defineConfig([
   stylistic.configs.customize({
     semi: true,
   }),
-  {
-    rules: {
-      '@stylistic/eol-last': 'off',
-    },
-  },
 ]);
