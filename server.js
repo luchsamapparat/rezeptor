@@ -22,7 +22,7 @@ if (DEVELOPMENT) {
   app.use(viteDevServer.middlewares);
   app.use(async (req, res, next) => {
     try {
-      const source = await viteDevServer.ssrLoadModule('./src/server/app.ts');
+      const source = await viteDevServer.ssrLoadModule('./src/server.ts');
       return await source.app(req, res, next);
     }
     catch (error) {

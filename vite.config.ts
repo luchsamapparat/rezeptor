@@ -5,9 +5,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig(({ isSsrBuild }) => ({
   build: {
     rollupOptions: isSsrBuild
-      ? {
-          input: './src/server/app.ts',
-        }
+      ? { input: './src/server.ts' }
       : undefined,
   },
   plugins: [reactRouter(), tsconfigPaths()],

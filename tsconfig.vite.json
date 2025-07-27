@@ -2,13 +2,7 @@
   "extends": "./tsconfig.json",
   "include": [
     ".react-router/types/**/*",
-    "src/app/**/*",
-    "src/app/**/.server/**/*",
-    "src/app/**/.client/**/*",
-    "src/database/**/*",
-    "src/server/**/*",
-    "src/routes.ts",
-    "src/root.tsx"
+    "src/**/*",
   ],
   "compilerOptions": {
     "composite": true,
@@ -31,11 +25,17 @@
       "./.react-router/types"
     ],
     "paths": {
-      "~/database/*": [
-        "src/database/*"
+      "~/common/*": [
+        "src/common/*"
+      ],
+      "~/application/*": [
+        "src/application/*"
+      ],
+      "~/useCases/*": [
+        "src/useCases/*"
       ],
       "~/*": [
-        "src/app/*"
+        "src/client/*"
       ]
     },
     "esModuleInterop": true,
