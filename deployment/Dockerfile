@@ -20,4 +20,4 @@ COPY database /app/database/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/dist /app/dist
 WORKDIR /app
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]
