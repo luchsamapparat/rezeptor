@@ -1,21 +1,14 @@
-import { z } from 'zod/v4-mini';
+import z from 'zod';
 
-const envSchema = z.pipe(
-  z.object({
-    DB_CONNECTION_STRING: z.string().check(
-      z.minLength(1),
-    ),
-    DB_MIGRATIONS_PATH: z.string().check(
-      z.minLength(1),
-    ),
-  }),
-  z.transform(({ DB_CONNECTION_STRING, DB_MIGRATIONS_PATH }) => ({
-    database: {
-      connectionString: DB_CONNECTION_STRING,
-      migrationsPath: DB_MIGRATIONS_PATH,
-    },
-  })),
-);
+const envSchema = z.object({
+  DB_CONNECTION_STRING: z.string().min(1),
+  DB_MIGRATIONS_PATH: z.string().min(1),
+}).transform(({ DB_CONNECTION_STRING, DB_MIGRATIONS_PATH }) => ({
+  database: {
+    connectionString: DB_CONNECTION_STRING,
+    migrationsPath: DB_MIGRATIONS_PATH,
+  },
+}));
 
 export type Environment = z.infer<typeof envSchema>;
 

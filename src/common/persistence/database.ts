@@ -14,3 +14,6 @@ export async function initDatabaseConnection<Schema extends Record<string, unkno
   await migrate(database, { migrationsFolder: migrationsPath });
   return database;
 }
+
+export type Database<Schema extends Record<string, unknown> = Record<string, unknown>> =
+  Awaited<ReturnType<typeof initDatabaseConnection<Schema>>>;

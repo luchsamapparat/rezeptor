@@ -1,15 +1,21 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import type z from 'zod';
 
-export interface TypedRequest<T extends z.ZodTypeAny> extends Request {
+export type RequestSchemas<
+  RequestBodySchema extends z.ZodType,
+> = {
+  requestBodySchema: RequestBodySchema;
+};
+
+export interface TypedRequest<T extends z.ZodType> extends Request {
   body: z.infer<T>;
 }
 
 export function validateRequest<
-  RequestBodySchema extends z.ZodTypeAny,
->({ requestBodySchema }: { requestBodySchema: RequestBodySchema }): RequestHandler {
+  BodySchema extends z.ZodType,
+>({ requestBodySchema }: RequestSchemas<BodySchema>): RequestHandler {
   return (
-    request: TypedRequest<RequestBodySchema>,
+    request: TypedRequest<BodySchema>,
     response: Response,
     next: NextFunction,
   ): void => {
@@ -18,7 +24,7 @@ export function validateRequest<
     if (!requestBodyValidation.success) {
       response.status(422).json({
         message: 'Invalid request body',
-        errors: requestBodyValidation.error.errors,
+        errors: requestBodyValidation.error.issues,
       });
       return;
     }

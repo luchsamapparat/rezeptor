@@ -1,2 +1,2 @@
-export { cookbooksSchema } from './useCases/cookbooks/server/persistence';
-export { recipesSchema } from './useCases/recipes/server/persistence';
+export { cookbooksTable } from './useCases/cookbooks/server/persistence/cookbooksTable';
+export { recipesTable } from './useCases/recipes/server/persistence/recipesTable';

@@ -1,7 +1,7 @@
 import { cookbooksApi } from './cookbooks/server/api';
-import { cookbooksSchema } from './cookbooks/server/persistence';
+import { cookbooksTable } from './cookbooks/server/persistence/cookbooksTable';
 import { recipesApi } from './recipes/server/api';
-import { recipesSchema } from './recipes/server/persistence';
+import { recipesTable } from './recipes/server/persistence/recipesTable';
 
 export const api = { cookbooksApi, recipesApi };
-export const databaseSchema = { ...cookbooksSchema, ...recipesSchema };
+export const databaseSchema = { cookbooksTable, recipesTable };

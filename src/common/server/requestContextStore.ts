@@ -1,14 +1,17 @@
-import { isUndefined } from 'lodash-es';
+import { isFunction, isUndefined } from 'lodash-es';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 import type { NextFunction, Request, Response } from 'express';
 
 export function createRequestContextStore<T>(name: string) {
-  const asyncLocalStorage = new AsyncLocalStorage<T>();
+  const asyncLocalStorage = new AsyncLocalStorage<T | undefined>();
 
   return {
-    middleware(value: T) {
-      return (request: Request, response: Response, next: NextFunction) => asyncLocalStorage.run(value, next);
+    middleware(value: T | (() => T)) {
+      return (request: Request, response: Response, next: NextFunction) => asyncLocalStorage.run(
+        isFunction(value) ? value() : value,
+        next,
+      );
     },
 
     get() {

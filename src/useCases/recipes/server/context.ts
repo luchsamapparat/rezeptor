@@ -1,4 +1,8 @@
-import { createUseCaseContext } from '../../../application/server/useCaseContext';
-import type { recipesSchema } from './persistence';
+import { createRequestContextStore } from '../../../common/server/requestContextStore';
+import type { RecipeRepository } from './persistence/recipeRepository';
 
-export const recipesContext = createUseCaseContext<typeof recipesSchema>('RecipesContext');
+type RecipesContext = {
+  recipesRepository: RecipeRepository;
+};
+
+export const recipesContext = createRequestContextStore<RecipesContext>('RecipesContext');

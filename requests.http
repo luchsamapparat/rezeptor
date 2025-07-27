@@ -1,0 +1,23 @@
+### cookbooks
+
+### get all cookbooks
+GET http://localhost:3000/api/cookbooks
+
+### add cookbook
+POST http://localhost:3000/api/cookbooks
+Content-Type: application/json
+
+{
+  "title": "Flavor",
+  "authors": [
+    "Yotam Ottolenghi", 
+    "Ixta Belfrage"
+  ],
+  "isbn10": "3831040869",
+  "isbn13": "9783161484100"
+}
+
+### recipes
+
+### get all recipes
+GET http://localhost:3000/api/recipes
