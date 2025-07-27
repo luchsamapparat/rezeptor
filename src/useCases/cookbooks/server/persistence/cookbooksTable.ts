@@ -1,5 +1,5 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { createInsertSchema } from 'drizzle-zod';
+import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
 import { primaryKey } from '../../../../common/persistence/databaseSchema';
 
 export const cookbooksTable = sqliteTable('cookbooks', {
@@ -13,3 +13,4 @@ export const cookbooksTable = sqliteTable('cookbooks', {
 export type Cookbook = typeof cookbooksTable.$inferSelect;
 
 export const insertCookbookSchema = createInsertSchema(cookbooksTable).omit({ id: true });
+export const updateCookbookSchema = createUpdateSchema(cookbooksTable).omit({ id: true });
