@@ -1,4 +1,6 @@
 import { type RouteConfig, index } from '@react-router/dev/routes';
-import { getBasePath } from '../../../common/client/routeConfig';
+import { routeModulePath } from '../../../common/client/routeConfig';
 
-export const cookbookRoutes = [index(getBasePath('CookbooksController.tsx'))] satisfies RouteConfig;
+const pathTo = routeModulePath(import.meta.dirname);
+
+export const cookbookRoutes = [index(pathTo('CookbooksController.tsx'))] satisfies RouteConfig;

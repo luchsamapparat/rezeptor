@@ -1,4 +1,6 @@
 import { type RouteConfig, index } from '@react-router/dev/routes';
-import { getBasePath } from '../../../common/client/routeConfig';
+import { routeModulePath } from '../../../common/client/routeConfig';
 
-export const recipesRoutes = [index(getBasePath('RecipesController.tsx'))] satisfies RouteConfig;
+const pathTo = routeModulePath(import.meta.dirname);
+
+export const recipesRoutes = [index(pathTo('RecipesController.tsx'))] satisfies RouteConfig;
