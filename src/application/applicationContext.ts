@@ -1,5 +1,5 @@
-import { initEnvironment } from '~/application/environment';
-import { initDatabaseConnection } from '~/common/persistence/database';
+import { initDatabaseConnection } from '../common/persistence/database';
+import { initEnvironment } from './environment';
 
 export async function initApplicationContext<DatabaseSchema extends Record<string, unknown>>(processEnv: NodeJS.ProcessEnv, databaseSchema: DatabaseSchema) {
   const environment = initEnvironment(processEnv);

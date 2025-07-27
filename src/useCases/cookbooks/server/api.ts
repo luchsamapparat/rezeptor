@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
 import { z } from 'zod';
-import { validateRequest, type TypedRequest } from '~/application/server/validation';
+import { validateRequest, type TypedRequest } from '../../../application/server/validation';
 import { cookbooksContext } from './context';
 
 const requestBodySchema = z.object({ foo: z.string() });

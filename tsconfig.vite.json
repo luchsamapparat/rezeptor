@@ -19,25 +19,10 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "rootDirs": [
       ".",
       "./.react-router/types"
     ],
-    "paths": {
-      "~/common/*": [
-        "src/common/*"
-      ],
-      "~/application/*": [
-        "src/application/*"
-      ],
-      "~/useCases/*": [
-        "src/useCases/*"
-      ],
-      "~/*": [
-        "src/client/*"
-      ]
-    },
     "esModuleInterop": true,
     "resolveJsonModule": true
   }

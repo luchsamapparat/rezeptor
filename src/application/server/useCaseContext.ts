@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from 'express';
-import { createRequestContextStore } from '~/common/server/requestContextStore';
+import { createRequestContextStore } from '../../common/server/requestContextStore';
 import type { ApplicationContext } from '../applicationContext';
 import { getApplicationContext } from './applicationContextStore';
 

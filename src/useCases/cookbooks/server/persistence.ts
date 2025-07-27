@@ -1,5 +1,5 @@
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { primaryKey } from '~/common/persistence/databaseSchema';
+import { primaryKey } from '../../../common/persistence/databaseSchema';
 
 const cookbooks = sqliteTable('cookbooks', {
   id: primaryKey(),
