@@ -3,7 +3,7 @@ import { defineConfig } from 'drizzle-kit';
 
 export default defineConfig({
   out: './database',
-  schema: './src/database/schema.ts',
+  schema: './src/databaseSchema.ts',
   dialect: 'sqlite',
   dbCredentials: {
     url: process.env.DB_CONNECTION_STRING!,
