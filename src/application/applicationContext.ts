@@ -13,3 +13,7 @@ export async function initApplicationContext<DatabaseSchema extends Record<strin
     database,
   } as const;
 }
+
+export type ApplicationContext<
+  DatabaseSchema extends Record<string, unknown> = Record<string, unknown>,
+> = Awaited<ReturnType<typeof initApplicationContext<DatabaseSchema>>>;

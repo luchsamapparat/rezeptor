@@ -1,40 +1,25 @@
-import { Router, type RequestHandler } from 'express';
+import { Router } from 'express';
 
-import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
+import { validateRequest, type TypedRequest } from '~/application/server/validation';
+import { cookbooksContext } from './context';
+
+const requestBodySchema = z.object({ foo: z.string() });
 
 export const cookbooksApi = Router();
 
-const schema = z.object({ foo: z.string() });
+cookbooksApi.use(cookbooksContext.middleware);
 
-interface TypedRequest<T extends z.ZodTypeAny> extends Request {
-  body: z.infer<T>;
-}
+cookbooksApi
+  .route('/cookbooks')
+  .get(
+    validateRequest({ requestBodySchema }),
+    async (request: TypedRequest<typeof requestBodySchema>, response) => {
+      console.log(request.body.foo);
 
-const validateSchema = <T extends z.ZodTypeAny>(schema: T): RequestHandler => {
-  return (
-    request: TypedRequest<T>,
-    response: Response,
-    next: NextFunction,
-  ): void => {
-    const validationResult = schema.safeParse(request.body);
+      const { database } = cookbooksContext.get();
 
-    if (!validationResult.success) {
-      response.status(422).json({
-        message: 'Validation failed',
-        errors: validationResult.error.errors,
-      });
-      return;
-    }
+      const allCookbooks = await database.query.cookbooks.findMany();
 
-    // Overwrite the req.body with validated data
-    request.body = validationResult.data;
-
-    next();
-  };
-};
-
-cookbooksApi.get('/cookbooks', validateSchema(schema), (request: TypedRequest<typeof schema>, response) => {
-  console.log(request.body.foo);
-  response.json([]);
-});
+      response.json(allCookbooks);
+    });

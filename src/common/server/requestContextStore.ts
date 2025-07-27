@@ -3,14 +3,12 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 import type { NextFunction, Request, Response } from 'express';
 
-export function createRequestContext<T>(name: string) {
+export function createRequestContextStore<T>(name: string) {
   const asyncLocalStorage = new AsyncLocalStorage<T>();
 
   return {
     middleware(value: T) {
-      return (request: Request, response: Response, next: NextFunction) => {
-        asyncLocalStorage.run(value, next);
-      };
+      return (request: Request, response: Response, next: NextFunction) => asyncLocalStorage.run(value, next);
     },
 
     get() {

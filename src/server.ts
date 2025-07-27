@@ -1,12 +1,15 @@
 import { createRequestHandler } from '@react-router/express';
 import { Router } from 'express';
-import 'react-router';
-import { cookbooksApi } from './useCases/cookbooks/server/api';
-import { recipesApi } from './useCases/recipes/server/api';
+import { values } from 'lodash-es';
+import { initApplicationContext } from '~/application/applicationContext';
+import { applicationContextMiddleware } from '~/application/server/applicationContextStore';
+import * as useCases from './useCases';
 
 export const app = Router();
 
-app.use('/api', recipesApi, cookbooksApi);
+app.use(applicationContextMiddleware(await initApplicationContext(process.env, useCases.databaseSchema)));
+
+app.use('/api', ...values(useCases.api));
 
 app.use(
   createRequestHandler({

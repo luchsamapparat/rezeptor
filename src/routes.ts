@@ -1,3 +1,4 @@
-import { type RouteConfig, index } from '@react-router/dev/routes';
+import { type RouteConfig } from '@react-router/dev/routes';
+import { useCaseRoutes } from './useCases/routes';
 
-export default [index('useCases/recipes/client/RecipesController.tsx')] satisfies RouteConfig;
+export default [...useCaseRoutes] satisfies RouteConfig;
