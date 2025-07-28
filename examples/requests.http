@@ -1,0 +1,78 @@
+### cookbooks
+
+### get all cookbooks
+GET http://localhost:3000/api/cookbooks
+
+### add cookbook
+POST http://localhost:3000/api/cookbooks
+Content-Type: application/json
+
+{
+  "title": "Flavor",
+  "authors": [
+    "Yotam Ottolenghi", 
+    "Ixta Belfrage"
+  ],
+  "isbn10": "3831040869",
+  "isbn13": "9783831484100"
+}
+
+### edit cookbook (replace :id with actual cookbook ID)
+PATCH http://localhost:3000/api/cookbooks/:id
+Content-Type: application/json
+
+{
+  "title": "Flavor: More than 100 Simple Recipes for a More Complex World",
+  "authors": [
+    "Yotam Ottolenghi", 
+    "Ixta Belfrage"
+  ]
+}
+
+### remove cookbook (replace :id with actual cookbook ID)
+DELETE http://localhost:3000/api/cookbooks/:id
+
+### identify cookbook from back cover image
+POST http://localhost:3000/api/cookbooks/identification
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="backCoverFile"; filename="cookbook-back-cover.jpg"
+Content-Type: image/jpeg
+
+< ./backcover1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### recipes
+
+### get all recipes
+GET http://localhost:3000/api/recipes
+
+### get specific recipe (replace :id with actual recipe ID)
+GET http://localhost:3000/api/recipes/:id
+
+### add recipe
+POST http://localhost:3000/api/recipes
+Content-Type: application/json
+
+{
+  "title": "Roasted Eggplant with Curry Yogurt",
+  "content": "Preheat oven to 220°C. Cut 2 large eggplants into 3cm chunks. Toss with olive oil, salt and pepper. Roast for 25-30 minutes until golden. Meanwhile, mix 200g Greek yogurt with 1 tsp curry powder, salt and lemon juice. Serve eggplant warm with curry yogurt drizzled on top.",
+  "cookbookId": null,
+  "pageNumber": 45,
+  "photoFileId": null,
+  "recipeFileId": null
+}
+
+### edit recipe (replace :id with actual recipe ID)
+PATCH http://localhost:3000/api/recipes/:id
+Content-Type: application/json
+
+{
+  "title": "Roasted Eggplant with Spiced Curry Yogurt",
+  "content": "Updated recipe with more detailed instructions...",
+  "pageNumber": 46
+}
+
+### remove recipe (replace :id with actual recipe ID)
+DELETE http://localhost:3000/api/recipes/:id

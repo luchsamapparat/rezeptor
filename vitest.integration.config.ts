@@ -8,6 +8,7 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.integration.test.ts', '**/*.integration.spec.ts'],
     exclude: ['node_modules/**', 'dist/**'],
+    clearMocks: true,
     pool: 'forks',
     poolOptions: {
       forks: {

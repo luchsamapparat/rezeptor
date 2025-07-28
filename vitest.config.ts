@@ -8,5 +8,6 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.test.ts', '**/*.spec.ts'],
     exclude: ['node_modules', '**/integration.test.ts', '**/*.integration.test.ts', '**/*.integration.spec.ts'],
+    clearMocks: true,
   },
 });

@@ -8,20 +8,30 @@ import type { cookbooksTable } from '../persistence/cookbooksTable';
 import { addCookbook } from './addCookbook';
 import { editCookbook } from './editCookbook';
 import { getCookbooks } from './getCookbooks';
+import { identifyCookbook } from './identifyCookbook';
 import { removeCookbook } from './removeCookbook';
 
 export const cookbooksPath = '/cookbooks';
 
 export const cookbooksApi = Router();
 
-cookbooksApi.use(cookbooksContext.middleware(() => ({
-  cookbooksRepository: new CookbookRepository(getApplicationContext<{ cookbooksTable: typeof cookbooksTable }>().database),
-})));
+cookbooksApi.use(cookbooksContext.middleware(() => {
+  const { database, documentAnalysisClient, bookSearchClient } = getApplicationContext<{ cookbooksTable: typeof cookbooksTable }>();
+  return {
+    cookbooksRepository: new CookbookRepository(database),
+    documentAnalysisClient,
+    bookSearchClient,
+  };
+}));
 
 cookbooksApi
   .route(cookbooksPath)
   .get(...getCookbooks)
   .post(...addCookbook);
+
+cookbooksApi
+  .route(`${cookbooksPath}/identification`)
+  .post(...identifyCookbook);
 
 cookbooksApi
   .route(`${cookbooksPath}/:id`)

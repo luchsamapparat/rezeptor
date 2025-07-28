@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import express from 'express';
 import { join } from 'node:path';
 import { afterEach as baseAfterEach, beforeEach as baseBeforeEach, test as baseTest } from 'vitest';
@@ -32,6 +33,13 @@ async function createTestApp() {
     database: {
       connectionString,
       migrationsPath,
+    },
+    documentAnalysis: {
+      endpoint: faker.internet.url(),
+      key: faker.string.alphanumeric(),
+    },
+    bookSearch: {
+      key: faker.string.alphanumeric(),
     },
   });
 

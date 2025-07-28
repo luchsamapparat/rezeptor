@@ -25,6 +25,18 @@ spec:
               value: file:/data/database.sqlite
             - name: DB_MIGRATIONS_PATH
               value: /app/database
+            - name: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
+              value: https://rezeptor.cognitiveservices.azure.com/
+            - name: AZURE_DOCUMENT_INTELLIGENCE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rezeptor
+                  key: AZURE_DOCUMENT_INTELLIGENCE_KEY
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rezeptor
+                  key: GOOGLE_API_KEY
           resources:
             limits:
               cpu: 100m

@@ -1,11 +1,24 @@
+import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
 import { omit, pick } from 'lodash-es';
 import request from 'supertest';
-import { describe, expect } from 'vitest';
+import { describe, expect, vi } from 'vitest';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
+import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
+import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
+import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from '../../../tests/mocks/googleBooks.mock';
 import { CookbookRepository } from '../server/persistence/cookbookRepository';
 import { cookbookMock, cookbookMockDataFactory, cookbookMockList, cookbookWithoutIsbnMock } from './data/cookbookMockData';
+
+vi.mock('@googleapis/books', () => ({
+  books: vi.fn(() => googleBooksMock),
+}));
+
+vi.mock('@azure/ai-form-recognizer', () => ({
+  DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
+  AzureKeyCredential: vi.fn(),
+}));
 
 describe('Cookbooks API Integration Tests', () => {
   describe('GET /api/cookbooks', () => {
@@ -152,6 +165,105 @@ describe('Cookbooks API Integration Tests', () => {
       await request(app)
         .delete('/api/cookbooks/non-existent-id')
         .expect(404);
+    });
+  });
+
+  describe('POST /api/cookbooks/identification', () => {
+    it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
+      const backCoverFile = 'backcover1.jpg';
+      const expectedBookData = {
+        title: cookbookMock.title,
+        authors: cookbookMock.authors,
+        isbn10: cookbookMock.isbn10?.toString() ?? null,
+        isbn13: cookbookMock.isbn13?.toString() ?? null,
+      };
+
+      const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+
+      setupAzureFormRecognizerMock(mockEan13);
+      setupGoogleBooksMock(expectedBookData);
+
+      const response = await request(app)
+        .post('/api/cookbooks/identification')
+        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .expect(200);
+
+      expect(response.body).toEqual(expectedBookData);
+
+      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+        'prebuilt-layout',
+        expect.any(ArrayBuffer),
+        { features: ['barcodes'] },
+      );
+      expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
+        q: `isbn:${mockEan13}`,
+      });
+    });
+
+    it('should return 422 when the image contains no EAN-13 barcode ', async ({ app }) => {
+      const backCoverFile = 'backcover1.jpg';
+
+      // Setup mock to return no barcode (null)
+      setupAzureFormRecognizerMock(null);
+
+      const response = await request(app)
+        .post('/api/cookbooks/identification')
+        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .expect(422);
+
+      expect(response.body).toEqual({
+        error: 'No EAN-13 barcode found in uploaded image.',
+      });
+
+      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+        'prebuilt-layout',
+        expect.any(ArrayBuffer),
+        { features: ['barcodes'] },
+      );
+      // Google Books should not be called when no barcode is found
+      expect(googleBookVolumesListMockFn).not.toHaveBeenCalled();
+    });
+
+    it('should return 404 when no book can be found for the extracted EAN-13 barcode ', async ({ app }) => {
+      const backCoverFile = 'backcover1.jpg';
+      const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+
+      // Setup mocks: valid barcode but no book found
+      setupAzureFormRecognizerMock(mockEan13);
+      setupGoogleBooksMock(null);
+
+      const response = await request(app)
+        .post('/api/cookbooks/identification')
+        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .expect(404);
+
+      expect(response.body).toEqual({
+        error: `No book found for the extracted EAN-13 barcode ${mockEan13}.`,
+      });
+
+      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+        'prebuilt-layout',
+        expect.any(ArrayBuffer),
+        { features: ['barcodes'] },
+      );
+      expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
+        q: `isbn:${mockEan13}`,
+      });
+    });
+
+    it('should return 422 when no file is provided', async ({ app }) => {
+      await request(app)
+        .post('/api/cookbooks/identification')
+        .expect(422);
+    });
+
+    it('should return 422 when file is not an image', async ({ app }) => {
+      const textFileBuffer = Buffer.from('This is not an image');
+
+      await request(app)
+        .post('/api/cookbooks/identification')
+        .attach('backCoverFile', textFileBuffer, 'test-file.txt')
+        .expect(422);
     });
   });
 });
