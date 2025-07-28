@@ -10,23 +10,28 @@ import { recipeMock, recipeMockDataFactory, recipeMockList } from './data/recipe
 describe('Recipes API Integration Tests', () => {
   describe('GET /api/recipes', () => {
     it('should return empty array when no recipes exist', async ({ app }) => {
+      // when:
       const response = await request(app)
         .get('/api/recipes')
         .expect(200);
 
+      // then:
       expect(response.body).toEqual([]);
     });
 
     it('should return all recipes when they exist', async ({ app, database }) => {
+      // given:
       const recipeRepository = new RecipeRepository(database);
       const recipe = recipeMock;
 
       await recipeRepository.insert(recipe);
 
+      // when:
       const response = await request(app)
         .get('/api/recipes')
         .expect(200);
 
+      // then:
       expect(response.body).toHaveLength(1);
       expect(response.body[0]).toMatchObject(recipe);
       expect(response.body[0].id).toBeDefined();
@@ -43,10 +48,12 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return specific recipe when it exists', async ({ app }) => {
+      // when:
       const response = await request(app)
         .get(`/api/recipes/${recipeId}`)
         .expect(200);
 
+      // then:
       expect(response.body.id).toBe(recipeId);
       expect(response.body.title).toBeDefined();
       expect(response.body.content).toBeDefined();
@@ -61,13 +68,16 @@ describe('Recipes API Integration Tests', () => {
 
   describe('POST /api/recipes', () => {
     it('should create a new recipe with valid data', async ({ app, database }) => {
+      // given:
       const newRecipe = recipeMock;
 
+      // when:
       const response = await request(app)
         .post('/api/recipes')
         .send(newRecipe)
         .expect(201);
 
+      // then:
       expect(response.body[0]).toMatchObject(newRecipe);
       expect(response.body[0].id).toBeDefined();
 
@@ -77,11 +87,13 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
+      // given:
       const invalidRecipe = {
         ...recipeMock,
         title: null,
       };
 
+      // when/then:
       await request(app)
         .post('/api/recipes')
         .send(invalidRecipe)
@@ -89,8 +101,10 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
+      // given:
       const incompleteRecipe = omit(recipeMock, 'title');
 
+      // when/then:
       await request(app)
         .post('/api/recipes')
         .send(incompleteRecipe)
@@ -108,13 +122,16 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should update recipe with valid data', async ({ app, database }) => {
+      // given:
       const recipeUpdate = pick(recipeMockDataFactory.build(), ['title', 'content']);
 
+      // when:
       const response = await request(app)
         .patch(`/api/recipes/${recipeId}`)
         .send(recipeUpdate)
         .expect(200);
 
+      // then:
       expect(response.body).toMatchObject(recipeUpdate);
       expect(response.body.id).toBe(recipeId);
 
@@ -123,8 +140,10 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
+      // given:
       const recipeUpdate = pick(recipeMockDataFactory.build(), ['title', 'content']);
 
+      // when/then:
       await request(app)
         .patch('/api/recipes/non-existent-id')
         .send(recipeUpdate)
@@ -132,8 +151,10 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
+      // given:
       const invalidRecipeUpdate = { title: null };
 
+      // when/then:
       await request(app)
         .patch(`/api/recipes/${recipeId}`)
         .send(invalidRecipeUpdate)

@@ -23,23 +23,28 @@ vi.mock('@azure/ai-form-recognizer', () => ({
 describe('Cookbooks API Integration Tests', () => {
   describe('GET /api/cookbooks', () => {
     it('should return empty array when no cookbooks exist', async ({ app }) => {
+      // when:
       const response = await request(app)
         .get('/api/cookbooks')
         .expect(200);
 
+      // then:
       expect(response.body).toEqual([]);
     });
 
     it('should return all cookbooks when they exist', async ({ app, database }) => {
+      // given:
       const repository = new CookbookRepository(database);
       const cookbooks = cookbookMockList;
 
       await repository.insertMany(cookbooks);
 
+      // when:
       const response = await request(app)
         .get('/api/cookbooks')
         .expect(200);
 
+      // then:
       expect(response.body).toHaveLength(cookbooks.length);
       for (const [index, cookbook] of cookbooks.entries()) {
         expect(response.body[index]).toMatchObject(cookbook);
@@ -50,13 +55,16 @@ describe('Cookbooks API Integration Tests', () => {
 
   describe('POST /api/cookbooks', () => {
     it('should create a new cookbook with valid data', async ({ app, database }) => {
+      // given:
       const newCookbook = cookbookMock;
 
+      // when:
       const response = await request(app)
         .post('/api/cookbooks')
         .send(newCookbook)
         .expect(201);
 
+      // then:
       expect(response.body[0]).toMatchObject(newCookbook);
       expect(response.body[0].id).toBeDefined();
 
@@ -66,24 +74,29 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should create cookbook without optional ISBN fields', async ({ app }) => {
+      // given:
       const newCookbook = cookbookWithoutIsbnMock;
 
+      // when:
       const response = await request(app)
         .post('/api/cookbooks')
         .send(newCookbook)
         .expect(201);
 
+      // then:
       expect(response.body[0]).toMatchObject(newCookbook);
       expect(response.body[0].isbn10).toBeNull();
       expect(response.body[0].isbn13).toBeNull();
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
+      // given:
       const invalidCookbook = {
         ...cookbookMock,
         title: null,
       };
 
+      // when/then:
       await request(app)
         .post('/api/cookbooks')
         .send(invalidCookbook)
@@ -91,8 +104,10 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
+      // given:
       const incompleteCookbook = omit(cookbookMock, 'authors');
 
+      // when/then:
       await request(app)
         .post('/api/cookbooks')
         .send(incompleteCookbook)
@@ -110,13 +125,16 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should update cookbook with valid data', async ({ app, database }) => {
+      // given:
       const cookbookUpdate = pick(cookbookMockDataFactory.build(), ['title', 'authors']);
 
+      // when:
       const response = await request(app)
         .patch(`/api/cookbooks/${cookbookId}`)
         .send(cookbookUpdate)
         .expect(200);
 
+      // then:
       expect(response.body).toMatchObject(cookbookUpdate);
       expect(response.body.id).toBe(cookbookId);
 
@@ -125,8 +143,10 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent cookbook', async ({ app }) => {
+      // given:
       const cookbookUpdate = pick(cookbookMockDataFactory.build(), ['title', 'authors']);
 
+      // when/then:
       await request(app)
         .patch('/api/cookbooks/non-existent-id')
         .send(cookbookUpdate)
@@ -134,8 +154,10 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
+      // given:
       const invalidCookbookUpdate = { title: null };
 
+      // when/then:
       await request(app)
         .patch(`/api/cookbooks/${cookbookId}`)
         .send(invalidCookbookUpdate)
@@ -153,10 +175,12 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should delete existing cookbook', async ({ app, database }) => {
+      // when:
       await request(app)
         .delete(`/api/cookbooks/${cookbookId}`)
         .expect(204);
 
+      // then:
       const cookbooks = await database.select().from(databaseSchema.cookbooksTable);
       expect(cookbooks).toHaveLength(cookbookMockList.length - 1);
     });
@@ -170,6 +194,7 @@ describe('Cookbooks API Integration Tests', () => {
 
   describe('POST /api/cookbooks/identification', () => {
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
+      // given:
       const backCoverFile = 'backcover1.jpg';
       const expectedBookData = {
         title: cookbookMock.title,
@@ -183,11 +208,13 @@ describe('Cookbooks API Integration Tests', () => {
       setupAzureFormRecognizerMock(mockEan13);
       setupGoogleBooksMock(expectedBookData);
 
+      // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
         .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
         .expect(200);
 
+      // then:
       expect(response.body).toEqual(expectedBookData);
 
       expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
@@ -201,16 +228,19 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 422 when the image contains no EAN-13 barcode ', async ({ app }) => {
+      // given:
       const backCoverFile = 'backcover1.jpg';
 
       // Setup mock to return no barcode (null)
       setupAzureFormRecognizerMock(null);
 
+      // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
         .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
         .expect(422);
 
+      // then:
       expect(response.body).toEqual({
         error: 'No EAN-13 barcode found in uploaded image.',
       });
@@ -225,6 +255,7 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 404 when no book can be found for the extracted EAN-13 barcode ', async ({ app }) => {
+      // given:
       const backCoverFile = 'backcover1.jpg';
       const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
 
@@ -232,11 +263,13 @@ describe('Cookbooks API Integration Tests', () => {
       setupAzureFormRecognizerMock(mockEan13);
       setupGoogleBooksMock(null);
 
+      // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
         .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
         .expect(404);
 
+      // then:
       expect(response.body).toEqual({
         error: `No book found for the extracted EAN-13 barcode ${mockEan13}.`,
       });
@@ -258,8 +291,10 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 422 when file is not an image', async ({ app }) => {
+      // given:
       const textFileBuffer = Buffer.from('This is not an image');
 
+      // when/then:
       await request(app)
         .post('/api/cookbooks/identification')
         .attach('backCoverFile', textFileBuffer, 'test-file.txt')
