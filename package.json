@@ -21,6 +21,7 @@
     "@react-router/express": "7.7.1",
     "@react-router/node": "7.7.1",
     "@types/lodash-es": "4.17.12",
+    "capitalize": "2.0.4",
     "compression": "1.8.0",
     "dotenv-cli": "8.0.0",
     "drizzle-orm": "0.44.1",
@@ -35,6 +36,7 @@
     "react-dom": "19.1.0",
     "react-router": "7.7.1",
     "sharp": "0.34.3",
+    "stopword": "3.1.5",
     "zod": "4.0.10"
   },
   "devDependencies": {
@@ -42,6 +44,7 @@
     "@faker-js/faker": "9.9.0",
     "@react-router/dev": "7.7.1",
     "@stylistic/eslint-plugin": "4.4.0",
+    "@types/capitalize": "2.0.2",
     "@types/compression": "1.8.0",
     "@types/express": "5.0.2",
     "@types/express-serve-static-core": "5.0.6",
@@ -51,6 +54,7 @@
     "@types/pg": "8.15.2",
     "@types/react": "19.1.6",
     "@types/react-dom": "19.1.5",
+    "@types/stopword": "2.0.3",
     "@types/supertest": "6.0.3",
     "drizzle-kit": "0.31.1",
     "eslint": "9.27.0",
