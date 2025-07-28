@@ -23,6 +23,8 @@ spec:
               value: "80"
             - name: DB_CONNECTION_STRING
               value: file:/data/database.sqlite
+            - name: DB_MIGRATIONS_PATH
+              value: /app/database
           resources:
             limits:
               cpu: 100m
