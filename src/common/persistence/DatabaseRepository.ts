@@ -9,14 +9,14 @@ import type { Database } from './database';
  *
  * @example
  * ```typescript
- * export class CookbookRepository extends Repository<typeof cookbooksTable> {
+ * export class CookbookRepository extends DatabaseRepository<typeof cookbooksTable> {
  *   constructor(database: Database<{ cookbooksTable: typeof cookbooksTable }>) {
  *     super(database, cookbooksTable);
  *   }
  * }
  * ```
  */
-export abstract class Repository<TTable extends SQLiteTable & { id: SQLiteColumn }> {
+export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLiteColumn }> {
   constructor(
     protected readonly database: Database<Record<string, unknown>>,
     protected readonly table: TTable,

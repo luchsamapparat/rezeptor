@@ -1,8 +1,8 @@
 import type { Database } from '../../../../common/persistence/database';
-import { Repository } from '../../../../common/persistence/repository';
+import { DatabaseRepository } from '../../../../common/persistence/DatabaseRepository';
 import { cookbooksTable } from './cookbooksTable';
 
-export class CookbookRepository extends Repository<typeof cookbooksTable> {
+export class CookbookRepository extends DatabaseRepository<typeof cookbooksTable> {
   constructor(
     database: Database<{ cookbooksTable: typeof cookbooksTable }>,
   ) {
