@@ -4,6 +4,11 @@
     ".react-router/types/**/*",
     "src/**/*",
   ],
+  "exclude": [
+    "**/test/**",
+    "**/*.integration.test.ts",
+    "**/integration.test.ts"
+  ],
   "compilerOptions": {
     "composite": true,
     "strict": true,

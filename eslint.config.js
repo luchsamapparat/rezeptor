@@ -17,6 +17,7 @@ export default defineConfig([
   }),
   {
     rules: {
+      'no-empty-pattern': 'off',
       '@stylistic/eol-last': 'off',
     },
     settings: {
