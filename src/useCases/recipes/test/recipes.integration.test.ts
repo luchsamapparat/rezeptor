@@ -1,11 +1,18 @@
 import { eq } from 'drizzle-orm';
 import { omit, pick } from 'lodash-es';
 import request from 'supertest';
-import { describe, expect } from 'vitest';
+import { describe, expect, vi } from 'vitest';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
+import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
+import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
 import { RecipeRepository } from '../server/persistence/recipeRepository';
 import { recipeMock, recipeMockDataFactory, recipeMockList } from './data/recipeMockData';
+
+vi.mock('@azure/ai-form-recognizer', () => ({
+  DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
+  AzureKeyCredential: vi.fn(),
+}));
 
 describe('Recipes API Integration Tests', () => {
   describe('GET /api/recipes', () => {
@@ -109,6 +116,78 @@ describe('Recipes API Integration Tests', () => {
         .post('/api/recipes')
         .send(incompleteRecipe)
         .expect(422);
+    });
+
+    it('should create a recipe from uploaded image file', async ({ app, database }) => {
+      // given:
+      // Create a cookbook first
+      const cookbook = await database.insert(databaseSchema.cookbooksTable).values({
+        id: crypto.randomUUID(),
+        title: 'Test Cookbook',
+        authors: ['Test Author'],
+        isbn13: '978-0123456789',
+      }).returning();
+      const cookbookId = cookbook[0].id;
+
+      // Setup the document analysis mock
+      setupAzureFormRecognizerMock({
+        title: 'Extracted Recipe Title',
+        pageNumber: '123',
+        text: 'Extracted recipe content with ingredients and instructions.',
+      });
+
+      // when:
+      const response = await request(app)
+        .post('/api/recipes')
+        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .field('cookbookId', cookbookId)
+        .expect(201);
+
+      // then:
+      expect(response.body[0]).toMatchObject({
+        title: 'Extracted Recipe Title',
+        content: 'Extracted recipe content with ingredients and instructions.',
+        pageNumber: 123,
+        cookbookId,
+        photoFileId: null,
+      });
+      expect(response.body[0].id).toBeDefined();
+      expect(response.body[0].recipeFileId).toBeDefined();
+
+      const recipes = await database.select().from(databaseSchema.recipesTable);
+      expect(recipes).toHaveLength(1);
+      expect(recipes[0].recipeFileId).not.toBeNull();
+    });
+
+    it('should create a recipe from uploaded image file without cookbook context', async ({ app, database }) => {
+      // given:
+      // Setup the document analysis mock
+      setupAzureFormRecognizerMock({
+        title: 'Another Recipe Title',
+        pageNumber: '456',
+        text: 'Another extracted recipe content.',
+      });
+
+      // when:
+      const response = await request(app)
+        .post('/api/recipes')
+        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .expect(201);
+
+      // then:
+      expect(response.body[0]).toMatchObject({
+        title: 'Another Recipe Title',
+        content: 'Another extracted recipe content.',
+        pageNumber: 456,
+        cookbookId: null,
+        photoFileId: null,
+      });
+      expect(response.body[0].id).toBeDefined();
+      expect(response.body[0].recipeFileId).toBeDefined();
+
+      const recipes = await database.select().from(databaseSchema.recipesTable);
+      expect(recipes).toHaveLength(1);
+      expect(recipes[0].recipeFileId).not.toBeNull();
     });
   });
 

@@ -41,6 +41,7 @@ async function createTestApp() {
     bookSearch: {
       key: faker.string.alphanumeric(),
     },
+    fileUploadsPath: faker.system.directoryPath(),
   });
 
   app.use(server);

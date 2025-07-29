@@ -64,6 +64,32 @@ Content-Type: application/json
   "recipeFileId": null
 }
 
+### add recipe from image file
+POST http://localhost:3000/api/recipes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="recipeFile"; filename="recipe1.jpg"
+Content-Type: image/jpeg
+
+< ./recipe1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### add recipe from image file with cookbook context (replace cookbookId with actual ID)
+POST http://localhost:3000/api/recipes
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="recipeFile"; filename="recipe1.jpg"
+Content-Type: image/jpeg
+
+< ./recipe1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cookbookId"
+
+your-cookbook-id-here
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
 ### edit recipe (replace :id with actual recipe ID)
 PATCH http://localhost:3000/api/recipes/:id
 Content-Type: application/json

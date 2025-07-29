@@ -35,7 +35,7 @@ export class DocumentAnalysisClient {
     };
   }
 
-  async extractDocumentContents(apiClient: DocumentAnalysisClient, file: File): Promise<DocumentContents> {
+  async extractDocumentContents(file: File): Promise<DocumentContents> {
     const { content, paragraphs } = await this.analyzeDocument(file);
 
     const title = paragraphs?.find(({ role }) => role === 'title')?.content ?? null;

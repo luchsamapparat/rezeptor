@@ -195,7 +195,6 @@ describe('Cookbooks API Integration Tests', () => {
   describe('POST /api/cookbooks/identification', () => {
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
       // given:
-      const backCoverFile = 'backcover1.jpg';
       const expectedBookData = {
         title: cookbookMock.title,
         authors: cookbookMock.authors,
@@ -205,13 +204,15 @@ describe('Cookbooks API Integration Tests', () => {
 
       const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
 
-      setupAzureFormRecognizerMock(mockEan13);
+      setupAzureFormRecognizerMock({
+        ean13: mockEan13,
+      });
       setupGoogleBooksMock(expectedBookData);
 
       // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
         .expect(200);
 
       // then:
@@ -229,15 +230,14 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 422 when the image contains no EAN-13 barcode ', async ({ app }) => {
       // given:
-      const backCoverFile = 'backcover1.jpg';
-
-      // Setup mock to return no barcode (null)
-      setupAzureFormRecognizerMock(null);
+      setupAzureFormRecognizerMock({
+        ean13: null,
+      });
 
       // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
         .expect(422);
 
       // then:
@@ -256,17 +256,17 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 404 when no book can be found for the extracted EAN-13 barcode ', async ({ app }) => {
       // given:
-      const backCoverFile = 'backcover1.jpg';
       const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
 
-      // Setup mocks: valid barcode but no book found
-      setupAzureFormRecognizerMock(mockEan13);
+      setupAzureFormRecognizerMock({
+        ean13: mockEan13,
+      });
       setupGoogleBooksMock(null);
 
       // when:
       const response = await request(app)
         .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile(backCoverFile), backCoverFile)
+        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
         .expect(404);
 
       // then:

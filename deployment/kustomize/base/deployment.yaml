@@ -25,6 +25,8 @@ spec:
               value: file:/data/database.sqlite
             - name: DB_MIGRATIONS_PATH
               value: /app/database
+            - name: FILE_UPLOADS_PATH
+              value: /data/uploads
             - name: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
               value: https://rezeptor.cognitiveservices.azure.com/
             - name: AZURE_DOCUMENT_INTELLIGENCE_KEY

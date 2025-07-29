@@ -14,9 +14,14 @@ export const recipesPath = '/recipes';
 
 export const recipesApi = Router();
 
-recipesApi.use(recipesContext.middleware(() => ({
-  recipesRepository: new RecipeRepository(getApplicationContext<{ recipesTable: typeof recipesTable }>().database),
-})));
+recipesApi.use(recipesContext.middleware(() => {
+  const { database, fileRepositoryFactory, documentAnalysisClient } = getApplicationContext<{ recipesTable: typeof recipesTable }>();
+  return {
+    recipesRepository: new RecipeRepository(database),
+    recipeFileRepository: fileRepositoryFactory.createFileRepository('recipes'),
+    documentAnalysisClient,
+  };
+}));
 
 recipesApi
   .route(recipesPath)

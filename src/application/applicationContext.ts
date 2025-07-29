@@ -1,4 +1,5 @@
 import { initDatabaseConnection } from '../common/persistence/database';
+import { FileRepositoryFactory } from '../common/persistence/FileRepositoryFactory';
 import { type Environment } from './environment';
 import { BookSearchClient } from './server/BookSearchClient';
 import { DocumentAnalysisClient } from './server/DocumentAnalysisClient';
@@ -16,10 +17,13 @@ export async function initApplicationContext<DatabaseSchema extends Record<strin
 
   const bookSearchClient = new BookSearchClient(environment.bookSearch.key);
 
+  const fileRepositoryFactory = new FileRepositoryFactory(environment.fileUploadsPath);
+
   return {
     database,
     documentAnalysisClient,
     bookSearchClient,
+    fileRepositoryFactory,
   } as const;
 }
 

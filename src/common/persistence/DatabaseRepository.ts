@@ -2,20 +2,6 @@ import { count, eq } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
 import type { Database } from './database';
 
-/**
- * Generic base repository class providing common CRUD operations for SQLite tables.
- *
- * @template TTable - The SQLite table type, must have an 'id' column
- *
- * @example
- * ```typescript
- * export class CookbookRepository extends DatabaseRepository<typeof cookbooksTable> {
- *   constructor(database: Database<{ cookbooksTable: typeof cookbooksTable }>) {
- *     super(database, cookbooksTable);
- *   }
- * }
- * ```
- */
 export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLiteColumn }> {
   constructor(
     protected readonly database: Database<Record<string, unknown>>,
