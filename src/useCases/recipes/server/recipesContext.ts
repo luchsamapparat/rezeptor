@@ -6,6 +6,7 @@ import type { RecipeRepository } from './persistence/recipeRepository';
 type RecipesContext = {
   recipesRepository: RecipeRepository;
   recipeFileRepository: FileRepository;
+  recipePhotoFileRepository: FileRepository;
   documentAnalysisClient: DocumentAnalysisClient;
 };
 

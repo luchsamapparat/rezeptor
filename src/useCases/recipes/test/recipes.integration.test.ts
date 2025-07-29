@@ -265,4 +265,74 @@ describe('Recipes API Integration Tests', () => {
         .expect(404);
     });
   });
+
+  describe('PUT /api/recipes/:id/photo', () => {
+    let recipeId: string;
+
+    beforeEach(async ({ database }) => {
+      const recipeRepository = new RecipeRepository(database);
+      const [recipe] = await recipeRepository.insert(recipeMock);
+      recipeId = recipe.id;
+    });
+
+    it('should add photo to existing recipe', async ({ app, database }) => {
+      // when:
+      const response = await request(app)
+        .put(`/api/recipes/${recipeId}/photo`)
+        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .expect(200);
+
+      // then:
+      expect(response.body.id).toBe(recipeId);
+      expect(response.body.photoFileId).toBeDefined();
+      expect(response.body.photoFileId).not.toBeNull();
+
+      const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
+      expect(updatedRecipe.photoFileId).not.toBeNull();
+    });
+
+    it('should replace existing photo', async ({ app, database }) => {
+      // given: recipe with existing photo - first upload a photo
+      const firstUploadResponse = await request(app)
+        .put(`/api/recipes/${recipeId}/photo`)
+        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .expect(200);
+
+      const existingPhotoFileId = firstUploadResponse.body.photoFileId;
+
+      // when: upload a different photo to replace the existing one
+      const response = await request(app)
+        .put(`/api/recipes/${recipeId}/photo`)
+        .attach('photoFile', await loadTestFile('recipe2.jpg'), 'recipe2.jpg')
+        .expect(200);
+
+      // then:
+      expect(response.body.id).toBe(recipeId);
+      expect(response.body.photoFileId).toBeDefined();
+      expect(response.body.photoFileId).not.toBe(existingPhotoFileId);
+
+      const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
+      expect(updatedRecipe.photoFileId).not.toBe(existingPhotoFileId);
+    });
+
+    it('should return 404 for non-existent recipe', async ({ app }) => {
+      await request(app)
+        .put('/api/recipes/non-existent-id/photo')
+        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .expect(404);
+    });
+
+    it('should return 422 when no photo file is provided', async ({ app }) => {
+      await request(app)
+        .put(`/api/recipes/${recipeId}/photo`)
+        .expect(422);
+    });
+
+    it('should return 422 for invalid file type', async ({ app }) => {
+      await request(app)
+        .put(`/api/recipes/${recipeId}/photo`)
+        .attach('photoFile', Buffer.from('not an image'), 'test.txt')
+        .expect(422);
+    });
+  });
 });

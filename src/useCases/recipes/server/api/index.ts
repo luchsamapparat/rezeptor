@@ -4,6 +4,7 @@ import { getApplicationContext } from '../../../../application/server/applicatio
 import { RecipeRepository } from '../persistence/recipeRepository';
 import type { recipesTable } from '../persistence/recipesTable';
 import { recipesContext } from '../recipesContext';
+import { addPhoto } from './addPhoto';
 import { addRecipe } from './addRecipe';
 import { editRecipe } from './editRecipe';
 import { getRecipe } from './getRecipe';
@@ -19,6 +20,7 @@ recipesApi.use(recipesContext.middleware(() => {
   return {
     recipesRepository: new RecipeRepository(database),
     recipeFileRepository: fileRepositoryFactory.createFileRepository('recipes'),
+    recipePhotoFileRepository: fileRepositoryFactory.createFileRepository('recipePhotos'),
     documentAnalysisClient,
   };
 }));
@@ -33,3 +35,7 @@ recipesApi
   .get(...getRecipe)
   .patch(...editRecipe)
   .delete(...removeRecipe);
+
+recipesApi
+  .route(`${recipesPath}/:id/photo`)
+  .put(...addPhoto);
