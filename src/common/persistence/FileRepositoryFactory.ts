@@ -1,10 +1,13 @@
-import { join } from 'node:path';
+import type { FileSystemOperations } from '../server/FileSystemOperations';
 import { FileRepository } from './FileRepository';
 
 export class FileRepositoryFactory {
-  constructor(private fileUploadsPath: string) { }
+  constructor(
+    private fileUploadsPath: string,
+    private fileSystem: FileSystemOperations,
+  ) { }
 
   createFileRepository(name: string) {
-    return new FileRepository(join(this.fileUploadsPath, name));
+    return new FileRepository(this.fileSystem.join(this.fileUploadsPath, name), this.fileSystem);
   }
 }

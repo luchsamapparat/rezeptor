@@ -4,11 +4,13 @@ import { values } from 'lodash-es';
 import { initApplicationContext } from '../application/applicationContext';
 import { type Environment } from '../application/environment';
 import { applicationContextMiddleware } from '../application/server/applicationContextStore';
+import { type FileSystemOperations } from '../common/server/FileSystemOperations';
+import { NodeFileSystem } from '../common/server/NodeFileSystem';
 import { api } from './api';
 import { databaseSchema } from './databaseSchema';
 
-export async function createServer(environment: Environment) {
-  const applicationContext = await initApplicationContext(environment, databaseSchema);
+export async function createServer(environment: Environment, fileSystem: FileSystemOperations = new NodeFileSystem()) {
+  const applicationContext = await initApplicationContext(environment, databaseSchema, fileSystem);
 
   const app = Router();
 

@@ -118,7 +118,7 @@ describe('Recipes API Integration Tests', () => {
         .expect(422);
     });
 
-    it('should create a recipe from uploaded image file', async ({ app, database }) => {
+    it('should create a recipe from uploaded image file', async ({ app, database, fileSystemMock }) => {
       // given:
       // Create a cookbook first
       const cookbook = await database.insert(databaseSchema.cookbooksTable).values({
@@ -135,6 +135,8 @@ describe('Recipes API Integration Tests', () => {
         pageNumber: '123',
         text: 'Extracted recipe content with ingredients and instructions.',
       });
+
+      const initialFileCount = fileSystemMock.getFileCount();
 
       // when:
       const response = await request(app)
@@ -153,6 +155,9 @@ describe('Recipes API Integration Tests', () => {
       });
       expect(response.body[0].id).toBeDefined();
       expect(response.body[0].recipeFileId).toBeDefined();
+
+      expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
+      expect(fileSystemMock.fileExists(`/data/recipes/${response.body[0].recipeFileId}`)).toBe(true);
 
       const recipes = await database.select().from(databaseSchema.recipesTable);
       expect(recipes).toHaveLength(1);
@@ -275,7 +280,10 @@ describe('Recipes API Integration Tests', () => {
       recipeId = recipe.id;
     });
 
-    it('should add photo to existing recipe', async ({ app, database }) => {
+    it('should add photo to existing recipe', async ({ app, database, fileSystemMock }) => {
+      // given:
+      const initialFileCount = fileSystemMock.getFileCount();
+
       // when:
       const response = await request(app)
         .put(`/api/recipes/${recipeId}/photo`)
@@ -286,6 +294,9 @@ describe('Recipes API Integration Tests', () => {
       expect(response.body.id).toBe(recipeId);
       expect(response.body.photoFileId).toBeDefined();
       expect(response.body.photoFileId).not.toBeNull();
+
+      expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${response.body.photoFileId}`)).toBe(true);
 
       const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
       expect(updatedRecipe.photoFileId).not.toBeNull();
