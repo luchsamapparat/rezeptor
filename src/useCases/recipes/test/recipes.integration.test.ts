@@ -269,6 +269,72 @@ describe('Recipes API Integration Tests', () => {
         .delete('/api/recipes/non-existent-id')
         .expect(404);
     });
+
+    it('should delete recipe files when recipe is deleted', async ({ app, database, fileSystemMock }) => {
+      // given: create a recipe with both photo and recipe files
+
+      // First create a recipe with a recipe file
+      setupAzureFormRecognizerMock({
+        title: 'Test Recipe',
+        pageNumber: '1',
+        text: 'Test recipe content.',
+      });
+
+      const createResponse = await request(app)
+        .post('/api/recipes')
+        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
+        .expect(201);
+
+      const createdRecipeId = createResponse.body[0].id;
+      const recipeFileId = createResponse.body[0].recipeFileId;
+
+      // Add a photo to the recipe
+      const photoResponse = await request(app)
+        .put(`/api/recipes/${createdRecipeId}/photo`)
+        .attach('photoFile', await loadTestFile('recipe2.jpg'), 'recipe2.jpg')
+        .expect(200);
+
+      const photoFileId = photoResponse.body.photoFileId;
+
+      // Verify files exist
+      expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}`)).toBe(true);
+
+      // when: delete the recipe
+      await request(app)
+        .delete(`/api/recipes/${createdRecipeId}`)
+        .expect(204);
+
+      // then: verify recipe is deleted from database
+      const recipes = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, createdRecipeId));
+      expect(recipes).toHaveLength(0);
+
+      // and: verify files are also deleted
+      expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}`)).toBe(false);
+    });
+
+    it('should delete recipe without files gracefully', async ({ app, database }) => {
+      // given: create a recipe without any files (manually inserted)
+      const recipeRepository = new RecipeRepository(database);
+      const [recipe] = await recipeRepository.insert({
+        title: 'Test Recipe Without Files',
+        content: 'Simple recipe content',
+        cookbookId: null,
+        pageNumber: null,
+        photoFileId: null,
+        recipeFileId: null,
+      });
+
+      // when: delete the recipe
+      await request(app)
+        .delete(`/api/recipes/${recipe.id}`)
+        .expect(204);
+
+      // then: verify recipe is deleted from database
+      const recipes = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipe.id));
+      expect(recipes).toHaveLength(0);
+    });
   });
 
   describe('PUT /api/recipes/:id/photo', () => {

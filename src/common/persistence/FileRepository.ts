@@ -28,9 +28,21 @@ export class FileRepository {
 
   /**
    * Removes a file from the repository directory.
+   * Does not throw if the file does not exist.
    */
   async remove(filename: string) {
     const filePath = this.fileSystem.join(this.directory, filename);
-    await this.fileSystem.unlink(filePath);
+    try {
+      await this.fileSystem.unlink(filePath);
+    }
+    catch (error) {
+      // Only ignore "file not found" errors (ENOENT)
+      // Re-throw any other errors (e.g., permission issues)
+      if (error instanceof Error && error.message.includes('ENOENT')) {
+        // File doesn't exist, which is fine - nothing to delete
+        return;
+      }
+      throw error;
+    }
   }
 }
