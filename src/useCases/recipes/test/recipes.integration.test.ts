@@ -1,13 +1,16 @@
+import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
-import { omit, pick } from 'lodash-es';
+import { omit } from 'lodash-es';
 import request from 'supertest';
 import { describe, expect, vi } from 'vitest';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
+import { CookbookRepository } from '../../cookbooks/server/persistence/cookbookRepository';
+import { insertCookbookEntityMock } from '../../cookbooks/test/data/cookbookMockData';
 import { RecipeRepository } from '../server/persistence/recipeRepository';
-import { recipeMock, recipeMockDataFactory, recipeMockList } from './data/recipeMockData';
+import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
 
 vi.mock('@azure/ai-form-recognizer', () => ({
   DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
@@ -29,9 +32,9 @@ describe('Recipes API Integration Tests', () => {
     it('should return all recipes when they exist', async ({ app, database }) => {
       // given:
       const recipeRepository = new RecipeRepository(database);
-      const recipe = recipeMock;
+      const insertRecipeEntity = insertRecipeEntityMock;
 
-      await recipeRepository.insert(recipe);
+      await recipeRepository.insert(insertRecipeEntity);
 
       // when:
       const response = await request(app)
@@ -40,7 +43,7 @@ describe('Recipes API Integration Tests', () => {
 
       // then:
       expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toMatchObject(recipe);
+      expect(response.body[0]).toMatchObject(insertRecipeEntity);
       expect(response.body[0].id).toBeDefined();
     });
   });
@@ -50,8 +53,8 @@ describe('Recipes API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipe] = await recipeRepository.insert(recipeMock);
-      recipeId = recipe.id;
+      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
+      recipeId = recipeEntity.id;
     });
 
     it('should return specific recipe when it exists', async ({ app }) => {
@@ -69,71 +72,69 @@ describe('Recipes API Integration Tests', () => {
 
   it('should return 404 for non-existent recipe', async ({ app }) => {
     await request(app)
-      .get('/api/recipes/non-existent-id')
+      .get(`/api/recipes/${faker.string.uuid()}`)
       .expect(404);
   });
 
   describe('POST /api/recipes', () => {
     it('should create a new recipe with valid data', async ({ app, database }) => {
       // given:
-      const newRecipe = recipeMock;
+      const addRecipeDto = addRecipeDtoMock;
 
       // when:
       const response = await request(app)
         .post('/api/recipes')
-        .send(newRecipe)
+        .send(addRecipeDto)
         .expect(201);
 
       // then:
-      expect(response.body[0]).toMatchObject(newRecipe);
+      expect(response.body[0]).toMatchObject(addRecipeDto);
       expect(response.body[0].id).toBeDefined();
 
       const recipes = await database.select().from(databaseSchema.recipesTable);
       expect(recipes).toHaveLength(1);
-      expect(recipes[0]).toMatchObject(newRecipe);
+      expect(recipes[0]).toMatchObject(addRecipeDto);
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
       // given:
-      const invalidRecipe = {
-        ...recipeMock,
+      const invalidAddRecipeDto = {
+        ...addRecipeDtoMock,
         title: null,
       };
 
       // when/then:
       await request(app)
         .post('/api/recipes')
-        .send(invalidRecipe)
+        .send(invalidAddRecipeDto)
         .expect(422);
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
       // given:
-      const incompleteRecipe = omit(recipeMock, 'title');
+      const incompleteAddRecipeDto = omit(addRecipeDtoMock, 'title');
 
       // when/then:
       await request(app)
         .post('/api/recipes')
-        .send(incompleteRecipe)
+        .send(incompleteAddRecipeDto)
         .expect(422);
     });
 
     it('should create a recipe from uploaded image file', async ({ app, database, fileSystemMock }) => {
       // given:
       // Create a cookbook first
-      const cookbook = await database.insert(databaseSchema.cookbooksTable).values({
-        id: crypto.randomUUID(),
-        title: 'Test Cookbook',
-        authors: ['Test Author'],
-        isbn13: '978-0123456789',
-      }).returning();
-      const cookbookId = cookbook[0].id;
+      const cookbookRepository = new CookbookRepository(database);
+      const [cookbookEntity] = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookId = cookbookEntity.id;
+
+      const { title, pageNumber, content } = recipeEntityMock;
 
       // Setup the document analysis mock
       setupAzureFormRecognizerMock({
-        title: 'Extracted Recipe Title',
-        pageNumber: '123',
-        text: 'Extracted recipe content with ingredients and instructions.',
+        title,
+        pageNumber: pageNumber?.toString(),
+        text: content,
       });
 
       const initialFileCount = fileSystemMock.getFileCount();
@@ -147,9 +148,9 @@ describe('Recipes API Integration Tests', () => {
 
       // then:
       expect(response.body[0]).toMatchObject({
-        title: 'Extracted Recipe Title',
-        content: 'Extracted recipe content with ingredients and instructions.',
-        pageNumber: 123,
+        title,
+        content,
+        pageNumber,
         cookbookId,
         photoFileId: null,
       });
@@ -167,10 +168,11 @@ describe('Recipes API Integration Tests', () => {
     it('should create a recipe from uploaded image file without cookbook context', async ({ app, database }) => {
       // given:
       // Setup the document analysis mock
+      const { title, pageNumber, content } = recipeEntityMock;
       setupAzureFormRecognizerMock({
-        title: 'Another Recipe Title',
-        pageNumber: '456',
-        text: 'Another extracted recipe content.',
+        title,
+        pageNumber: pageNumber?.toString(),
+        text: content,
       });
 
       // when:
@@ -181,9 +183,9 @@ describe('Recipes API Integration Tests', () => {
 
       // then:
       expect(response.body[0]).toMatchObject({
-        title: 'Another Recipe Title',
-        content: 'Another extracted recipe content.',
-        pageNumber: 456,
+        title,
+        content,
+        pageNumber,
         cookbookId: null,
         photoFileId: null,
       });
@@ -201,47 +203,47 @@ describe('Recipes API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipe] = await recipeRepository.insertMany(recipeMockList);
-      recipeId = recipe.id;
+      const [recipeEntity] = await recipeRepository.insertMany(recipeEntityMockList.map(toInsertRecipeEntity));
+      recipeId = recipeEntity.id;
     });
 
     it('should update recipe with valid data', async ({ app, database }) => {
       // given:
-      const recipeUpdate = pick(recipeMockDataFactory.build(), ['title', 'content']);
+      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
 
       // when:
       const response = await request(app)
         .patch(`/api/recipes/${recipeId}`)
-        .send(recipeUpdate)
+        .send(editRecipeDto)
         .expect(200);
 
       // then:
-      expect(response.body).toMatchObject(recipeUpdate);
+      expect(response.body).toMatchObject(editRecipeDto);
       expect(response.body.id).toBe(recipeId);
 
       const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
-      expect(updatedRecipe).toMatchObject(recipeUpdate);
+      expect(updatedRecipe).toMatchObject(editRecipeDto);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
       // given:
-      const recipeUpdate = pick(recipeMockDataFactory.build(), ['title', 'content']);
+      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
 
       // when/then:
       await request(app)
-        .patch('/api/recipes/non-existent-id')
-        .send(recipeUpdate)
+        .patch(`/api/recipes/${faker.string.uuid()}`)
+        .send(editRecipeDto)
         .expect(404);
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
       // given:
-      const invalidRecipeUpdate = { title: null };
+      const invalidEditRecipeDto = { title: null };
 
       // when/then:
       await request(app)
         .patch(`/api/recipes/${recipeId}`)
-        .send(invalidRecipeUpdate)
+        .send(invalidEditRecipeDto)
         .expect(422);
     });
   });
@@ -251,8 +253,8 @@ describe('Recipes API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipe] = await recipeRepository.insertMany(recipeMockList);
-      recipeId = recipe.id;
+      const [recipeEntity] = await recipeRepository.insertMany(recipeEntityMockList.map(toInsertRecipeEntity));
+      recipeId = recipeEntity.id;
     });
 
     it('should delete existing recipe', async ({ app, database }) => {
@@ -260,13 +262,13 @@ describe('Recipes API Integration Tests', () => {
         .delete(`/api/recipes/${recipeId}`)
         .expect(204);
 
-      const recipes = await database.select().from(databaseSchema.recipesTable);
-      expect(recipes).toHaveLength(recipeMockList.length - 1);
+      const recipeEntities = await database.select().from(databaseSchema.recipesTable);
+      expect(recipeEntities).toHaveLength(recipeEntityMockList.length - 1);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
       await request(app)
-        .delete('/api/recipes/non-existent-id')
+        .delete(`/api/recipes/${faker.string.uuid()}`)
         .expect(404);
     });
 
@@ -317,23 +319,16 @@ describe('Recipes API Integration Tests', () => {
     it('should delete recipe without files gracefully', async ({ app, database }) => {
       // given: create a recipe without any files (manually inserted)
       const recipeRepository = new RecipeRepository(database);
-      const [recipe] = await recipeRepository.insert({
-        title: 'Test Recipe Without Files',
-        content: 'Simple recipe content',
-        cookbookId: null,
-        pageNumber: null,
-        photoFileId: null,
-        recipeFileId: null,
-      });
+      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
 
       // when: delete the recipe
       await request(app)
-        .delete(`/api/recipes/${recipe.id}`)
+        .delete(`/api/recipes/${recipeEntity.id}`)
         .expect(204);
 
       // then: verify recipe is deleted from database
-      const recipes = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipe.id));
-      expect(recipes).toHaveLength(0);
+      const recipeEntities = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeEntity.id));
+      expect(recipeEntities).toHaveLength(0);
     });
   });
 
@@ -342,8 +337,8 @@ describe('Recipes API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipe] = await recipeRepository.insert(recipeMock);
-      recipeId = recipe.id;
+      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
+      recipeId = recipeEntity.id;
     });
 
     it('should add photo to existing recipe', async ({ app, database, fileSystemMock }) => {
@@ -364,8 +359,8 @@ describe('Recipes API Integration Tests', () => {
       expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${response.body.photoFileId}`)).toBe(true);
 
-      const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
-      expect(updatedRecipe.photoFileId).not.toBeNull();
+      const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
+      expect(updatedRecipeEntity.photoFileId).not.toBeNull();
     });
 
     it('should replace existing photo', async ({ app, database }) => {
@@ -388,13 +383,14 @@ describe('Recipes API Integration Tests', () => {
       expect(response.body.photoFileId).toBeDefined();
       expect(response.body.photoFileId).not.toBe(existingPhotoFileId);
 
-      const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
-      expect(updatedRecipe.photoFileId).not.toBe(existingPhotoFileId);
+      const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
+      expect(updatedRecipeEntity.photoFileId).not.toBe(existingPhotoFileId);
+      expect(updatedRecipeEntity.photoFileId).not.toBe(null);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
       await request(app)
-        .put('/api/recipes/non-existent-id/photo')
+        .put(`/api/recipes/${faker.string.uuid()}/photo`)
         .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
         .expect(404);
     });

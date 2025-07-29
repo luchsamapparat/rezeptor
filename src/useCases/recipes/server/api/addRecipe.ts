@@ -1,14 +1,11 @@
-import { z } from 'zod';
 import { createContentTypeRouter } from '../../../../common/server/contentTypeRouter';
 import { createRequestHandler } from '../../../../common/server/requestHandler';
-import { insertRecipeSchema } from '../persistence/recipesTable';
 import { recipesContext } from '../recipesContext';
+import { addFromPhotoRecipeDtoSchema, addRecipeDtoSchema, type AddRecipeDto } from './recipeApiModel';
 
-const manualRecipeSchema = insertRecipeSchema;
-
-const addRecipeManually = createRequestHandler(
+const addRecipeFromData = createRequestHandler(
   {
-    requestBodySchema: manualRecipeSchema,
+    requestBodySchema: addRecipeDtoSchema,
   },
   async (request, response) => {
     const { recipesRepository } = recipesContext.get();
@@ -26,20 +23,16 @@ const addRecipeManually = createRequestHandler(
   },
 );
 
-const fileUploadRecipeSchema = z.object({
-  cookbookId: z.string().optional(),
-});
-
-const addRecipeFromFile = createRequestHandler(
+const addRecipeFromPhoto = createRequestHandler(
   {
-    requestBodySchema: fileUploadRecipeSchema,
+    requestBodySchema: addFromPhotoRecipeDtoSchema,
     fileUpload: {
       fieldName: 'recipeFile',
       required: true,
       acceptedMimeTypes: ['image/*'],
       maxSize: 5 * 1024 * 1024, // 5MB
     },
-  } as const,
+  },
   async (request, response) => {
     const { recipesRepository, recipeFileRepository, documentAnalysisClient } = recipesContext.get();
 
@@ -47,7 +40,7 @@ const addRecipeFromFile = createRequestHandler(
       const documentContents = await documentAnalysisClient.extractDocumentContents(request.file);
       const recipeFileId = await recipeFileRepository.save(new Uint8Array(await request.file.arrayBuffer()));
 
-      const recipeData: z.infer<typeof insertRecipeSchema> = {
+      const recipeData: AddRecipeDto = {
         title: documentContents.title || '',
         content: documentContents.content,
         pageNumber: documentContents.pageNumber,
@@ -69,6 +62,6 @@ const addRecipeFromFile = createRequestHandler(
 );
 
 export const addRecipe = createContentTypeRouter({
-  'application/json': addRecipeManually,
-  'multipart/form-data': addRecipeFromFile,
+  'application/json': addRecipeFromData,
+  'multipart/form-data': addRecipeFromPhoto,
 });

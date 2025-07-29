@@ -1,5 +1,4 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { createInsertSchema, createUpdateSchema } from 'drizzle-zod';
 import { foreignKey, key, primaryKey } from '../../../../common/persistence/databaseSchema';
 import { cookbooksTable } from '../../../cookbooks/server/persistence/cookbooksTable';
 
@@ -12,8 +11,3 @@ export const recipesTable = sqliteTable('recipes', {
   cookbookId: foreignKey(() => cookbooksTable.id, { onDelete: 'no action' }),
   pageNumber: integer(),
 });
-
-export type Recipe = typeof recipesTable.$inferSelect;
-
-export const insertRecipeSchema = createInsertSchema(recipesTable).omit({ id: true });
-export const updateRecipeSchema = createUpdateSchema(recipesTable).omit({ id: true });

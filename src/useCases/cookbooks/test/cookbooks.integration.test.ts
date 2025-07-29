@@ -1,15 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
-import { omit, pick } from 'lodash-es';
+import { omit } from 'lodash-es';
 import request from 'supertest';
 import { describe, expect, vi } from 'vitest';
+import { BookSearchResult } from '../../../application/server/BookSearchClient';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
 import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from '../../../tests/mocks/googleBooks.mock';
 import { CookbookRepository } from '../server/persistence/cookbookRepository';
-import { cookbookMock, cookbookMockDataFactory, cookbookMockList, cookbookWithoutIsbnMock } from './data/cookbookMockData';
+import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
 
 vi.mock('@googleapis/books', () => ({
   books: vi.fn(() => googleBooksMock),
@@ -34,10 +35,10 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return all cookbooks when they exist', async ({ app, database }) => {
       // given:
-      const repository = new CookbookRepository(database);
-      const cookbooks = cookbookMockList;
+      const cookbookRepository = new CookbookRepository(database);
+      const cookbookEntities = cookbookEntityMockList.map(toInsertCookbookEntity);
 
-      await repository.insertMany(cookbooks);
+      await cookbookRepository.insertMany(cookbookEntities);
 
       // when:
       const response = await request(app)
@@ -45,8 +46,8 @@ describe('Cookbooks API Integration Tests', () => {
         .expect(200);
 
       // then:
-      expect(response.body).toHaveLength(cookbooks.length);
-      for (const [index, cookbook] of cookbooks.entries()) {
+      expect(response.body).toHaveLength(cookbookEntities.length);
+      for (const [index, cookbook] of cookbookEntities.entries()) {
         expect(response.body[index]).toMatchObject(cookbook);
         expect(response.body[index].id).toBeDefined();
       }
@@ -56,61 +57,61 @@ describe('Cookbooks API Integration Tests', () => {
   describe('POST /api/cookbooks', () => {
     it('should create a new cookbook with valid data', async ({ app, database }) => {
       // given:
-      const newCookbook = cookbookMock;
+      const addCookbookDto = addCookbookDtoMock;
 
       // when:
       const response = await request(app)
         .post('/api/cookbooks')
-        .send(newCookbook)
+        .send(addCookbookDto)
         .expect(201);
 
       // then:
-      expect(response.body[0]).toMatchObject(newCookbook);
+      expect(response.body[0]).toMatchObject(addCookbookDto);
       expect(response.body[0].id).toBeDefined();
 
       const cookbooks = await database.select().from(databaseSchema.cookbooksTable);
       expect(cookbooks).toHaveLength(1);
-      expect(cookbooks[0]).toMatchObject(newCookbook);
+      expect(cookbooks[0]).toMatchObject(addCookbookDto);
     });
 
     it('should create cookbook without optional ISBN fields', async ({ app }) => {
       // given:
-      const newCookbook = cookbookWithoutIsbnMock;
+      const addCookbookDto = addCookbookWithoutIsbnDtoMock;
 
       // when:
       const response = await request(app)
         .post('/api/cookbooks')
-        .send(newCookbook)
+        .send(addCookbookDto)
         .expect(201);
 
       // then:
-      expect(response.body[0]).toMatchObject(newCookbook);
+      expect(response.body[0]).toMatchObject(addCookbookDto);
       expect(response.body[0].isbn10).toBeNull();
       expect(response.body[0].isbn13).toBeNull();
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
       // given:
-      const invalidCookbook = {
-        ...cookbookMock,
+      const invalidAddCookbookDto = {
+        ...addCookbookDtoMock,
         title: null,
       };
 
       // when/then:
       await request(app)
         .post('/api/cookbooks')
-        .send(invalidCookbook)
+        .send(invalidAddCookbookDto)
         .expect(422);
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
       // given:
-      const incompleteCookbook = omit(cookbookMock, 'authors');
+      const incompleteAddCookbookDto = omit(addCookbookDtoMock, 'authors');
 
       // when/then:
       await request(app)
         .post('/api/cookbooks')
-        .send(incompleteCookbook)
+        .send(incompleteAddCookbookDto)
         .expect(422);
     });
   });
@@ -119,48 +120,48 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const repository = new CookbookRepository(database);
-      const [cookbook] = await repository.insert(cookbookMock);
-      cookbookId = cookbook.id;
+      const cookbookRepository = new CookbookRepository(database);
+      const [cookbookEntity] = await cookbookRepository.insert(insertCookbookEntityMock);
+      cookbookId = cookbookEntity.id;
     });
 
     it('should update cookbook with valid data', async ({ app, database }) => {
       // given:
-      const cookbookUpdate = pick(cookbookMockDataFactory.build(), ['title', 'authors']);
+      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
 
       // when:
       const response = await request(app)
         .patch(`/api/cookbooks/${cookbookId}`)
-        .send(cookbookUpdate)
+        .send(editCookbookDto)
         .expect(200);
 
       // then:
-      expect(response.body).toMatchObject(cookbookUpdate);
+      expect(response.body).toMatchObject(editCookbookDto);
       expect(response.body.id).toBe(cookbookId);
 
-      const [updatedCookbook] = await database.select().from(databaseSchema.cookbooksTable).where(eq(databaseSchema.cookbooksTable.id, cookbookId));
-      expect(updatedCookbook).toMatchObject(cookbookUpdate);
+      const [updatedCookbookEntity] = await database.select().from(databaseSchema.cookbooksTable).where(eq(databaseSchema.cookbooksTable.id, cookbookId));
+      expect(updatedCookbookEntity).toMatchObject(editCookbookDto);
     });
 
     it('should return 404 for non-existent cookbook', async ({ app }) => {
       // given:
-      const cookbookUpdate = pick(cookbookMockDataFactory.build(), ['title', 'authors']);
+      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
 
       // when/then:
       await request(app)
-        .patch('/api/cookbooks/non-existent-id')
-        .send(cookbookUpdate)
+        .patch(`/api/cookbooks/${faker.string.uuid()}`)
+        .send(editCookbookDto)
         .expect(404);
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
       // given:
-      const invalidCookbookUpdate = { title: null };
+      const invalidEditCookbookDto = { title: null };
 
       // when/then:
       await request(app)
         .patch(`/api/cookbooks/${cookbookId}`)
-        .send(invalidCookbookUpdate)
+        .send(invalidEditCookbookDto)
         .expect(422);
     });
   });
@@ -169,9 +170,9 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const repository = new CookbookRepository(database);
-      const [cookbook] = await repository.insertMany(cookbookMockList);
-      cookbookId = cookbook.id;
+      const cookbookRepository = new CookbookRepository(database);
+      const [cookbookEntity] = await cookbookRepository.insertMany(cookbookEntityMockList);
+      cookbookId = cookbookEntity.id;
     });
 
     it('should delete existing cookbook', async ({ app, database }) => {
@@ -181,13 +182,13 @@ describe('Cookbooks API Integration Tests', () => {
         .expect(204);
 
       // then:
-      const cookbooks = await database.select().from(databaseSchema.cookbooksTable);
-      expect(cookbooks).toHaveLength(cookbookMockList.length - 1);
+      const cookbookEntities = await database.select().from(databaseSchema.cookbooksTable);
+      expect(cookbookEntities).toHaveLength(cookbookEntityMockList.length - 1);
     });
 
     it('should return 404 for non-existent cookbook', async ({ app }) => {
       await request(app)
-        .delete('/api/cookbooks/non-existent-id')
+        .delete(`/api/cookbooks/${faker.string.uuid()}`)
         .expect(404);
     });
   });
@@ -195,19 +196,19 @@ describe('Cookbooks API Integration Tests', () => {
   describe('POST /api/cookbooks/identification', () => {
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
       // given:
-      const expectedBookData = {
-        title: cookbookMock.title,
-        authors: cookbookMock.authors,
-        isbn10: cookbookMock.isbn10?.toString() ?? null,
-        isbn13: cookbookMock.isbn13?.toString() ?? null,
+      const expectedBookSearchResult: BookSearchResult = {
+        title: cookbookEntityMock.title,
+        authors: cookbookEntityMock.authors,
+        isbn10: cookbookEntityMock.isbn10?.toString() ?? null,
+        isbn13: cookbookEntityMock.isbn13?.toString() ?? null,
       };
 
-      const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+      const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
 
       setupAzureFormRecognizerMock({
-        ean13: mockEan13,
+        ean13: expectedEan13,
       });
-      setupGoogleBooksMock(expectedBookData);
+      setupGoogleBooksMock(expectedBookSearchResult);
 
       // when:
       const response = await request(app)
@@ -216,7 +217,7 @@ describe('Cookbooks API Integration Tests', () => {
         .expect(200);
 
       // then:
-      expect(response.body).toEqual(expectedBookData);
+      expect(response.body).toEqual(expectedBookSearchResult);
 
       expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',
@@ -224,7 +225,7 @@ describe('Cookbooks API Integration Tests', () => {
         { features: ['barcodes'] },
       );
       expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
-        q: `isbn:${mockEan13}`,
+        q: `isbn:${expectedEan13}`,
       });
     });
 
@@ -256,10 +257,10 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 404 when no book can be found for the extracted EAN-13 barcode ', async ({ app }) => {
       // given:
-      const mockEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+      const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
 
       setupAzureFormRecognizerMock({
-        ean13: mockEan13,
+        ean13: expectedEan13,
       });
       setupGoogleBooksMock(null);
 
@@ -271,7 +272,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // then:
       expect(response.body).toEqual({
-        error: `No book found for the extracted EAN-13 barcode ${mockEan13}.`,
+        error: `No book found for the extracted EAN-13 barcode ${expectedEan13}.`,
       });
 
       expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
@@ -280,7 +281,7 @@ describe('Cookbooks API Integration Tests', () => {
         { features: ['barcodes'] },
       );
       expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
-        q: `isbn:${mockEan13}`,
+        q: `isbn:${expectedEan13}`,
       });
     });
 
@@ -292,12 +293,12 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 422 when file is not an image', async ({ app }) => {
       // given:
-      const textFileBuffer = Buffer.from('This is not an image');
+      const invalidFileBuffer = Buffer.from('This is not an image');
 
       // when/then:
       await request(app)
         .post('/api/cookbooks/identification')
-        .attach('backCoverFile', textFileBuffer, 'test-file.txt')
+        .attach('backCoverFile', invalidFileBuffer, 'test-file.txt')
         .expect(422);
     });
   });

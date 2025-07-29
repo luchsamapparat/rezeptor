@@ -1,21 +1,18 @@
-import { z } from 'zod';
 import { createRequestHandler } from '../../../../common/server/requestHandler';
-import { updateRecipeSchema } from '../persistence/recipesTable';
 import { recipesContext } from '../recipesContext';
-
-const editRecipeSchema = updateRecipeSchema.partial();
+import { editRecipeDtoSchema, recipeIdentifierPathSchema } from './recipeApiModel';
 
 export const editRecipe = createRequestHandler(
   {
-    requestBodySchema: editRecipeSchema,
-    paramsSchema: z.object({ id: z.string() }),
+    paramsSchema: recipeIdentifierPathSchema,
+    requestBodySchema: editRecipeDtoSchema,
   },
   async (request, response) => {
     const { recipesRepository } = recipesContext.get();
-    const { id } = request.params;
+    const { recipeId } = request.params;
     const updates = request.body;
 
-    const updated = await recipesRepository.update(id, updates);
+    const updated = await recipesRepository.update(recipeId, updates);
     if (!updated.length) {
       response.status(404).json({ error: 'Recipe not found' });
       return;

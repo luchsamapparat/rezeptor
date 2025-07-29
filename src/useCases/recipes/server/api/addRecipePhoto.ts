@@ -1,24 +1,24 @@
-import { z } from 'zod';
 import { createRequestHandler } from '../../../../common/server/requestHandler';
 import { recipesContext } from '../recipesContext';
+import { recipeIdentifierPathSchema } from './recipeApiModel';
 
-export const addPhoto = createRequestHandler(
+export const addRecipePhoto = createRequestHandler(
   {
-    paramsSchema: z.object({ id: z.string() }),
+    paramsSchema: recipeIdentifierPathSchema,
     fileUpload: {
       fieldName: 'photoFile',
       required: true,
       acceptedMimeTypes: ['image/*'],
       maxSize: 5 * 1024 * 1024, // 5MB
     },
-  } as const,
+  },
   async (request, response) => {
     const { recipesRepository, recipePhotoFileRepository } = recipesContext.get();
-    const { id } = request.params;
+    const { recipeId } = request.params;
 
     try {
       // Check if recipe exists
-      const existingRecipe = await recipesRepository.findById(id);
+      const existingRecipe = await recipesRepository.findById(recipeId);
       if (!existingRecipe) {
         response.status(404).json({ error: 'Recipe not found' });
         return;
@@ -39,7 +39,7 @@ export const addPhoto = createRequestHandler(
       const photoFileId = await recipePhotoFileRepository.save(new Uint8Array(await request.file.arrayBuffer()));
 
       // Update the recipe with the new photo file ID
-      const updated = await recipesRepository.update(id, { photoFileId });
+      const updated = await recipesRepository.update(recipeId, { photoFileId });
 
       if (!updated.length) {
         response.status(404).json({ error: 'Recipe not found' });

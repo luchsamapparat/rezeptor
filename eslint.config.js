@@ -18,6 +18,7 @@ export default defineConfig([
   {
     rules: {
       'no-empty-pattern': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       '@stylistic/eol-last': 'off',
     },
     settings: {

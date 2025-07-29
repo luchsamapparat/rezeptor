@@ -9,7 +9,7 @@ export const identifyCookbook = createRequestHandler(
       required: true,
       acceptedMimeTypes: ['image/*'],
     },
-  } as const,
+  },
   async (request, response) => {
     const { documentAnalysisClient, bookSearchClient } = cookbooksContext.get();
 

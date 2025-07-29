@@ -1,9 +1,11 @@
 import { createRequestHandler } from '../../../../common/server/requestHandler';
 import { cookbooksContext } from '../cookbooksContext';
-import { insertCookbookSchema } from '../persistence/cookbooksTable';
+import { addCookbookDtoSchema } from './cookbookApiModel';
 
 export const addCookbook = createRequestHandler(
-  { requestBodySchema: insertCookbookSchema },
+  {
+    requestBodySchema: addCookbookDtoSchema,
+  },
   async (request, response) => {
     const { cookbooksRepository } = cookbooksContext.get();
 

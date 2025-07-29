@@ -4,14 +4,13 @@ import { getApplicationContext } from '../../../../application/server/applicatio
 import { RecipeRepository } from '../persistence/recipeRepository';
 import type { recipesTable } from '../persistence/recipesTable';
 import { recipesContext } from '../recipesContext';
-import { addPhoto } from './addPhoto';
 import { addRecipe } from './addRecipe';
+import { addRecipePhoto } from './addRecipePhoto';
 import { editRecipe } from './editRecipe';
 import { getRecipe } from './getRecipe';
 import { getRecipes } from './getRecipes';
+import { recipeIdentifierName, recipesPath } from './recipeApiModel';
 import { removeRecipe } from './removeRecipe';
-
-export const recipesPath = '/recipes';
 
 export const recipesApi = Router();
 
@@ -31,11 +30,11 @@ recipesApi
   .post(...addRecipe);
 
 recipesApi
-  .route(`${recipesPath}/:id`)
+  .route(`${recipesPath}/:${recipeIdentifierName}`)
   .get(...getRecipe)
   .patch(...editRecipe)
   .delete(...removeRecipe);
 
 recipesApi
-  .route(`${recipesPath}/:id/photo`)
-  .put(...addPhoto);
+  .route(`${recipesPath}/:${recipeIdentifierName}/photo`)
+  .put(...addRecipePhoto);

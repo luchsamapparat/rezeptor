@@ -6,12 +6,11 @@ import { CookbookRepository } from '../persistence/cookbookRepository';
 import type { cookbooksTable } from '../persistence/cookbooksTable';
 
 import { addCookbook } from './addCookbook';
+import { cookbookIdentifierName, cookbooksPath } from './cookbookApiModel';
 import { editCookbook } from './editCookbook';
 import { getCookbooks } from './getCookbooks';
 import { identifyCookbook } from './identifyCookbook';
 import { removeCookbook } from './removeCookbook';
-
-export const cookbooksPath = '/cookbooks';
 
 export const cookbooksApi = Router();
 
@@ -34,6 +33,6 @@ cookbooksApi
   .post(...identifyCookbook);
 
 cookbooksApi
-  .route(`${cookbooksPath}/:id`)
+  .route(`${cookbooksPath}/:${cookbookIdentifierName}`)
   .patch(...editCookbook)
   .delete(...removeCookbook);
