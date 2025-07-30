@@ -11,7 +11,9 @@ A modern, production-ready template for building full-stack React applications u
 - 🔒 TypeScript by default
 - 🎉 TailwindCSS for styling
 - 💾 SQLite + DrizzleORM
-- 📖 [React Router docs](https://reactrouter.com/)
+- � **OpenAPI specification generation** from Zod schemas
+- 🌐 **Interactive Swagger UI** for API testing
+- �📖 [React Router docs](https://reactrouter.com/)
 
 ## Getting Started
 
@@ -40,6 +42,17 @@ npm run dev
 ```
 
 Your application will be available at `http://localhost:5173`.
+
+## API Documentation
+
+This project automatically generates OpenAPI specifications from your existing Zod schemas:
+
+- **Interactive API docs**: Visit `http://localhost:5173/api/docs` 
+- **Generate spec files**: `npm run openapi:generate`
+- **JSON spec**: `http://localhost:5173/api/openapi.json`
+- **YAML spec**: `http://localhost:5173/api/openapi.yaml`
+
+See [docs/openapi.md](docs/openapi.md) for detailed documentation.
 
 ## Building for Production
 

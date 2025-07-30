@@ -1,0 +1,295 @@
+openapi: 3.0.0
+info:
+  title: Rezeptor API
+  version: 1.0.0
+  description: API for managing recipes and cookbooks in the Rezeptor application
+servers:
+  - url: /api
+    description: API server
+components:
+  schemas:
+    recipesrecipeIdphoto_Upload:
+      type: object
+      properties:
+        photoFile:
+          type: string
+          description: File upload
+      required:
+        - photoFile
+    cookbooksidentification_Upload:
+      type: object
+      properties:
+        document:
+          type: string
+          description: File upload
+      required:
+        - document
+  parameters: {}
+paths:
+  /recipes:
+    get:
+      tags:
+        - Recipes
+      summary: Get all recipes
+      description: Retrieve a list of all recipes
+      responses:
+        '200':
+          description: Success
+    post:
+      tags:
+        - Recipes
+      summary: Add a new recipe
+      description: Create a new recipe from data or photo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                photoFileId:
+                  type: string
+                  nullable: true
+                recipeFileId:
+                  type: string
+                  nullable: true
+                cookbookId:
+                  type: string
+                  nullable: true
+                pageNumber:
+                  type: integer
+                  nullable: true
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+              required:
+                - title
+                - content
+              example:
+                title: Pasta Carbonara
+                description: Classic Italian pasta dish with eggs, cheese, and bacon
+                cookbookId: 123e4567-e89b-12d3-a456-426614174000
+      responses:
+        '200':
+          description: Success
+  /recipes/{recipeId}:
+    get:
+      tags:
+        - Recipes
+      summary: Get a recipe by ID
+      description: Retrieve a specific recipe by its ID
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: recipeId
+          in: path
+      responses:
+        '200':
+          description: Success
+    patch:
+      tags:
+        - Recipes
+      summary: Update a recipe
+      description: Update an existing recipe
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: recipeId
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                photoFileId:
+                  type: string
+                  nullable: true
+                recipeFileId:
+                  type: string
+                  nullable: true
+                cookbookId:
+                  type: string
+                  nullable: true
+                pageNumber:
+                  type: integer
+                  nullable: true
+                  minimum: -9007199254740991
+                  maximum: 9007199254740991
+              example:
+                title: Updated Pasta Carbonara
+                description: Updated classic Italian pasta dish
+      responses:
+        '200':
+          description: Success
+    delete:
+      tags:
+        - Recipes
+      summary: Delete a recipe
+      description: Remove a recipe and its associated files
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: recipeId
+          in: path
+      responses:
+        '200':
+          description: Success
+  /recipes/{recipeId}/photo:
+    put:
+      tags:
+        - Recipes
+      summary: Add or update recipe photo
+      description: Upload a photo for a recipe
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: recipeId
+          in: path
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/recipesrecipeIdphoto_Upload'
+      responses:
+        '200':
+          description: Success
+  /cookbooks:
+    get:
+      tags:
+        - Cookbooks
+      summary: Get all cookbooks
+      description: Retrieve a list of all cookbooks
+      responses:
+        '200':
+          description: Success
+    post:
+      tags:
+        - Cookbooks
+      summary: Add a new cookbook
+      description: Create a new cookbook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                authors:
+                  anyOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - nullable: true
+                    - type: object
+                      additionalProperties:
+                        nullable: true
+                    - type: array
+                      items:
+                        nullable: true
+                    - nullable: true
+                isbn10:
+                  type: string
+                  nullable: true
+                isbn13:
+                  type: string
+                  nullable: true
+              required:
+                - title
+                - authors
+              example:
+                title: Italian Classics
+                description: A collection of traditional Italian recipes
+      responses:
+        '200':
+          description: Success
+  /cookbooks/identification:
+    post:
+      tags:
+        - Cookbooks
+      summary: Identify cookbook from document
+      description: Use AI to identify cookbook details from an uploaded document
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/cookbooksidentification_Upload'
+      responses:
+        '200':
+          description: Success
+  /cookbooks/{cookbookId}:
+    patch:
+      tags:
+        - Cookbooks
+      summary: Update a cookbook
+      description: Update an existing cookbook
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: cookbookId
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                authors:
+                  anyOf:
+                    - type: string
+                    - type: number
+                    - type: boolean
+                    - nullable: true
+                    - type: object
+                      additionalProperties:
+                        nullable: true
+                    - type: array
+                      items:
+                        nullable: true
+                    - nullable: true
+                isbn10:
+                  type: string
+                  nullable: true
+                isbn13:
+                  type: string
+                  nullable: true
+              example:
+                title: Updated Italian Classics
+                description: An updated collection of traditional Italian recipes
+      responses:
+        '200':
+          description: Success
+    delete:
+      tags:
+        - Cookbooks
+      summary: Delete a cookbook
+      description: Remove a cookbook
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          required: true
+          name: cookbookId
+          in: path
+      responses:
+        '200':
+          description: Success
