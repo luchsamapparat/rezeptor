@@ -18,8 +18,9 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
   /**
    * Insert a single record
    */
-  async insert(entity: Omit<TTable['$inferInsert'], 'id'>): Promise<TTable['$inferSelect'][]> {
-    return this.insertMany([entity]);
+  async insert(entity: Omit<TTable['$inferInsert'], 'id'>): Promise<TTable['$inferSelect']> {
+    const results = await this.insertMany([entity]);
+    return results[0];
   }
 
   /**
@@ -37,23 +38,25 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
   /**
    * Find a record by its ID
    */
-  async findById(id: string): Promise<TTable['$inferSelect'] | undefined> {
+  async findById(id: string): Promise<TTable['$inferSelect'] | null> {
     const results = await this.database.select().from(this.table).where(eq(this.table.id, id)).limit(1);
-    return results[0];
+    return results[0] ?? null;
   }
 
   /**
    * Delete a record by its ID
    */
-  async deleteById(id: string): Promise<TTable['$inferSelect'][]> {
-    return this.database.delete(this.table).where(eq(this.table.id, id)).returning();
+  async deleteById(id: string): Promise<TTable['$inferSelect'] | null> {
+    const results = await this.database.delete(this.table).where(eq(this.table.id, id)).returning();
+    return results[0] ?? null;
   }
 
   /**
    * Update a record by its ID
    */
-  async update(id: string, updates: Partial<TTable['$inferInsert']>): Promise<TTable['$inferSelect'][]> {
-    return this.database.update(this.table).set(updates).where(eq(this.table.id, id)).returning();
+  async update(id: string, updates: Partial<TTable['$inferInsert']>): Promise<TTable['$inferSelect'] | null> {
+    const results = await this.database.update(this.table).set(updates).where(eq(this.table.id, id)).returning();
+    return results[0] ?? null;
   }
 
   /**

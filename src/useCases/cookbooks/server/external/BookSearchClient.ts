@@ -8,11 +8,15 @@ export type BookSearchResult = {
   isbn13: string | null;
 };
 
+type BookSearchClientOptions = {
+  key: string;
+};
+
 export class BookSearchClient {
   private apiClient: books_v1.Books;
 
   constructor(
-    key: string,
+    { key }: BookSearchClientOptions,
   ) {
     this.apiClient = books({ version: 'v1', key });
   }

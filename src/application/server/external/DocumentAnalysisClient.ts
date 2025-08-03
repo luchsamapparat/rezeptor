@@ -1,8 +1,8 @@
 import type { FormRecognizerFeature } from '@azure/ai-form-recognizer';
 import { DocumentAnalysisClient as AzureDocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
-import { getFileSize } from '../../common/server/file';
-import { resizeImage } from '../../common/server/image';
-import { sanitizeString } from '../../common/server/string';
+import { getFileSize } from '../../../common/server/file';
+import { resizeImage } from '../../../common/server/image';
+import { sanitizeString } from '../../../common/server/string';
 
 type Barcode = {
   ean13: string | null;
@@ -14,13 +14,15 @@ type DocumentContents = {
   content: string;
 };
 
+type DocumentAnalysisClientOptions = {
+  endpoint: string;
+  key: string;
+};
+
 export class DocumentAnalysisClient {
   private apiClient: AzureDocumentAnalysisClient;
 
-  constructor(
-    endpoint: string,
-    key: string,
-  ) {
+  constructor({ endpoint, key }: DocumentAnalysisClientOptions) {
     this.apiClient = new AzureDocumentAnalysisClient(
       endpoint,
       new AzureKeyCredential(key),
