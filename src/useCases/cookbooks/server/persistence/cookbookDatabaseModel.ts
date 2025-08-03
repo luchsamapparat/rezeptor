@@ -1,3 +1,4 @@
 import { cookbooksTable } from './cookbooksTable';
 
-export type CookbooksDatabaseSchema = { cookbooksTable: typeof cookbooksTable };
+export const cookbooksDatabaseSchema = { cookbooksTable };
+export type CookbooksDatabaseSchema = typeof cookbooksDatabaseSchema;

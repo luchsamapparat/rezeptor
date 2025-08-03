@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { values } from 'lodash-es';
 import { database, documentAnalysisClient, environment, fileRepositoryFactory, fileSystem, type ApplicationContext } from '../application/server/di';
 import type { Environment } from '../application/server/environment';
 import { initDatabaseConnection, type Database } from '../common/persistence/database';
@@ -26,7 +25,7 @@ export async function createApiServer(env: Environment, fs: FileSystemOperations
     .use(fileRepositoryFactory.middleware('fileRepositoryFactory'))
     .use(documentAnalysisClient.middleware('documentAnalysisClient'));
 
-  values(api).forEach(apiRoute => app.route('/api', apiRoute));
+  app.route('/api', api);
 
   return { app, database: db };
 };

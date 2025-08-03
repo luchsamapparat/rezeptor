@@ -1,7 +1,13 @@
+import { Hono } from 'hono';
+import type { ApplicationContext } from '../application/server/di';
 import { cookbooksApi } from './cookbooks/server/api';
-import { cookbooksTable } from './cookbooks/server/persistence/cookbooksTable';
+import { cookbooksDatabaseSchema, type CookbooksDatabaseSchema } from './cookbooks/server/persistence/cookbookDatabaseModel';
 import { recipesApi } from './recipes/server/api';
-import { recipesTable } from './recipes/server/persistence/recipesTable';
+import { recipesDatabaseSchema, type RecipesDatabaseSchema } from './recipes/server/persistence/recipeDatabaseModel';
 
-export const useCasesApi = { cookbooksApi, recipesApi };
-export const useCasesDatabaseSchema = { cookbooksTable, recipesTable };
+export const useCasesDatabaseSchema = { ...cookbooksDatabaseSchema, ...recipesDatabaseSchema };
+export type UseCasesDatabaseSchema = CookbooksDatabaseSchema & RecipesDatabaseSchema;
+
+export const useCasesApi = new Hono<{ Variables: ApplicationContext<UseCasesDatabaseSchema> }>()
+  .route('/', cookbooksApi)
+  .route('/', recipesApi);
