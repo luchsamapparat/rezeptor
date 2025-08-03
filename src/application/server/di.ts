@@ -28,7 +28,7 @@ export const database = memoize(<DatabaseSchema extends Record<string, unknown>>
   const databaseDependency = optionalDatabase<DatabaseSchema>();
   const originalResolve = databaseDependency.resolve;
   const resolve = async (c: Context) => {
-    const db = await originalResolve(c);
+    const db = await originalResolve.bind(databaseDependency)(c);
     if (isNull(db)) {
       throw new Error('No Database provided');
     }
