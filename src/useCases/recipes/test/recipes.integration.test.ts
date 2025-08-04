@@ -1,7 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
 import { omit } from 'lodash-es';
-import request from 'supertest';
 import { describe, expect, vi } from 'vitest';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
@@ -21,12 +20,14 @@ describe('Recipes API Integration Tests', () => {
   describe('GET /api/recipes', () => {
     it('should return empty array when no recipes exist', async ({ app }) => {
       // when:
-      const response = await request(app)
-        .get('/api/recipes')
-        .expect(200);
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'GET',
+      }));
 
       // then:
-      expect(response.body).toEqual([]);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toEqual([]);
     });
 
     it('should return all recipes when they exist', async ({ app, database }) => {
@@ -37,43 +38,54 @@ describe('Recipes API Integration Tests', () => {
       await recipeRepository.insert(insertRecipeEntity);
 
       // when:
-      const response = await request(app)
-        .get('/api/recipes')
-        .expect(200);
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'GET',
+      }));
 
       // then:
-      expect(response.body).toHaveLength(1);
-      expect(response.body[0]).toMatchObject(insertRecipeEntity);
-      expect(response.body[0].id).toBeDefined();
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveLength(1);
+      expect(body[0]).toMatchObject(insertRecipeEntity);
+      expect(body[0].id).toBeDefined();
     });
   });
 
-  describe('GET /api/recipes/:id', () => {
+  describe('GET /api/recipes/:recipeId', () => {
     let recipeId: string;
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
       recipeId = recipeEntity.id;
     });
 
     it('should return specific recipe when it exists', async ({ app }) => {
       // when:
-      const response = await request(app)
-        .get(`/api/recipes/${recipeId}`)
-        .expect(200);
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}`, {
+        method: 'GET',
+      }));
 
       // then:
-      expect(response.body.id).toBe(recipeId);
-      expect(response.body.title).toBeDefined();
-      expect(response.body.content).toBeDefined();
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.id).toBe(recipeId);
+      expect(body.title).toBeDefined();
+      expect(body.content).toBeDefined();
     });
-  });
 
-  it('should return 404 for non-existent recipe', async ({ app }) => {
-    await request(app)
-      .get(`/api/recipes/${faker.string.uuid()}`)
-      .expect(404);
+    it('should return 404 for non-existent recipe', async ({ app }) => {
+      // given:
+      const nonExistentId = faker.string.uuid();
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
+    });
   });
 
   describe('POST /api/recipes', () => {
@@ -82,14 +94,17 @@ describe('Recipes API Integration Tests', () => {
       const addRecipeDto = addRecipeDtoMock;
 
       // when:
-      const response = await request(app)
-        .post('/api/recipes')
-        .send(addRecipeDto)
-        .expect(201);
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addRecipeDto),
+      }));
 
       // then:
-      expect(response.body[0]).toMatchObject(addRecipeDto);
-      expect(response.body[0].id).toBeDefined();
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toMatchObject(addRecipeDto);
+      expect(body.id).toBeDefined();
 
       const recipes = await database.select().from(databaseSchema.recipesTable);
       expect(recipes).toHaveLength(1);
@@ -103,29 +118,37 @@ describe('Recipes API Integration Tests', () => {
         title: null,
       };
 
-      // when/then:
-      await request(app)
-        .post('/api/recipes')
-        .send(invalidAddRecipeDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidAddRecipeDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
       // given:
       const incompleteAddRecipeDto = omit(addRecipeDtoMock, 'title');
 
-      // when/then:
-      await request(app)
-        .post('/api/recipes')
-        .send(incompleteAddRecipeDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(incompleteAddRecipeDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
 
     it('should create a recipe from uploaded image file', async ({ app, database, fileSystemMock }) => {
       // given:
       // Create a cookbook first
       const cookbookRepository = new CookbookRepository(database);
-      const [cookbookEntity] = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
       const cookbookId = cookbookEntity.id;
 
       const { title, pageNumber, content } = recipeEntityMock;
@@ -138,27 +161,33 @@ describe('Recipes API Integration Tests', () => {
       });
 
       const initialFileCount = fileSystemMock.getFileCount();
+      const testFile = await loadTestFile('recipe1.jpg');
 
       // when:
-      const response = await request(app)
-        .post('/api/recipes')
-        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .field('cookbookId', cookbookId)
-        .expect(201);
+      const formData = new FormData();
+      formData.append('recipeFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData.append('cookbookId', cookbookId);
+
+      const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+        method: 'POST',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body[0]).toMatchObject({
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toMatchObject({
         title,
         content,
         pageNumber,
         cookbookId,
         photoFileId: null,
       });
-      expect(response.body[0].id).toBeDefined();
-      expect(response.body[0].recipeFileId).toBeDefined();
+      expect(body.id).toBeDefined();
+      expect(body.recipeFileId).toBeDefined();
 
       expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
-      expect(fileSystemMock.fileExists(`/data/recipes/${response.body[0].recipeFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipes/${body.recipeFileId}`)).toBe(true);
 
       const recipes = await database.select().from(databaseSchema.recipesTable);
       expect(recipes).toHaveLength(1);
@@ -175,22 +204,29 @@ describe('Recipes API Integration Tests', () => {
         text: content,
       });
 
+      const testFile = await loadTestFile('recipe1.jpg');
+
       // when:
-      const response = await request(app)
-        .post('/api/recipes')
-        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .expect(201);
+      const formData = new FormData();
+      formData.append('recipeFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+        method: 'POST',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body[0]).toMatchObject({
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toMatchObject({
         title,
         content,
         pageNumber,
         cookbookId: null,
         photoFileId: null,
       });
-      expect(response.body[0].id).toBeDefined();
-      expect(response.body[0].recipeFileId).toBeDefined();
+      expect(body.id).toBeDefined();
+      expect(body.recipeFileId).toBeDefined();
 
       const recipes = await database.select().from(databaseSchema.recipesTable);
       expect(recipes).toHaveLength(1);
@@ -198,7 +234,7 @@ describe('Recipes API Integration Tests', () => {
     });
   });
 
-  describe('PATCH /api/recipes/:id', () => {
+  describe('PATCH /api/recipes/:recipeId', () => {
     let recipeId: string;
 
     beforeEach(async ({ database }) => {
@@ -212,14 +248,17 @@ describe('Recipes API Integration Tests', () => {
       const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
 
       // when:
-      const response = await request(app)
-        .patch(`/api/recipes/${recipeId}`)
-        .send(editRecipeDto)
-        .expect(200);
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editRecipeDto),
+      }));
 
       // then:
-      expect(response.body).toMatchObject(editRecipeDto);
-      expect(response.body.id).toBe(recipeId);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toMatchObject(editRecipeDto);
+      expect(body.id).toBe(recipeId);
 
       const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
       expect(updatedRecipe).toMatchObject(editRecipeDto);
@@ -228,27 +267,36 @@ describe('Recipes API Integration Tests', () => {
     it('should return 404 for non-existent recipe', async ({ app }) => {
       // given:
       const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
+      const nonExistentId = faker.string.uuid();
 
-      // when/then:
-      await request(app)
-        .patch(`/api/recipes/${faker.string.uuid()}`)
-        .send(editRecipeDto)
-        .expect(404);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editRecipeDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
       // given:
       const invalidEditRecipeDto = { title: null };
 
-      // when/then:
-      await request(app)
-        .patch(`/api/recipes/${recipeId}`)
-        .send(invalidEditRecipeDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidEditRecipeDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
   });
 
-  describe('DELETE /api/recipes/:id', () => {
+  describe('DELETE /api/recipes/:recipeId', () => {
     let recipeId: string;
 
     beforeEach(async ({ database }) => {
@@ -258,18 +306,29 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should delete existing recipe', async ({ app, database }) => {
-      await request(app)
-        .delete(`/api/recipes/${recipeId}`)
-        .expect(204);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}`, {
+        method: 'DELETE',
+      }));
+
+      // then:
+      expect(response.status).toBe(204);
 
       const recipeEntities = await database.select().from(databaseSchema.recipesTable);
       expect(recipeEntities).toHaveLength(recipeEntityMockList.length - 1);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
-      await request(app)
-        .delete(`/api/recipes/${faker.string.uuid()}`)
-        .expect(404);
+      // given:
+      const nonExistentId = faker.string.uuid();
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}`, {
+        method: 'DELETE',
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
     });
 
     it('should delete recipe files when recipe is deleted', async ({ app, database, fileSystemMock }) => {
@@ -282,32 +341,46 @@ describe('Recipes API Integration Tests', () => {
         text: 'Test recipe content.',
       });
 
-      const createResponse = await request(app)
-        .post('/api/recipes')
-        .attach('recipeFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .expect(201);
+      const testFile1 = await loadTestFile('recipe1.jpg');
+      const formData1 = new FormData();
+      formData1.append('recipeFile', new File([testFile1], 'recipe1.jpg', { type: 'image/jpeg' }));
 
-      const createdRecipeId = createResponse.body[0].id;
-      const recipeFileId = createResponse.body[0].recipeFileId;
+      const createResponse = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+        method: 'POST',
+        body: formData1,
+      }));
+
+      expect(createResponse.status).toBe(201);
+      const createBody = await createResponse.json();
+      const createdRecipeId = createBody.id;
+      const recipeFileId = createBody.recipeFileId;
 
       // Add a photo to the recipe
-      const photoResponse = await request(app)
-        .put(`/api/recipes/${createdRecipeId}/photo`)
-        .attach('photoFile', await loadTestFile('recipe2.jpg'), 'recipe2.jpg')
-        .expect(200);
+      const testFile2 = await loadTestFile('recipe2.jpg');
+      const formData2 = new FormData();
+      formData2.append('photoFile', new File([testFile2], 'recipe2.jpg', { type: 'image/jpeg' }));
 
-      const photoFileId = photoResponse.body.photoFileId;
+      const photoResponse = await app.request(new Request(`http://localhost/api/recipes/${createdRecipeId}/photo`, {
+        method: 'PUT',
+        body: formData2,
+      }));
+
+      expect(photoResponse.status).toBe(200);
+      const photoBody = await photoResponse.json();
+      const photoFileId = photoBody.photoFileId;
 
       // Verify files exist
       expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(true);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}`)).toBe(true);
 
       // when: delete the recipe
-      await request(app)
-        .delete(`/api/recipes/${createdRecipeId}`)
-        .expect(204);
+      const deleteResponse = await app.request(new Request(`http://localhost/api/recipes/${createdRecipeId}`, {
+        method: 'DELETE',
+      }));
 
       // then: verify recipe is deleted from database
+      expect(deleteResponse.status).toBe(204);
+
       const recipes = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, createdRecipeId));
       expect(recipes).toHaveLength(0);
 
@@ -319,45 +392,52 @@ describe('Recipes API Integration Tests', () => {
     it('should delete recipe without files gracefully', async ({ app, database }) => {
       // given: create a recipe without any files (manually inserted)
       const recipeRepository = new RecipeRepository(database);
-      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
 
       // when: delete the recipe
-      await request(app)
-        .delete(`/api/recipes/${recipeEntity.id}`)
-        .expect(204);
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeEntity.id}`, {
+        method: 'DELETE',
+      }));
 
       // then: verify recipe is deleted from database
+      expect(response.status).toBe(204);
+
       const recipeEntities = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeEntity.id));
       expect(recipeEntities).toHaveLength(0);
     });
   });
 
-  describe('PUT /api/recipes/:id/photo', () => {
+  describe('PUT /api/recipes/:recipeId/photo', () => {
     let recipeId: string;
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeRepository(database);
-      const [recipeEntity] = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
       recipeId = recipeEntity.id;
     });
 
     it('should add photo to existing recipe', async ({ app, database, fileSystemMock }) => {
       // given:
       const initialFileCount = fileSystemMock.getFileCount();
+      const testFile = await loadTestFile('recipe1.jpg');
 
       // when:
-      const response = await request(app)
-        .put(`/api/recipes/${recipeId}/photo`)
-        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .expect(200);
+      const formData = new FormData();
+      formData.append('photoFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body.id).toBe(recipeId);
-      expect(response.body.photoFileId).toBeDefined();
-      expect(response.body.photoFileId).not.toBeNull();
-
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.id).toBe(recipeId);
+      expect(body.photoFileId).toBeDefined();
+      expect(body.photoFileId).not.toBeNull();
       expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
-      expect(fileSystemMock.fileExists(`/data/recipePhotos/${response.body.photoFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${body.photoFileId}`)).toBe(true);
 
       const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
       expect(updatedRecipeEntity.photoFileId).not.toBeNull();
@@ -365,23 +445,36 @@ describe('Recipes API Integration Tests', () => {
 
     it('should replace existing photo', async ({ app, database }) => {
       // given: recipe with existing photo - first upload a photo
-      const firstUploadResponse = await request(app)
-        .put(`/api/recipes/${recipeId}/photo`)
-        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .expect(200);
+      const testFile1 = await loadTestFile('recipe1.jpg');
 
-      const existingPhotoFileId = firstUploadResponse.body.photoFileId;
+      const formData1 = new FormData();
+      formData1.append('photoFile', new File([testFile1], 'recipe1.jpg', { type: 'image/jpeg' }));
+
+      const firstUploadResponse = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: formData1,
+      }));
+
+      expect(firstUploadResponse.status).toBe(200);
+      const firstBody = await firstUploadResponse.json();
+      const existingPhotoFileId = firstBody.photoFileId;
 
       // when: upload a different photo to replace the existing one
-      const response = await request(app)
-        .put(`/api/recipes/${recipeId}/photo`)
-        .attach('photoFile', await loadTestFile('recipe2.jpg'), 'recipe2.jpg')
-        .expect(200);
+      const testFile2 = await loadTestFile('recipe2.jpg');
+      const formData2 = new FormData();
+      formData2.append('photoFile', new File([testFile2], 'recipe2.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: formData2,
+      }));
 
       // then:
-      expect(response.body.id).toBe(recipeId);
-      expect(response.body.photoFileId).toBeDefined();
-      expect(response.body.photoFileId).not.toBe(existingPhotoFileId);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body.id).toBe(recipeId);
+      expect(body.photoFileId).toBeDefined();
+      expect(body.photoFileId).not.toBe(existingPhotoFileId);
 
       const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
       expect(updatedRecipeEntity.photoFileId).not.toBe(existingPhotoFileId);
@@ -389,23 +482,46 @@ describe('Recipes API Integration Tests', () => {
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
-      await request(app)
-        .put(`/api/recipes/${faker.string.uuid()}/photo`)
-        .attach('photoFile', await loadTestFile('recipe1.jpg'), 'recipe1.jpg')
-        .expect(404);
+      // given:
+      const nonExistentId = faker.string.uuid();
+      const testFile = await loadTestFile('recipe1.jpg');
+
+      // when:
+      const formData = new FormData();
+      formData.append('photoFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}/photo`, {
+        method: 'PUT',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
     });
 
     it('should return 422 when no photo file is provided', async ({ app }) => {
-      await request(app)
-        .put(`/api/recipes/${recipeId}/photo`)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: new FormData(),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
 
     it('should return 422 for invalid file type', async ({ app }) => {
-      await request(app)
-        .put(`/api/recipes/${recipeId}/photo`)
-        .attach('photoFile', Buffer.from('not an image'), 'test.txt')
-        .expect(422);
+      // when:
+      const formData = new FormData();
+      formData.append('photoFile', new File([Buffer.from('not an image')], 'test.txt', { type: 'text/plain' }));
+
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
   });
 });

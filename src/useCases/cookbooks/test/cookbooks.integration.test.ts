@@ -1,14 +1,13 @@
 import { faker } from '@faker-js/faker';
 import { eq } from 'drizzle-orm';
 import { omit } from 'lodash-es';
-import request from 'supertest';
 import { describe, expect, vi } from 'vitest';
-import { BookSearchResult } from '../../../application/server/BookSearchClient';
 import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
 import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from '../../../tests/mocks/googleBooks.mock';
+import { BookSearchResult } from '../server/external/BookSearchClient';
 import { CookbookRepository } from '../server/persistence/cookbookRepository';
 import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
 
@@ -25,12 +24,14 @@ describe('Cookbooks API Integration Tests', () => {
   describe('GET /api/cookbooks', () => {
     it('should return empty array when no cookbooks exist', async ({ app }) => {
       // when:
-      const response = await request(app)
-        .get('/api/cookbooks')
-        .expect(200);
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'GET',
+      }));
 
       // then:
-      expect(response.body).toEqual([]);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toEqual([]);
     });
 
     it('should return all cookbooks when they exist', async ({ app, database }) => {
@@ -41,15 +42,17 @@ describe('Cookbooks API Integration Tests', () => {
       await cookbookRepository.insertMany(cookbookEntities);
 
       // when:
-      const response = await request(app)
-        .get('/api/cookbooks')
-        .expect(200);
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'GET',
+      }));
 
       // then:
-      expect(response.body).toHaveLength(cookbookEntities.length);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveLength(cookbookEntities.length);
       for (const [index, cookbook] of cookbookEntities.entries()) {
-        expect(response.body[index]).toMatchObject(cookbook);
-        expect(response.body[index].id).toBeDefined();
+        expect(body[index]).toMatchObject(cookbook);
+        expect(body[index].id).toBeDefined();
       }
     });
   });
@@ -60,14 +63,17 @@ describe('Cookbooks API Integration Tests', () => {
       const addCookbookDto = addCookbookDtoMock;
 
       // when:
-      const response = await request(app)
-        .post('/api/cookbooks')
-        .send(addCookbookDto)
-        .expect(201);
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addCookbookDto),
+      }));
 
       // then:
-      expect(response.body[0]).toMatchObject(addCookbookDto);
-      expect(response.body[0].id).toBeDefined();
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toMatchObject(addCookbookDto);
+      expect(body.id).toBeDefined();
 
       const cookbooks = await database.select().from(databaseSchema.cookbooksTable);
       expect(cookbooks).toHaveLength(1);
@@ -79,15 +85,18 @@ describe('Cookbooks API Integration Tests', () => {
       const addCookbookDto = addCookbookWithoutIsbnDtoMock;
 
       // when:
-      const response = await request(app)
-        .post('/api/cookbooks')
-        .send(addCookbookDto)
-        .expect(201);
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(addCookbookDto),
+      }));
 
       // then:
-      expect(response.body[0]).toMatchObject(addCookbookDto);
-      expect(response.body[0].isbn10).toBeNull();
-      expect(response.body[0].isbn13).toBeNull();
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toMatchObject(addCookbookDto);
+      expect(body.isbn10).toBeNull();
+      expect(body.isbn13).toBeNull();
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
@@ -97,31 +106,39 @@ describe('Cookbooks API Integration Tests', () => {
         title: null,
       };
 
-      // when/then:
-      await request(app)
-        .post('/api/cookbooks')
-        .send(invalidAddCookbookDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidAddCookbookDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
 
     it('should return 422 when required fields are missing', async ({ app }) => {
       // given:
       const incompleteAddCookbookDto = omit(addCookbookDtoMock, 'authors');
 
-      // when/then:
-      await request(app)
-        .post('/api/cookbooks')
-        .send(incompleteAddCookbookDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(incompleteAddCookbookDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
   });
 
-  describe('PATCH /api/cookbooks/:id', () => {
+  describe('PATCH /api/cookbooks/:cookbookId', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
       const cookbookRepository = new CookbookRepository(database);
-      const [cookbookEntity] = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
       cookbookId = cookbookEntity.id;
     });
 
@@ -130,14 +147,17 @@ describe('Cookbooks API Integration Tests', () => {
       const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
 
       // when:
-      const response = await request(app)
-        .patch(`/api/cookbooks/${cookbookId}`)
-        .send(editCookbookDto)
-        .expect(200);
+      const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
+        method: 'POST', // Note: Hono uses POST for PATCH in this API
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editCookbookDto),
+      }));
 
       // then:
-      expect(response.body).toMatchObject(editCookbookDto);
-      expect(response.body.id).toBe(cookbookId);
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toMatchObject(editCookbookDto);
+      expect(body.id).toBe(cookbookId);
 
       const [updatedCookbookEntity] = await database.select().from(databaseSchema.cookbooksTable).where(eq(databaseSchema.cookbooksTable.id, cookbookId));
       expect(updatedCookbookEntity).toMatchObject(editCookbookDto);
@@ -146,27 +166,36 @@ describe('Cookbooks API Integration Tests', () => {
     it('should return 404 for non-existent cookbook', async ({ app }) => {
       // given:
       const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
+      const nonExistentId = faker.string.uuid();
 
-      // when/then:
-      await request(app)
-        .patch(`/api/cookbooks/${faker.string.uuid()}`)
-        .send(editCookbookDto)
-        .expect(404);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/cookbooks/${nonExistentId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editCookbookDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
     });
 
     it('should return 422 for invalid update data', async ({ app }) => {
       // given:
       const invalidEditCookbookDto = { title: null };
 
-      // when/then:
-      await request(app)
-        .patch(`/api/cookbooks/${cookbookId}`)
-        .send(invalidEditCookbookDto)
-        .expect(422);
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invalidEditCookbookDto),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
   });
 
-  describe('DELETE /api/cookbooks/:id', () => {
+  describe('DELETE /api/cookbooks/:cookbookId', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
@@ -177,19 +206,28 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should delete existing cookbook', async ({ app, database }) => {
       // when:
-      await request(app)
-        .delete(`/api/cookbooks/${cookbookId}`)
-        .expect(204);
+      const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
+        method: 'DELETE',
+      }));
 
       // then:
+      expect(response.status).toBe(204);
+
       const cookbookEntities = await database.select().from(databaseSchema.cookbooksTable);
       expect(cookbookEntities).toHaveLength(cookbookEntityMockList.length - 1);
     });
 
     it('should return 404 for non-existent cookbook', async ({ app }) => {
-      await request(app)
-        .delete(`/api/cookbooks/${faker.string.uuid()}`)
-        .expect(404);
+      // given:
+      const nonExistentId = faker.string.uuid();
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/cookbooks/${nonExistentId}`, {
+        method: 'DELETE',
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
     });
   });
 
@@ -210,14 +248,21 @@ describe('Cookbooks API Integration Tests', () => {
       });
       setupGoogleBooksMock(expectedBookSearchResult);
 
+      const testFile = await loadTestFile('backcover1.jpg');
+
       // when:
-      const response = await request(app)
-        .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
-        .expect(200);
+      const formData = new FormData();
+      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body).toEqual(expectedBookSearchResult);
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(body).toEqual(expectedBookSearchResult);
 
       expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',
@@ -235,14 +280,21 @@ describe('Cookbooks API Integration Tests', () => {
         ean13: null,
       });
 
+      const testFile = await loadTestFile('backcover1.jpg');
+
       // when:
-      const response = await request(app)
-        .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
-        .expect(422);
+      const formData = new FormData();
+      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body).toEqual({
+      expect(response.status).toBe(422);
+      const body = await response.json();
+      expect(body).toEqual({
         error: 'No EAN-13 barcode found in uploaded image.',
       });
 
@@ -264,14 +316,21 @@ describe('Cookbooks API Integration Tests', () => {
       });
       setupGoogleBooksMock(null);
 
+      const testFile = await loadTestFile('backcover1.jpg');
+
       // when:
-      const response = await request(app)
-        .post('/api/cookbooks/identification')
-        .attach('backCoverFile', await loadTestFile('backcover1.jpg'), 'backcover1.jpg')
-        .expect(404);
+      const formData = new FormData();
+      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
 
       // then:
-      expect(response.body).toEqual({
+      expect(response.status).toBe(404);
+      const body = await response.json();
+      expect(body).toEqual({
         error: `No book found for the extracted EAN-13 barcode ${expectedEan13}.`,
       });
 
@@ -286,20 +345,31 @@ describe('Cookbooks API Integration Tests', () => {
     });
 
     it('should return 422 when no file is provided', async ({ app }) => {
-      await request(app)
-        .post('/api/cookbooks/identification')
-        .expect(422);
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: new FormData(),
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
 
     it('should return 422 when file is not an image', async ({ app }) => {
       // given:
       const invalidFileBuffer = Buffer.from('This is not an image');
 
-      // when/then:
-      await request(app)
-        .post('/api/cookbooks/identification')
-        .attach('backCoverFile', invalidFileBuffer, 'test-file.txt')
-        .expect(422);
+      // when:
+      const formData = new FormData();
+      formData.append('backCoverFile', new File([invalidFileBuffer], 'test-file.txt', { type: 'text/plain' }));
+
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(422);
     });
   });
 });
