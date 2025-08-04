@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
-import express from 'express';
+import { Hono } from 'hono';
 import { join } from 'node:path';
 import { afterEach as baseAfterEach, beforeEach as baseBeforeEach, test as baseTest } from 'vitest';
-import { createServer } from '../bootstrap/server';
+import { createApiServer } from '../bootstrap/apiServer';
 import { FileSystemMock } from './mocks/fileSystem.mock';
 
 export const test = baseTest
@@ -26,13 +26,13 @@ export const beforeEach = baseBeforeEach<TestApp>;
 export const afterEach = baseAfterEach<TestApp>;
 
 async function createTestApp() {
-  const app = express();
+  const app = new Hono();
 
   const connectionString = `:memory:`;
   const migrationsPath = join(import.meta.dirname, '../../database');
   const fileSystemMock = new FileSystemMock();
 
-  const { app: server, database } = await createServer({
+  const { app: api, database } = await createApiServer({
     database: {
       connectionString,
       migrationsPath,
@@ -47,7 +47,7 @@ async function createTestApp() {
     fileUploadsPath: '/data',
   }, fileSystemMock);
 
-  app.use(server);
+  app.route('/', api);
 
   return {
     app,
