@@ -15,9 +15,9 @@ WORKDIR /app
 RUN npm run build
 
 FROM node:24-alpine
-COPY package.json package-lock.json server.js /app/
+COPY package.json package-lock.json /app/
 COPY database /app/database/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/dist /app/dist
 WORKDIR /app
-CMD ["node", "server.js"]
+CMD ["node", "/app/dist/server/index.js"]
