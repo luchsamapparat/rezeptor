@@ -1,5 +1,5 @@
 import { type Context, type Env } from 'hono';
-import { Dependency } from 'hono-simple-di';
+import { Dependency, type Scope } from 'hono-simple-di';
 import { isNull, memoize } from 'lodash-es';
 import { type Database } from '../../common/persistence/database';
 import { FileRepositoryFactory } from '../../common/persistence/FileRepositoryFactory';
@@ -8,7 +8,7 @@ import { NodeFileSystem } from '../../common/server/NodeFileSystem';
 import { type Environment } from './environment';
 import { DocumentAnalysisClient } from './external/DocumentAnalysisClient';
 
-export const dependency = <E extends Env, T>(factory: (env: Environment, c: Context<E>) => T | Promise<T>) => new Dependency<T>(
+export const dependency = <E extends Env, T>(factory: (env: Environment, c: Context<E>) => T | Promise<T>, scope?: Scope) => new Dependency<T>(
   async (c) => {
     const env = await environment.resolve(c);
 
@@ -18,6 +18,7 @@ export const dependency = <E extends Env, T>(factory: (env: Environment, c: Cont
 
     return factory(env, c);
   },
+  { scope },
 );
 
 export const environment = new Dependency<Environment | null>(() => null);
@@ -38,7 +39,7 @@ export const database = memoize(<DatabaseSchema extends Record<string, unknown>>
   return databaseDependency as Dependency<Database<DatabaseSchema>>;
 });
 
-export const fileRepositoryFactory = dependency(async (env, c) => new FileRepositoryFactory(env.fileUploadsPath, await fileSystem.resolve(c)));
+export const fileRepositoryFactory = dependency(async (env, c) => new FileRepositoryFactory(env.fileUploadsPath, await fileSystem.resolve(c)), 'request');
 export const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
 
 type DependencyType<T> = T extends Dependency<infer U> ? U : never;
