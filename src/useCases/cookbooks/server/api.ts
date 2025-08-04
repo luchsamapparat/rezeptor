@@ -28,7 +28,7 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
     error: 'The uploaded file must be an image.',
   });
 
-const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<CookbooksDatabaseSchema>().resolve(c)));
+const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<CookbooksDatabaseSchema>().resolve(c)), 'request');
 const bookSearchClient = dependency(env => new BookSearchClient(env.bookSearch));
 
 export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDatabaseSchema> }>()
