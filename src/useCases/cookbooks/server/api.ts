@@ -1,9 +1,9 @@
-import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 
 import z from 'zod';
 import { identifierSchema } from '../../../application/model/identifier';
 import { database, dependency, type ApplicationContext } from '../../../application/server/di';
+import { validator } from '../../../common/server/validation';
 import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from './application/cookbooks';
 import { BookSearchClient } from './external/BookSearchClient';
 import type { CookbooksDatabaseSchema } from './persistence/cookbookDatabaseModel';
@@ -41,7 +41,7 @@ export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDa
   )
   .get(
     `/:${cookbookIdentifierName}`,
-    zValidator('param', cookbookIdentifierPathSchema),
+    validator('param', cookbookIdentifierPathSchema),
     async c => c.json(await getCookbook({
       ...c.var,
       cookbookId: c.req.valid('param')[cookbookIdentifierName],
@@ -49,7 +49,7 @@ export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDa
   )
   .post(
     `/`,
-    zValidator('json', addCookbookDtoSchema),
+    validator('json', addCookbookDtoSchema),
     async c => c.json(await addCookbook({
       ...c.var,
       cookbook: c.req.valid('json'),
@@ -57,7 +57,7 @@ export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDa
   )
   .post(
     `/identification`,
-    zValidator('form', identifyCookbookDtoSchema),
+    validator('form', identifyCookbookDtoSchema),
     async c => c.json(await identifyCookbook({
       ...c.var,
       backCoverFile: c.req.valid('form').backCoverFile,
@@ -65,8 +65,8 @@ export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDa
   )
   .post(
     `/:${cookbookIdentifierName}`,
-    zValidator('param', cookbookIdentifierPathSchema),
-    zValidator('json', editCookbookDtoSchema),
+    validator('param', cookbookIdentifierPathSchema),
+    validator('json', editCookbookDtoSchema),
     async c => c.json(await editCookbook({
       ...c.var,
       cookbookId: c.req.valid('param')[cookbookIdentifierName],
@@ -75,7 +75,7 @@ export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDa
   )
   .delete(
     `/:${cookbookIdentifierName}`,
-    zValidator('param', cookbookIdentifierPathSchema),
+    validator('param', cookbookIdentifierPathSchema),
     async (c) => {
       await removeCookbook({
         ...c.var,
