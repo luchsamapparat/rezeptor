@@ -1,5 +1,5 @@
-import * as capitalize from 'capitalize';
-import * as stopword from 'stopword';
+import capitalize from 'capitalize';
+import stopword from 'stopword';
 
 const stopwordList = stopword.deu;
 
