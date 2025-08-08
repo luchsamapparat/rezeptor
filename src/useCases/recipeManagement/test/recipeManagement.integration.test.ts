@@ -4,8 +4,8 @@ import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
-import { CookbookRepository } from '../../cookbooks/server/persistence/cookbookRepository';
-import { insertCookbookEntityMock } from '../../cookbooks/test/data/cookbookMockData';
+import { CookbookRepository } from '../../cookbookManagement/server/persistence/cookbookRepository';
+import { insertCookbookEntityMock } from '../../cookbookManagement/test/data/cookbookMockData';
 import { RecipeRepository } from '../server/persistence/recipeRepository';
 import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
 
@@ -14,7 +14,7 @@ vi.mock('@azure/ai-form-recognizer', () => ({
   AzureKeyCredential: vi.fn(),
 }));
 
-describe('Recipes API Integration Tests', () => {
+describe('Recipe Management API Integration Tests', () => {
   describe('GET /api/recipes', () => {
     it('should return empty array when no recipes exist', async ({ app }) => {
       // when:

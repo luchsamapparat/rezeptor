@@ -4,10 +4,10 @@ import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
-import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from '../../../tests/mocks/googleBooks.mock';
 import { BookSearchResult } from '../server/external/BookSearchClient';
 import { CookbookRepository } from '../server/persistence/cookbookRepository';
 import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
+import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from './mocks/googleBooks.mock';
 
 vi.mock('@googleapis/books', () => ({
   books: vi.fn(() => googleBooksMock),

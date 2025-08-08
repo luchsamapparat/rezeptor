@@ -4,12 +4,12 @@ import z from 'zod';
 import { identifierSchema } from '../../../application/model/identifier';
 import { database, dependency, type ApplicationContext } from '../../../application/server/di';
 import { validator } from '../../../common/server/validation';
-import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from './application/cookbooks';
+import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from './application/cookbookManagement';
 import { BookSearchClient } from './external/BookSearchClient';
-import type { CookbooksDatabaseSchema } from './persistence/cookbookDatabaseModel';
+import type { CookbookManagementDatabaseSchema } from './persistence/cookbookDatabaseModel';
 import { CookbookRepository } from './persistence/cookbookRepository';
 
-const cookbooksPath = '/cookbooks';
+const cookbookManagementPath = '/cookbooks';
 
 const cookbookIdentifierName = 'cookbookId';
 const cookbookIdentifierPathSchema = z.object({ [cookbookIdentifierName]: identifierSchema });
@@ -28,11 +28,11 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
     error: 'The uploaded file must be an image.',
   });
 
-const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<CookbooksDatabaseSchema>().resolve(c)), 'request');
+const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<CookbookManagementDatabaseSchema>().resolve(c)), 'request');
 const bookSearchClient = dependency(env => new BookSearchClient(env.bookSearch));
 
-export const cookbooksApi = new Hono<{ Variables: ApplicationContext<CookbooksDatabaseSchema> }>()
-  .basePath(cookbooksPath)
+export const cookbookManagementApi = new Hono<{ Variables: ApplicationContext<CookbookManagementDatabaseSchema> }>()
+  .basePath(cookbookManagementPath)
   .use(cookbookRepository.middleware('cookbookRepository'))
   .use(bookSearchClient.middleware('bookSearchClient'))
   .get(

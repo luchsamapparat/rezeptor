@@ -4,11 +4,11 @@ import z from 'zod';
 import { identifierSchema } from '../../../application/model/identifier';
 import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../application/server/di';
 import { validator } from '../../../common/server/validation';
-import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from './application/recipes';
-import type { RecipesDatabaseSchema } from './persistence/recipeDatabaseModel';
+import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from './application/recipeManagement';
+import type { RecipeManagementDatabaseSchema } from './persistence/recipeManagementDatabaseModel';
 import { RecipeRepository } from './persistence/recipeRepository';
 
-const recipesPath = '/recipes';
+const recipeManagementPath = '/recipes';
 
 const recipeIdentifierName = 'recipeId';
 const recipeIdentifierPathSchema = z.object({ [recipeIdentifierName]: identifierSchema });
@@ -37,7 +37,7 @@ const addRecipePhotoDtoSchema = z.object({
   message: 'The uploaded file must be an image.',
 });
 
-const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
+const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipeManagementDatabaseSchema>().resolve(c)), 'request');
 const recipeFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipes');
@@ -47,8 +47,8 @@ const recipePhotoFileRepository = dependency(async (_, c) => {
   return factory.createFileRepository('recipePhotos');
 }, 'request');
 
-export const recipesApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
-  .basePath(recipesPath)
+export const recipeManagementApi = new Hono<{ Variables: ApplicationContext<RecipeManagementDatabaseSchema> }>()
+  .basePath(recipeManagementPath)
   .use(recipesRepository.middleware('recipesRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
   .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))

@@ -3,4 +3,4 @@ import { routeModulePath } from '../../../common/client/routeConfig';
 
 const pathTo = routeModulePath(import.meta.dirname);
 
-export const recipesRoutes = [index(pathTo('RecipesController.tsx'))] satisfies RouteConfig;
+export const recipeManagementRoutes = [index(pathTo('RecipeManagementController.tsx'))] satisfies RouteConfig;

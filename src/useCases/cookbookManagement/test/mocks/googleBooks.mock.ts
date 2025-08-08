@@ -1,6 +1,6 @@
 import { isNull } from 'lodash-es';
 import { vi } from 'vitest';
-import type { BookSearchResult } from '../../useCases/cookbooks/server/external/BookSearchClient';
+import type { BookSearchResult } from '../../server/external/BookSearchClient';
 
 export const googleBookVolumesListMockFn = vi.fn();
 

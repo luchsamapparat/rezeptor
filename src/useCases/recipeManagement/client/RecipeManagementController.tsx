@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export default function RecipesController() {
+export default function RecipeManagementController() {
   useEffect(() => {
     (async () => {
       const response = await fetch('/api/recipes');
