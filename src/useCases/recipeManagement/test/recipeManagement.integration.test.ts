@@ -47,6 +47,55 @@ describe('Recipe Management API Integration Tests', () => {
       expect(body[0]).toMatchObject(insertRecipeEntity);
       expect(body[0].id).toBeDefined();
     });
+
+    it('should return recipe with cookbook data when recipe has cookbook', async ({ app, database }) => {
+      // given:
+      const cookbookRepository = new CookbookRepository(database);
+      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
+
+      const recipeRepository = new RecipeRepository(database);
+      const recipeWithCookbook = {
+        ...insertRecipeEntityMock,
+        cookbookId: cookbookEntity.id,
+      };
+      await recipeRepository.insert(recipeWithCookbook);
+
+      // when:
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveLength(1);
+      expect(body[0]).toMatchObject(recipeWithCookbook);
+      expect(body[0].cookbook).toBeDefined();
+      expect(body[0].cookbook.title).toBe(cookbookEntity.title);
+      expect(body[0].cookbook.id).toBe(cookbookEntity.id);
+    });
+
+    it('should return recipe with null cookbook when recipe has no cookbook', async ({ app, database }) => {
+      // given:
+      const recipeRepository = new RecipeRepository(database);
+      const recipeWithoutCookbook = {
+        ...insertRecipeEntityMock,
+        cookbookId: null,
+      };
+      await recipeRepository.insert(recipeWithoutCookbook);
+
+      // when:
+      const response = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveLength(1);
+      expect(body[0]).toMatchObject(recipeWithoutCookbook);
+      expect(body[0].cookbook).toBeNull();
+    });
   });
 
   describe('GET /api/recipes/:recipeId', () => {

@@ -4,6 +4,7 @@ import z from 'zod';
 import { identifierSchema } from '../../../application/model/identifier';
 import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../application/server/di';
 import { validator } from '../../../common/server/validation';
+import type { CookbookManagementDatabaseSchema } from '../../cookbookManagement/server/persistence/cookbookDatabaseModel';
 import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from './application/recipeManagement';
 import type { RecipeManagementDatabaseSchema } from './persistence/recipeManagementDatabaseModel';
 import { RecipeRepository } from './persistence/recipeRepository';
@@ -37,7 +38,7 @@ const addRecipePhotoDtoSchema = z.object({
   message: 'The uploaded file must be an image.',
 });
 
-const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipeManagementDatabaseSchema>().resolve(c)), 'request');
+const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipeManagementDatabaseSchema & CookbookManagementDatabaseSchema>().resolve(c)), 'request');
 const recipeFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipes');

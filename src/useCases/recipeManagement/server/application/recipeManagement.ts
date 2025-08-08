@@ -95,7 +95,7 @@ type GetRecipesArgs = {
   recipesRepository: RecipeRepository;
 };
 
-export const getRecipes = async ({ recipesRepository }: GetRecipesArgs) => recipesRepository.getAll();
+export const getRecipes = async ({ recipesRepository }: GetRecipesArgs) => recipesRepository.getAllWithCookbooks();
 
 type AddRecipePhotoArgs = {
   recipesRepository: RecipeRepository;
