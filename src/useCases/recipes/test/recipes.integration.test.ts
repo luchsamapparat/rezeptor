@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { eq } from 'drizzle-orm';
 import { omit } from 'lodash-es';
 import { describe, expect, vi } from 'vitest';
-import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
@@ -106,7 +104,8 @@ describe('Recipes API Integration Tests', () => {
       expect(body).toMatchObject(addRecipeDto);
       expect(body.id).toBeDefined();
 
-      const recipes = await database.select().from(databaseSchema.recipesTable);
+      const recipeRepository = new RecipeRepository(database);
+      const recipes = await recipeRepository.getAll();
       expect(recipes).toHaveLength(1);
       expect(recipes[0]).toMatchObject(addRecipeDto);
     });
@@ -189,7 +188,8 @@ describe('Recipes API Integration Tests', () => {
       expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
       expect(fileSystemMock.fileExists(`/data/recipes/${body.recipeFileId}`)).toBe(true);
 
-      const recipes = await database.select().from(databaseSchema.recipesTable);
+      const recipeRepository = new RecipeRepository(database);
+      const recipes = await recipeRepository.getAll();
       expect(recipes).toHaveLength(1);
       expect(recipes[0].recipeFileId).not.toBeNull();
     });
@@ -228,7 +228,8 @@ describe('Recipes API Integration Tests', () => {
       expect(body.id).toBeDefined();
       expect(body.recipeFileId).toBeDefined();
 
-      const recipes = await database.select().from(databaseSchema.recipesTable);
+      const recipeRepository = new RecipeRepository(database);
+      const recipes = await recipeRepository.getAll();
       expect(recipes).toHaveLength(1);
       expect(recipes[0].recipeFileId).not.toBeNull();
     });
@@ -260,7 +261,8 @@ describe('Recipes API Integration Tests', () => {
       expect(body).toMatchObject(editRecipeDto);
       expect(body.id).toBe(recipeId);
 
-      const [updatedRecipe] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
+      const recipeRepository = new RecipeRepository(database);
+      const updatedRecipe = await recipeRepository.findById(recipeId);
       expect(updatedRecipe).toMatchObject(editRecipeDto);
     });
 
@@ -314,7 +316,8 @@ describe('Recipes API Integration Tests', () => {
       // then:
       expect(response.status).toBe(204);
 
-      const recipeEntities = await database.select().from(databaseSchema.recipesTable);
+      const recipeRepository = new RecipeRepository(database);
+      const recipeEntities = await recipeRepository.getAll();
       expect(recipeEntities).toHaveLength(recipeEntityMockList.length - 1);
     });
 
@@ -381,8 +384,9 @@ describe('Recipes API Integration Tests', () => {
       // then: verify recipe is deleted from database
       expect(deleteResponse.status).toBe(204);
 
-      const recipes = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, createdRecipeId));
-      expect(recipes).toHaveLength(0);
+      const recipeRepository = new RecipeRepository(database);
+      const recipes = await recipeRepository.findById(createdRecipeId);
+      expect(recipes).toBeNull();
 
       // and: verify files are also deleted
       expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(false);
@@ -402,8 +406,8 @@ describe('Recipes API Integration Tests', () => {
       // then: verify recipe is deleted from database
       expect(response.status).toBe(204);
 
-      const recipeEntities = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeEntity.id));
-      expect(recipeEntities).toHaveLength(0);
+      const recipeEntities = await recipeRepository.findById(recipeEntity.id);
+      expect(recipeEntities).toBeNull();
     });
   });
 
@@ -439,8 +443,9 @@ describe('Recipes API Integration Tests', () => {
       expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${body.photoFileId}`)).toBe(true);
 
-      const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
-      expect(updatedRecipeEntity.photoFileId).not.toBeNull();
+      const recipeRepository = new RecipeRepository(database);
+      const updatedRecipeEntity = await recipeRepository.findById(recipeId);
+      expect(updatedRecipeEntity?.photoFileId).not.toBeNull();
     });
 
     it('should replace existing photo', async ({ app, database }) => {
@@ -476,9 +481,10 @@ describe('Recipes API Integration Tests', () => {
       expect(body.photoFileId).toBeDefined();
       expect(body.photoFileId).not.toBe(existingPhotoFileId);
 
-      const [updatedRecipeEntity] = await database.select().from(databaseSchema.recipesTable).where(eq(databaseSchema.recipesTable.id, recipeId));
-      expect(updatedRecipeEntity.photoFileId).not.toBe(existingPhotoFileId);
-      expect(updatedRecipeEntity.photoFileId).not.toBe(null);
+      const recipeRepository = new RecipeRepository(database);
+      const updatedRecipeEntity = await recipeRepository.findById(recipeId);
+      expect(updatedRecipeEntity?.photoFileId).not.toBe(existingPhotoFileId);
+      expect(updatedRecipeEntity?.photoFileId).not.toBe(null);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {

@@ -1,8 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { eq } from 'drizzle-orm';
 import { omit } from 'lodash-es';
 import { describe, expect, vi } from 'vitest';
-import { databaseSchema } from '../../../bootstrap/databaseSchema';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integration.test';
 import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
@@ -75,7 +73,8 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(addCookbookDto);
       expect(body.id).toBeDefined();
 
-      const cookbooks = await database.select().from(databaseSchema.cookbooksTable);
+      const cookbookRepository = new CookbookRepository(database);
+      const cookbooks = await cookbookRepository.getAll();
       expect(cookbooks).toHaveLength(1);
       expect(cookbooks[0]).toMatchObject(addCookbookDto);
     });
@@ -159,7 +158,8 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(editCookbookDto);
       expect(body.id).toBe(cookbookId);
 
-      const [updatedCookbookEntity] = await database.select().from(databaseSchema.cookbooksTable).where(eq(databaseSchema.cookbooksTable.id, cookbookId));
+      const cookbookRepository = new CookbookRepository(database);
+      const updatedCookbookEntity = await cookbookRepository.findById(cookbookId);
       expect(updatedCookbookEntity).toMatchObject(editCookbookDto);
     });
 
@@ -213,7 +213,8 @@ describe('Cookbooks API Integration Tests', () => {
       // then:
       expect(response.status).toBe(204);
 
-      const cookbookEntities = await database.select().from(databaseSchema.cookbooksTable);
+      const cookbookRepository = new CookbookRepository(database);
+      const cookbookEntities = await cookbookRepository.getAll();
       expect(cookbookEntities).toHaveLength(cookbookEntityMockList.length - 1);
     });
 
