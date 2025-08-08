@@ -65,7 +65,7 @@ Content-Type: application/json
 }
 
 ### add recipe from image file
-POST http://localhost:3000/api/recipes
+POST http://localhost:3000/api/recipes/from-photo
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -76,7 +76,7 @@ Content-Type: image/jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### add recipe from image file with cookbook context (replace cookbookId with actual ID)
-POST http://localhost:3000/api/recipes
+POST http://localhost:3000/api/recipes/from-photo
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
