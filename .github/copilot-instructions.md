@@ -1,123 +1,128 @@
-# Rezeptor AI Coding Instructions
+# Rezeptor Project - AI Agent Instructions
 
 ## Architecture Overview
 
-This is a **full-stack React Router v7 application** with server-side rendering, built around a **use case-driven architecture**. The app manages recipes and cookbooks with a clean separation between client/server code within each domain.
+**Rezeptor** is a recipe management application built with React Router v7 + Hono backend using a Clean Architecture approach organized around **Use Cases**. The project follows Domain-Driven Design patterns with clear separation between client/server layers.
 
-### Core Structure Pattern
+### Core Stack
+- **Frontend**: React Router v7 with React Query for state management
+- **Backend**: Hono web framework with dependency injection (`hono-simple-di`)
+- **Database**: SQLite with Drizzle ORM + migrations
+- **AI Services**: Azure Document Intelligence + Google Books API
+- **Testing**: Vitest with separate unit/integration test configs
+
+### Project Structure
 ```
-src/useCases/{domain}/
-├── client/           # React components, routes
-├── server/           # API handlers, business logic  
-├── test/             # Integration tests
-└── persistence/      # Database tables, repositories
+src/
+├── useCases/           # Domain boundaries (cookbookManagement, recipeManagement, recipeBrowser)
+├── application/        # Cross-cutting concerns (DI, environment, external clients)
+├── common/            # Shared infrastructure (database, file system, validation)
+└── bootstrap/         # Application composition and API server setup
 ```
 
 ## Key Development Patterns
 
-### 1. Request Handler Pattern
-Use `createRequestHandler()` for all API endpoints with automatic validation:
-
-```typescript
-// In src/useCases/{domain}/server/api/{endpoint}.ts
-export const getItems = createRequestHandler(
-  { querySchema: z.object({ limit: z.number() }) },
-  async (request, response) => {
-    // request.query is now typed and validated
-  }
-);
+### Use Case Organization
+Each domain follows this structure:
+```
+useCases/[domain]/
+├── client/            # React components, API clients, routes
+├── server/            # API routes, business logic, persistence
+└── test/              # Integration tests, mocks, test data
 ```
 
-### 2. Context-Based Dependency Injection
-Each use case has its own context store using AsyncLocalStorage:
-
+### Dependency Injection Pattern
+Use the `dependency()` helper for injecting services into Hono middleware:
 ```typescript
-// In {domain}Context.ts
-export const {domain}Context = createRequestContextStore<{Domain}Context>('{Domain}Context');
-
-// In API router
-app.use({domain}Context.middleware(() => ({
-  {domain}Repository: new {Domain}Repository(getApplicationContext().database),
-})));
+const repository = dependency(async (_, c) => 
+  new MyRepository(await database<Schema>().resolve(c)), 'request');
 ```
 
-### 3. DatabaseRepository Pattern
-Extend the base `DatabaseRepository<TTable>` class - it provides CRUD operations with UUID generation:
-
+### API Route Structure
+APIs follow RESTful patterns with proper validation:
 ```typescript
-export class CookbookRepository extends DatabaseRepository<typeof cookbooksTable> {
-  constructor(database: Database<{ cookbooksTable: typeof cookbooksTable }>) {
-    super(database, cookbooksTable);
+.post('/', validator('json', dtoSchema), async c => 
+  c.json(await useCase({ ...c.var, data: c.req.valid('json') }), 201))
+```
+
+### Repository Pattern
+All persistence extends `DatabaseRepository<TTable>` with auto-generated UUIDs:
+```typescript
+export class MyRepository extends DatabaseRepository<typeof myTable> {
+  constructor(database: Database<{ myTable: typeof myTable }>) {
+    super(database, myTable);
   }
 }
 ```
 
-### 4. Database Schema with Zod Integration
-Tables use Drizzle ORM with automatic Zod schema generation:
+## Development Workflows
 
+### Environment Setup
+Required environment variables (see `src/application/server/environment.ts`):
+```bash
+DB_CONNECTION_STRING=file:./data/database.sqlite
+DB_MIGRATIONS_PATH=./database
+FILE_UPLOADS_PATH=./data/uploads
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://...
+AZURE_DOCUMENT_INTELLIGENCE_KEY=...
+GOOGLE_API_KEY=...
+```
+
+### Development Commands
+- `npm run dev` - Start development server (port 3000)
+- `npm run db:generate` - Generate Drizzle migrations
+- `npm run db:migrate` - Run database migrations
+- `npm run test` - Unit tests only
+- `npm run test:integration` - Integration tests (use for API testing)
+- `npm run typecheck` - Full TypeScript + React Router type generation
+
+### Testing Strategy
+- **Unit tests**: `*.test.ts` - Pure business logic, utilities
+- **Integration tests**: `*.integration.test.ts` - Full API testing with in-memory database
+- **Test setup**: Use `beforeEach, it` from `src/tests/integration.test.ts` for API tests
+- **Mocking**: External services mocked via Vitest (`vi.mock()`) - see `src/tests/mocks/`
+
+### File Upload Handling
+Files are managed through `FileRepository` + `FileRepositoryFactory`:
 ```typescript
-export const itemsTable = sqliteTable('items', {
-  id: primaryKey(),
-  title: text().notNull(),
+const fileRepo = factory.createFileRepository('recipes'); // Creates /uploads/recipes/
+const fileId = await fileRepo.save(buffer); // Returns UUID filename
+await fileRepo.remove(fileId); // Handles missing files gracefully
+```
+
+## API Client Patterns
+
+### Hono Client Generation
+Type-safe API clients using Hono's RPC:
+```typescript
+const client = hc<typeof apiType>('/api');
+const response = await client.endpoint.$get();
+```
+
+### React Query Integration
+```typescript
+export const myQuery = () => ({
+  queryKey: ['resource'],
+  queryFn: async () => (await apiClient.resource.$get()).json(),
 });
-
-export const insertItemSchema = createInsertSchema(itemsTable).omit({ id: true });
 ```
 
-## Essential Commands
+## Error Handling & Validation
 
-### Development Workflow
-- `npm run typecheck` - Run TypeScript type checks
-- `npm run lint` - Run ESLint checks
-- `npm run dev` - Start dev server with HMR at http://localhost:5173
-- `npm run db:generate` - Generate migrations from schema changes
-- `npm run db:migrate` - Apply database migrations
-- `npm run test:integration` - Run integration tests with in-memory SQLite
+- **Validation**: Zod schemas with `validator()` middleware
+- **Business Errors**: `NotFoundError` (404), `ValidationError` (422)
+- **File Validation**: Use `.refine()` for file type checking
+- **Error Responses**: Consistent `{ error: string }` format
 
-## File Upload Handling
-When adding file uploads, configure in `createRequestHandler()`:
-```typescript
-{
-  fileUpload: {
-    fieldName: 'file',
-    required: true,
-    acceptedMimeTypes: ['image/'],
-    maxSize: 5 * 1024 * 1024
-  }
-}
-```
+## External Integrations
 
-## Testing Conventions
+- **Azure Document Intelligence**: OCR for recipe/cookbook extraction
+- **Google Books API**: Cookbook identification by ISBN/EAN-13
+- **File Processing**: Sharp for image handling, automated file cleanup on entity deletion
 
-Integration tests use the `test.extend()` pattern with automatic app/database setup:
+## Testing Anti-Patterns to Avoid
 
-```typescript
-import { describe, it, expect } from '../../../tests/integration.test';
-
-describe('API Tests', () => {
-  it('should work', async ({ app, database }) => {
-    const response = await request(app)
-      .get('/api/endpoint')
-      .expect(200);
-  });
-});
-```
-
-## Project-Specific Notes
-
-- **No generic middleware** - Use context stores and createRequestHandler for request processing
-- **Type-safe routing** - Routes defined in `routes.ts` files with React Router v7 config
-- **Automatic UUID generation** - DatabaseRepository base class handles ID creation
-- **In-memory testing** - Tests use SQLite `:memory:` databases
-- **Native File API** - File uploads converted from Multer to native File instances
-- **SSR enabled** - Full server-side rendering with React Router
-
-## Adding New Use Cases
-
-1. Create directory structure: `src/useCases/{domain}/{client,server,test}`
-2. Add table schema in `server/persistence/{domain}Table.ts`
-3. Create repository extending base DatabaseRepository class
-4. Set up context store in `server/{domain}Context.ts`
-5. Add API routes using createRequestHandler pattern
-6. Register routes in `src/useCases/routes.ts`
-7. Write integration tests following the extend pattern
+- Don't mock business logic - use integration tests instead
+- External API calls must be mocked (`setupAzureFormRecognizerMock`, `setupGoogleBooksMock`)
+- Use `FileSystemMock` for file operations testing
+- Always test both success and error scenarios (404, 422 responses)
