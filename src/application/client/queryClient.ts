@@ -1,4 +1,4 @@
-import { isServer, QueryClient } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 import { isNull } from 'lodash-es';
 import { unstable_createContext, unstable_RouterContextProvider } from 'react-router';
 
@@ -21,7 +21,7 @@ export const getQueryClient = (context: Readonly<unstable_RouterContextProvider>
 let clientQueryClient: QueryClient | null = null;
 
 export const getOrCreateQueryClient = () => {
-  if (isServer) {
+  if (import.meta.env.SSR) {
     return new QueryClient();
   }
 

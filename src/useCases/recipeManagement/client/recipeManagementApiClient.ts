@@ -1,10 +1,9 @@
-import { isServer } from '@tanstack/react-query';
 import { hc, type InferResponseType } from 'hono/client';
-import type { recipeManagementApi } from '../../recipeManagement/server/api';
+import type { recipeManagementApi } from '../server/api';
 
-const fetch = isServer ? await import('../../recipeManagement/server/api').then(m => m.recipeManagementApi.request) : undefined;
+const fetch = import.meta.env.SSR ? await import('../../recipeManagement/server/api').then(m => m.recipeManagementApi.request) : undefined;
 
-const recipeManagementApiClient = hc<typeof recipeManagementApi>(isServer ? '/' : '/api', { fetch });
+const recipeManagementApiClient = hc<typeof recipeManagementApi>(import.meta.env.SSR ? '/' : '/api', { fetch });
 
 export type RecipeDto = InferResponseType<typeof recipeManagementApiClient.recipes.$get>[0];
 
