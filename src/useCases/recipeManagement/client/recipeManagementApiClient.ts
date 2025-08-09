@@ -9,7 +9,7 @@ export type RecipeDto = InferResponseType<typeof recipeManagementApiClient.recip
 
 const recipesQueryKey = ['recipes'];
 
-export const recipesQuery = ({ initialData = [] }: { initialData?: RecipeDto[] } = {}) => ({
+export const recipesQuery = ({ initialData }: { initialData?: RecipeDto[] } = {}) => ({
   initialData,
   queryKey: recipesQueryKey,
   queryFn: async () => {
