@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { recipesQuery } from '../api/client';
 import type { Route } from './+types/RecipeBrowserController';
@@ -36,7 +37,21 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
 
   return (
     <div>
-      <h1>Recipe Browser</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1>Recipe Browser</h1>
+        <Link
+          to="/cookbooks"
+          style={{
+            padding: '0.5rem 1rem',
+            backgroundColor: '#007bff',
+            color: 'white',
+            textDecoration: 'none',
+            borderRadius: '4px',
+          }}
+        >
+          Manage Cookbooks
+        </Link>
+      </div>
 
       {recipes.length === 0
         ? (
@@ -92,11 +107,6 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
                           From:
                           {' '}
                           {recipe.cookbook.title}
-                        </span>
-                      )}
-                      {recipe.photoFileId && (
-                        <span style={{ padding: '0.25rem 0.5rem', background: '#e8f5e8', borderRadius: '4px' }}>
-                          📷
                         </span>
                       )}
                     </div>
