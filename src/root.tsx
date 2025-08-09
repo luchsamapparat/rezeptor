@@ -1,13 +1,22 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 
 import type { PropsWithChildren } from 'react';
 import type { Route } from './+types/root';
+import { getOrCreateQueryClient, provideQueryClient } from './application/client/queryClient';
 import { ApplicationError } from './application/ui/ApplicationError';
 
 export const links: Route.LinksFunction = () => [];
 
-export const queryClient = new QueryClient();
+export const unstable_middleware: Route.unstable_MiddlewareFunction[] = [async ({ context }, next) => {
+  provideQueryClient(context, getOrCreateQueryClient());
+  await next();
+}];
+
+export const unstable_clientMiddleware: Route.unstable_ClientMiddlewareFunction[] = [async ({ context }, next) => {
+  provideQueryClient(context, getOrCreateQueryClient());
+  await next();
+}];
 
 export function Layout({ children }: PropsWithChildren) {
   return (
@@ -29,7 +38,7 @@ export function Layout({ children }: PropsWithChildren) {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={getOrCreateQueryClient()}>
       <Outlet />
     </QueryClientProvider>
   );

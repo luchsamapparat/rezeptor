@@ -1,15 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { queryClient } from '../../../root';
-import { recipesQuery } from './apiClient';
+import { getQueryClient } from '../../../application/client/queryClient';
+import { recipesQuery } from '../../recipeManagement/client/recipeManagementApiClient';
+import type { Route } from './+types/RecipeBrowserController';
 
-export const clientLoader = () => queryClient.ensureQueryData(recipesQuery());
+export const loader = async ({ context }: Route.LoaderArgs) => ({ recipes: await getQueryClient(context).ensureQueryData(recipesQuery()) });
 
-export default function RecipeBrowserController() {
+export default function RecipeBrowserController({ loaderData }: Route.ComponentProps) {
   const {
     data: recipes = [],
     isLoading,
     error,
-  } = useQuery(recipesQuery());
+  } = useQuery(recipesQuery({ initialData: loaderData.recipes }));
 
   if (isLoading) {
     return (

@@ -4,5 +4,7 @@ export default {
   ssr: true,
   appDirectory: 'src',
   buildDirectory: 'dist',
-
+  future: {
+    unstable_middleware: true,
+  },
 } satisfies Config;
