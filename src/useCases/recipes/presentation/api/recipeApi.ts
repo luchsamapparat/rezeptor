@@ -6,7 +6,7 @@ import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
 import { recipeExtractionService, recipeFileRepository, recipePhotoFileRepository, recipeRepository } from '../../infrastructure/di';
 import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
-import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from '../../recipeManagement';
+import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipePhoto, getRecipes, removeRecipe } from '../../recipeManagement';
 
 const recipePath = '/recipes';
 
@@ -96,6 +96,22 @@ export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabas
         recipeId: c.req.valid('param')[recipeIdentifierName],
         photoFile,
       }));
+    },
+  )
+  .get(
+    `/:${recipeIdentifierName}/photo`,
+    validator('param', recipeIdentifierPathSchema),
+    async (c) => {
+      const photoData = await getRecipePhoto({
+        ...c.var,
+        recipeId: c.req.valid('param')[recipeIdentifierName],
+      });
+
+      // Return the image with appropriate headers
+      return c.body(photoData, 200, {
+        'Content-Type': 'image/jpeg',
+        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+      });
     },
   )
   .delete(

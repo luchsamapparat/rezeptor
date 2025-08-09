@@ -1,5 +1,6 @@
 import { isNull } from 'lodash-es';
 import type { Identifier } from '../../application/model/identifier';
+import type { FileRepository } from '../../common/persistence/FileRepository';
 import { NotFoundError } from '../../common/server/error';
 import type { Cookbook } from './cookbookManagement';
 
@@ -159,6 +160,27 @@ export const addRecipePhoto = async ({
   const photoFileId = await recipePhotoFileRepository.save(photoFile);
 
   return recipesRepository.update(recipeId, { photoFileId });
+};
+
+type GetRecipePhotoArgs = {
+  recipesRepository: RecipeRepository;
+  recipePhotoFileRepository: FileRepository;
+  recipeId: Identifier;
+};
+
+export const getRecipePhoto = async ({ recipesRepository, recipePhotoFileRepository, recipeId }: GetRecipePhotoArgs) => {
+  const recipe = await recipesRepository.findById(recipeId);
+
+  if (isNull(recipe)) {
+    throw new NotFoundError(`No recipe with ID ${recipeId} found`);
+  }
+
+  if (isNull(recipe.photoFileId)) {
+    throw new NotFoundError(`Recipe with ID ${recipeId} has no photo`);
+  }
+
+  const photoData = await recipePhotoFileRepository.get(recipe.photoFileId);
+  return photoData;
 };
 
 type RemoveRecipeArgs = {

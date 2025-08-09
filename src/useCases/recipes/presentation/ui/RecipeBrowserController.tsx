@@ -53,6 +53,25 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
                 {recipes.map(recipe => (
                   <div key={recipe.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem' }}>
+                    {recipe.photoFileId && (
+                      <div style={{ marginBottom: '1rem' }}>
+                        <img
+                          src={`/api/recipes/${recipe.id}/photo`}
+                          alt={`Photo of ${recipe.title}`}
+                          style={{
+                            width: '100%',
+                            height: '200px',
+                            objectFit: 'cover',
+                            borderRadius: '4px',
+                            border: '1px solid #eee',
+                          }}
+                          onError={(e) => {
+                            // Hide the image if it fails to load
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
                     <h3>{recipe.title}</h3>
                     <div style={{ marginBottom: '1rem' }}>
                       {recipe.content.length > 200

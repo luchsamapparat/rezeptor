@@ -597,4 +597,73 @@ describe('Recipe Management API Integration Tests', () => {
       expect(response.status).toBe(422);
     });
   });
+
+  describe('GET /api/recipes/:recipeId/photo', () => {
+    let recipeId: string;
+
+    beforeEach(async ({ database, app }) => {
+      const recipeRepository = new RecipeDatabaseRepository(database);
+      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
+      recipeId = recipeEntity.id;
+
+      // Add a photo to the recipe
+      const testFile = await loadTestFile('recipe1.jpg');
+      const formData = new FormData();
+      formData.append('photoFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+
+      // Use the API to upload the photo so we have a real photo stored
+      const uploadResponse = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'PUT',
+        body: formData,
+      }));
+
+      expect(uploadResponse.status).toBe(200);
+    });
+
+    it('should return recipe photo when it exists', async ({ app }) => {
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toBe('image/jpeg');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=31536000');
+
+      // Verify we get back image data
+      const photoData = await response.arrayBuffer();
+      expect(photoData.byteLength).toBeGreaterThan(0);
+    });
+
+    it('should return 404 for non-existent recipe', async ({ app }) => {
+      // given:
+      const nonExistentId = faker.string.uuid();
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}/photo`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
+    });
+
+    it('should return 404 when recipe has no photo', async ({ app, database }) => {
+      // given: create a recipe without a photo
+      const recipeRepository = new RecipeDatabaseRepository(database);
+      const recipeEntityWithoutPhoto = await recipeRepository.insert({
+        ...insertRecipeEntityMock,
+        photoFileId: null,
+      });
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeEntityWithoutPhoto.id}/photo`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(404);
+    });
+  });
 });
