@@ -4,11 +4,11 @@ import z from 'zod';
 import { identifierSchema } from '../../../../application/model/identifier';
 import { database, dependency, type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
-import { CookbookRepository } from '../../../recipes/server/persistence/cookbookRepository';
 import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from '../../cookbookManagement';
-import { BookSearchClient } from '../external/BookSearchClient';
-import { DocumentAnalysisClient } from '../external/DocumentAnalysisClient';
-import type { RecipesDatabaseSchema } from '../persistence/recipeDatabaseModel';
+import { AzureDocumentAnalysisClient } from '../../infrastructure/AzureDocumentAnalysisClient';
+import { GoogleBooksClient } from '../../infrastructure/GoogleBooksClient';
+import { CookbookDatabaseRepository } from '../../infrastructure/persistence/CookbookDatabaseRepository';
+import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
 
 const cookbookPath = '/cookbooks';
 
@@ -29,15 +29,15 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
     error: 'The uploaded file must be an image.',
   });
 
-const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
-const bookSearchClient = dependency(env => new BookSearchClient(env.bookSearch));
-const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
+const cookbookRepository = dependency(async (_, c) => new CookbookDatabaseRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
+const bookMetadataService = dependency(env => new GoogleBooksClient(env.googleBooks));
+const barcodeExtractionService = dependency(env => new AzureDocumentAnalysisClient(env.azureDocumentAnalysis));
 
 export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(cookbookPath)
   .use(cookbookRepository.middleware('cookbookRepository'))
-  .use(bookSearchClient.middleware('bookSearchClient'))
-  .use(documentAnalysisClient.middleware('documentAnalysisClient'))
+  .use(bookMetadataService.middleware('bookMetadataService'))
+  .use(barcodeExtractionService.middleware('barcodeExtractionService'))
   .get(
     '/',
     async c => c.json(await getCookbooks(c.var)),
@@ -66,7 +66,7 @@ export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatab
       backCoverFile: c.req.valid('form').backCoverFile,
     }), 201),
   )
-  .post(
+  .patch(
     `/:${cookbookIdentifierName}`,
     validator('param', cookbookIdentifierPathSchema),
     validator('json', editCookbookDtoSchema),

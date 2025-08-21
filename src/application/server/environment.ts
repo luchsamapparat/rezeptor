@@ -12,11 +12,11 @@ const envSchema = z.object({
     connectionString: DB_CONNECTION_STRING,
     migrationsPath: DB_MIGRATIONS_PATH,
   },
-  documentAnalysis: {
+  azureDocumentAnalysis: {
     endpoint: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT,
     key: AZURE_DOCUMENT_INTELLIGENCE_KEY,
   },
-  bookSearch: {
+  googleBooks: {
     key: GOOGLE_API_KEY,
   },
   fileUploadsPath: FILE_UPLOADS_PATH,

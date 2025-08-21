@@ -3,10 +3,10 @@ import { omit } from 'lodash-es';
 import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
-import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
-import { BookSearchResult } from '../server/external/BookSearchClient';
-import { CookbookRepository } from '../server/persistence/cookbookRepository';
+import type { BookMetadata } from '../cookbookManagement';
+import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
+import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
 import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from './mocks/googleBooks.mock';
 
 vi.mock('@googleapis/books', () => ({
@@ -34,7 +34,7 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return all cookbooks when they exist', async ({ app, database }) => {
       // given:
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const cookbookEntities = cookbookEntityMockList.map(toInsertCookbookEntity);
 
       await cookbookRepository.insertMany(cookbookEntities);
@@ -73,7 +73,7 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(addCookbookDto);
       expect(body.id).toBeDefined();
 
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const cookbooks = await cookbookRepository.getAll();
       expect(cookbooks).toHaveLength(1);
       expect(cookbooks[0]).toMatchObject(addCookbookDto);
@@ -136,7 +136,7 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
       cookbookId = cookbookEntity.id;
     });
@@ -147,7 +147,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
-        method: 'POST', // Note: Hono uses POST for PATCH in this API
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editCookbookDto),
       }));
@@ -158,7 +158,7 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(editCookbookDto);
       expect(body.id).toBe(cookbookId);
 
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const updatedCookbookEntity = await cookbookRepository.findById(cookbookId);
       expect(updatedCookbookEntity).toMatchObject(editCookbookDto);
     });
@@ -170,7 +170,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const response = await app.request(new Request(`http://localhost/api/cookbooks/${nonExistentId}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editCookbookDto),
       }));
@@ -185,7 +185,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(invalidEditCookbookDto),
       }));
@@ -199,7 +199,7 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const [cookbookEntity] = await cookbookRepository.insertMany(cookbookEntityMockList);
       cookbookId = cookbookEntity.id;
     });
@@ -213,7 +213,7 @@ describe('Cookbooks API Integration Tests', () => {
       // then:
       expect(response.status).toBe(204);
 
-      const cookbookRepository = new CookbookRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database);
       const cookbookEntities = await cookbookRepository.getAll();
       expect(cookbookEntities).toHaveLength(cookbookEntityMockList.length - 1);
     });
@@ -235,7 +235,7 @@ describe('Cookbooks API Integration Tests', () => {
   describe('POST /api/cookbooks/identification', () => {
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
       // given:
-      const expectedBookSearchResult: BookSearchResult = {
+      const expectedBookMetadata: BookMetadata = {
         title: cookbookEntityMock.title,
         authors: cookbookEntityMock.authors,
         isbn10: cookbookEntityMock.isbn10?.toString() ?? null,
@@ -247,7 +247,7 @@ describe('Cookbooks API Integration Tests', () => {
       setupAzureFormRecognizerMock({
         ean13: expectedEan13,
       });
-      setupGoogleBooksMock(expectedBookSearchResult);
+      setupGoogleBooksMock(expectedBookMetadata);
 
       const testFile = await loadTestFile('backcover1.jpg');
 
@@ -263,7 +263,7 @@ describe('Cookbooks API Integration Tests', () => {
       // then:
       expect(response.status).toBe(201);
       const body = await response.json();
-      expect(body).toEqual(expectedBookSearchResult);
+      expect(body).toEqual(expectedBookMetadata);
 
       expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',

@@ -1,5 +1,5 @@
 import { type RouteConfig, index } from '@react-router/dev/routes';
-import { routeModulePath } from '../../../common/client/routeConfig';
+import { routeModulePath } from '../../../../common/client/routeConfig';
 
 const pathTo = routeModulePath(import.meta.dirname);
 

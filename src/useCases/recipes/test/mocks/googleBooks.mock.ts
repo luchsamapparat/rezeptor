@@ -1,6 +1,6 @@
 import { isNull } from 'lodash-es';
 import { vi } from 'vitest';
-import type { BookSearchResult } from '../../server/external/BookSearchClient';
+import type { BookMetadata } from '../../cookbookManagement';
 
 export const googleBookVolumesListMockFn = vi.fn();
 
@@ -10,7 +10,7 @@ export const googleBooksMock = {
   },
 };
 
-export function setupGoogleBooksMock(bookData: BookSearchResult | null) {
+export function setupGoogleBooksMock(bookData: BookMetadata | null) {
   googleBookVolumesListMockFn.mockResolvedValue({
     data: {
       items: isNull(bookData)

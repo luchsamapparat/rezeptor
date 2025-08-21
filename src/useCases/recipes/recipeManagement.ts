@@ -1,9 +1,49 @@
 import { isNull } from 'lodash-es';
 import type { Identifier } from '../../application/model/identifier';
-import type { FileRepository } from '../../common/persistence/FileRepository';
 import { NotFoundError } from '../../common/server/error';
-import type { DocumentAnalysisClient } from './server/external/DocumentAnalysisClient';
-import type { RecipeRepository } from './server/persistence/recipeRepository';
+import type { Cookbook } from './cookbookManagement';
+
+export type RecipeRepository = {
+  insert(newRecipe: NewRecipe): Promise<Recipe>;
+  update(recipeId: Identifier, changes: RecipeChanges): Promise<Recipe | null>;
+  findById(recipeId: Identifier): Promise<Recipe | null>;
+  getAllWithCookbooks(): Promise<RecipeWithCookbook[]>;
+  deleteById(recipeId: Identifier): Promise<Recipe | null>;
+};
+
+export type RecipeFileRepository = {
+  save(file: File): Promise<string>;
+  remove(filename: string): Promise<void>;
+};
+
+export type RecipePhotoFileRepository = {
+  save(file: File): Promise<string>;
+  remove(filename: string): Promise<void>;
+};
+
+export type RecipeContentExtractionService = {
+  extractRecipeContents(file: File): Promise<RecipeContents>;
+};
+
+export type RecipeContents = {
+  title: string | null;
+  pageNumber: number | null;
+  content: string;
+};
+
+type Recipe = {
+  id: Identifier;
+  title: string;
+  content: string;
+  photoFileId: string | null;
+  recipeFileId: string | null;
+  cookbookId: string | null;
+  pageNumber: number | null;
+};
+
+type RecipeWithCookbook = Recipe & {
+  cookbook: Cookbook | null;
+};
 
 type NewRecipe = {
   title: string;
@@ -23,8 +63,8 @@ export const addRecipe = async ({ recipesRepository, recipe }: AddRecipeArgs) =>
 
 type AddRecipeFromPhotoArgs = {
   recipesRepository: RecipeRepository;
-  recipeFileRepository: FileRepository;
-  documentAnalysisClient: DocumentAnalysisClient;
+  recipeFileRepository: RecipeFileRepository;
+  recipeContentExtractionService: RecipeContentExtractionService;
   recipeFile: File;
   cookbookId?: string | null;
 };
@@ -32,17 +72,17 @@ type AddRecipeFromPhotoArgs = {
 export const addRecipeFromPhoto = async ({
   recipesRepository,
   recipeFileRepository,
-  documentAnalysisClient,
+  recipeContentExtractionService,
   recipeFile,
   cookbookId,
 }: AddRecipeFromPhotoArgs) => {
-  const documentContents = await documentAnalysisClient.extractDocumentContents(recipeFile);
-  const recipeFileId = await recipeFileRepository.save(new Uint8Array(await recipeFile.arrayBuffer()));
+  const recipeContents = await recipeContentExtractionService.extractRecipeContents(recipeFile);
+  const recipeFileId = await recipeFileRepository.save(recipeFile);
 
   const recipeData: NewRecipe = {
-    title: documentContents.title || '',
-    content: documentContents.content,
-    pageNumber: documentContents.pageNumber,
+    title: recipeContents.title || '',
+    content: recipeContents.content,
+    pageNumber: recipeContents.pageNumber,
     recipeFileId,
     cookbookId: cookbookId || null,
     photoFileId: null,
@@ -99,7 +139,7 @@ export const getRecipes = async ({ recipesRepository }: GetRecipesArgs) => recip
 
 type AddRecipePhotoArgs = {
   recipesRepository: RecipeRepository;
-  recipePhotoFileRepository: FileRepository;
+  recipePhotoFileRepository: RecipePhotoFileRepository;
   recipeId: Identifier;
   photoFile: File;
 };
@@ -116,15 +156,15 @@ export const addRecipePhoto = async ({
     throw new NotFoundError(`No recipe with ID ${recipeId} found`);
   }
 
-  const photoFileId = await recipePhotoFileRepository.save(new Uint8Array(await photoFile.arrayBuffer()));
+  const photoFileId = await recipePhotoFileRepository.save(photoFile);
 
   return recipesRepository.update(recipeId, { photoFileId });
 };
 
 type RemoveRecipeArgs = {
   recipesRepository: RecipeRepository;
-  recipePhotoFileRepository: FileRepository;
-  recipeFileRepository: FileRepository;
+  recipePhotoFileRepository: RecipePhotoFileRepository;
+  recipeFileRepository: RecipeFileRepository;
   recipeId: Identifier;
 };
 

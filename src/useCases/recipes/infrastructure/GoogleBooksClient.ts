@@ -1,27 +1,21 @@
 import { books, type books_v1 } from '@googleapis/books';
 import { isEmpty, isUndefined } from 'lodash-es';
+import type { BookMetadata, BookMetadataService } from '../cookbookManagement';
 
-export type BookSearchResult = {
-  title: string;
-  authors: string[];
-  isbn10: string | null;
-  isbn13: string | null;
-};
-
-type BookSearchClientOptions = {
+type GoogleBooksClientOptions = {
   key: string;
 };
 
-export class BookSearchClient {
+export class GoogleBooksClient implements BookMetadataService {
   private apiClient: books_v1.Books;
 
   constructor(
-    { key }: BookSearchClientOptions,
+    { key }: GoogleBooksClientOptions,
   ) {
     this.apiClient = books({ version: 'v1', key });
   }
 
-  async findBook(isbn: string): Promise<BookSearchResult | null> {
+  async findBook(isbn: string): Promise<BookMetadata | null> {
     const sanitizedIsbn = isbn.replace(/\D/g, '');
 
     if (sanitizedIsbn.length === 0) {

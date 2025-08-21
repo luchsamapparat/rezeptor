@@ -1,14 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
-import type {
-  AddCookbookDto,
-  EditCookbookDto,
-} from '../../server/api/cookbookApiModel';
-import type {
-  CookbookEntity,
-  InsertCookbookEntity,
-  UpdateCookbookEntity,
-} from '../../server/persistence/cookbookDatabaseModel';
+import type { CookbookEntity, InsertCookbookEntity, UpdateCookbookEntity } from '../../infrastructure/persistence/cookbooksTable';
+import type { AddCookbookDto, EditCookbookDto } from '../../presentation/api/client';
 
 export const cookbookEntityMockDataFactory = Factory.define<CookbookEntity>(() => ({
   id: faker.string.uuid(),

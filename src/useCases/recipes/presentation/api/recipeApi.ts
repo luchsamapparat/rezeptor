@@ -4,10 +4,10 @@ import z from 'zod';
 import { identifierSchema } from '../../../../application/model/identifier';
 import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
+import { AzureDocumentAnalysisClient } from '../../infrastructure/AzureDocumentAnalysisClient';
+import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
+import { RecipeDatabaseRepository } from '../../infrastructure/persistence/RecipeDatabaseRepository';
 import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from '../../recipeManagement';
-import { DocumentAnalysisClient } from '../external/DocumentAnalysisClient';
-import type { RecipesDatabaseSchema } from '../persistence/recipeDatabaseModel';
-import { RecipeRepository } from '../persistence/recipeRepository';
 
 const recipePath = '/recipes';
 
@@ -38,7 +38,7 @@ const addRecipePhotoDtoSchema = z.object({
   message: 'The uploaded file must be an image.',
 });
 
-const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
+const recipeRepository = dependency(async (_, c) => new RecipeDatabaseRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
 const recipeFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipes');
@@ -47,14 +47,14 @@ const recipePhotoFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipePhotos');
 }, 'request');
-const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
+const recipeContentExtractionService = dependency(env => new AzureDocumentAnalysisClient(env.azureDocumentAnalysis));
 
 export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(recipePath)
-  .use(recipesRepository.middleware('recipesRepository'))
+  .use(recipeRepository.middleware('recipesRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
   .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))
-  .use(documentAnalysisClient.middleware('documentAnalysisClient'))
+  .use(recipeContentExtractionService.middleware('recipeContentExtractionService'))
   .get(
     '/',
     async c => c.json(await getRecipes(c.var)),

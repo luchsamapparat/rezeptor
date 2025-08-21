@@ -10,11 +10,11 @@ export class FileRepository {
    * Saves a file to the repository directory.
    * Creates the directory if it does not exist.
    */
-  async save(file: Buffer | Uint8Array) {
+  async save(file: File) {
     const filename = crypto.randomUUID();
     const filePath = this.fileSystem.join(this.directory, filename);
     await this.fileSystem.mkdir(this.directory, { recursive: true });
-    await this.fileSystem.writeFile(filePath, file);
+    await this.fileSystem.writeFile(filePath, new Uint8Array(await file.arrayBuffer()));
     return filename;
   }
 

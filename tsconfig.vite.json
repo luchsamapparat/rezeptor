@@ -5,9 +5,7 @@
     "src/**/*",
   ],
   "exclude": [
-    "**/test/**",
-    "**/*.integration.test.ts",
-    "**/integration.test.ts"
+    // "**/test/**"
   ],
   "compilerOptions": {
     "composite": true,

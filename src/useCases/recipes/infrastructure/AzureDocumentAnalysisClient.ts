@@ -1,29 +1,21 @@
 import type { FormRecognizerFeature } from '@azure/ai-form-recognizer';
-import { DocumentAnalysisClient as AzureDocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
-import { getFileSize } from '../../../../common/server/file';
-import { resizeImage } from '../../../../common/server/image';
-import { sanitizeString } from '../../../../common/server/string';
+import { AzureKeyCredential, DocumentAnalysisClient } from '@azure/ai-form-recognizer';
+import { getFileSize } from '../../../common/server/file';
+import { resizeImage } from '../../../common/server/image';
+import { sanitizeString } from '../../../common/server/string';
+import type { Barcode, BarcodeExtractionService } from '../cookbookManagement';
+import type { RecipeContentExtractionService, RecipeContents } from '../recipeManagement';
 
-type Barcode = {
-  ean13: string | null;
-};
-
-type DocumentContents = {
-  title: string | null;
-  pageNumber: number | null;
-  content: string;
-};
-
-type DocumentAnalysisClientOptions = {
+type AzureDocumentAnalysisClientOptions = {
   endpoint: string;
   key: string;
 };
 
-export class DocumentAnalysisClient {
-  private apiClient: AzureDocumentAnalysisClient;
+export class AzureDocumentAnalysisClient implements BarcodeExtractionService, RecipeContentExtractionService {
+  private apiClient: DocumentAnalysisClient;
 
-  constructor({ endpoint, key }: DocumentAnalysisClientOptions) {
-    this.apiClient = new AzureDocumentAnalysisClient(
+  constructor({ endpoint, key }: AzureDocumentAnalysisClientOptions) {
+    this.apiClient = new DocumentAnalysisClient(
       endpoint,
       new AzureKeyCredential(key),
     );
@@ -37,7 +29,7 @@ export class DocumentAnalysisClient {
     };
   }
 
-  async extractDocumentContents(file: File): Promise<DocumentContents> {
+  async extractRecipeContents(file: File): Promise<RecipeContents> {
     const { content, paragraphs } = await this.analyzeDocument(file);
 
     const title = paragraphs?.find(({ role }) => role === 'title')?.content ?? null;

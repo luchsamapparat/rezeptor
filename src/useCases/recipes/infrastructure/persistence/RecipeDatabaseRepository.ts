@@ -1,10 +1,11 @@
 import { eq, getTableColumns } from 'drizzle-orm';
 import type { Database } from '../../../../common/persistence/database';
 import { DatabaseRepository } from '../../../../common/persistence/DatabaseRepository';
-import { cookbooksTable } from '../../../recipes/server/persistence/cookbooksTable';
+import type { RecipeRepository } from '../../recipeManagement';
+import { cookbooksTable } from './cookbooksTable';
 import { recipesTable } from './recipesTable';
 
-export class RecipeRepository extends DatabaseRepository<typeof recipesTable> {
+export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesTable> implements RecipeRepository {
   constructor(
     database: Database<{ recipesTable: typeof recipesTable; cookbooksTable: typeof cookbooksTable }>,
   ) {

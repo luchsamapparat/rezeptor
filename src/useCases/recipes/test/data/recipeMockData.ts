@@ -1,15 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
-import type {
-  AddFromPhotoRecipeDto,
-  AddRecipeDto,
-  EditRecipeDto,
-} from '../../server/api/recipeApiModel';
-import type {
-  InsertRecipeEntity,
-  RecipeEntity,
-  UpdateRecipeEntity,
-} from '../../server/persistence/recipeDatabaseModel';
+import type { InsertRecipeEntity, RecipeEntity, UpdateRecipeEntity } from '../../infrastructure/persistence/recipesTable';
+import type { AddFromPhotoRecipeDto, AddRecipeDto, EditRecipeDto } from '../../presentation/api/client';
 
 export const recipeEntityMockDataFactory = Factory.define<RecipeEntity>(() => ({
   id: faker.string.uuid(),
@@ -19,10 +11,6 @@ export const recipeEntityMockDataFactory = Factory.define<RecipeEntity>(() => ({
   pageNumber: faker.number.int({ min: 1, max: 500 }),
   photoFileId: faker.string.uuid(),
   recipeFileId: faker.string.uuid(),
-}));
-
-export const addFromPhotoRecipeDtoMockDataFactory = Factory.define<AddFromPhotoRecipeDto>(() => ({
-  cookbookId: faker.string.uuid(),
 }));
 
 export const recipeEntityMockList = recipeEntityMockDataFactory.buildList(10);
@@ -37,6 +25,10 @@ export const toUpdateRecipeEntity = (entity: RecipeEntity): UpdateRecipeEntity =
   const { id, ...updateEntity } = entity;
   return updateEntity;
 };
+
+export const addFromPhotoRecipeDtoMockDataFactory = Factory.define<Omit<AddFromPhotoRecipeDto, 'recipeFile'>>(() => ({
+  cookbookId: faker.string.uuid(),
+}));
 
 export const toAddRecipeDto = (entity: RecipeEntity): AddRecipeDto => {
   const { id, ...addDto } = entity;

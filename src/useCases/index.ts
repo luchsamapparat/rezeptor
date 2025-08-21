@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { ApplicationContext } from '../application/server/di';
-import { recipesApi } from './recipes/server/api';
-import { recipesDatabaseSchema, type RecipesDatabaseSchema } from './recipes/server/persistence/recipeDatabaseModel';
+import { recipesDatabaseSchema, type RecipesDatabaseSchema } from './recipes/infrastructure/persistence/recipeDatabaseModel';
+import { recipesApi } from './recipes/presentation/api/server';
 
 export const useCasesDatabaseSchema = { ...recipesDatabaseSchema };
 export type UseCasesDatabaseSchema = RecipesDatabaseSchema;

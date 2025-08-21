@@ -37,11 +37,11 @@ async function createTestApp() {
       connectionString,
       migrationsPath,
     },
-    documentAnalysis: {
+    azureDocumentAnalysis: {
       endpoint: faker.internet.url(),
       key: faker.string.alphanumeric(),
     },
-    bookSearch: {
+    googleBooks: {
       key: faker.string.alphanumeric(),
     },
     fileUploadsPath: '/data',
