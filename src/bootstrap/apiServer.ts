@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { database, documentAnalysisClient, environment, fileRepositoryFactory, fileSystem, type ApplicationContext } from '../application/server/di';
+import { database, environment, fileRepositoryFactory, fileSystem, type ApplicationContext } from '../application/server/di';
 import type { Environment } from '../application/server/environment';
 import { initDatabaseConnection, type Database } from '../common/persistence/database';
 import { type FileSystemOperations } from '../common/server/FileSystemOperations';
@@ -33,8 +33,7 @@ export async function createApiServer(env: Environment, fs: FileSystemOperations
     .use(environment.injection(env).middleware('environment'))
     .use(fileSystem.injection(fs).middleware('fileSystem'))
     .use(database<typeof databaseSchema>().injection(db).middleware('database'))
-    .use(fileRepositoryFactory.middleware('fileRepositoryFactory'))
-    .use(documentAnalysisClient.middleware('documentAnalysisClient'));
+    .use(fileRepositoryFactory.middleware('fileRepositoryFactory'));
 
   app.route('/api', api);
 

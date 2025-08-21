@@ -2,11 +2,11 @@ import { faker } from '@faker-js/faker';
 import { omit } from 'lodash-es';
 import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
-import { beforeEach, it } from '../../../tests/integration.test';
+import { beforeEach, it } from '../../../tests/integrationTest';
 import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
-import { CookbookRepository } from '../../cookbookManagement/server/persistence/cookbookRepository';
-import { insertCookbookEntityMock } from '../../cookbookManagement/test/data/cookbookMockData';
+import { CookbookRepository } from '../server/persistence/cookbookRepository';
 import { RecipeRepository } from '../server/persistence/recipeRepository';
+import { insertCookbookEntityMock } from './data/cookbookMockData';
 import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
 
 vi.mock('@azure/ai-form-recognizer', () => ({
@@ -213,7 +213,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('recipeFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData.append('recipeFile', testFile);
       formData.append('cookbookId', cookbookId);
 
       const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
@@ -257,7 +257,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('recipeFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData.append('recipeFile', testFile);
 
       const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
         method: 'POST',
@@ -395,7 +395,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       const testFile1 = await loadTestFile('recipe1.jpg');
       const formData1 = new FormData();
-      formData1.append('recipeFile', new File([testFile1], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData1.append('recipeFile', testFile1);
 
       const createResponse = await app.request(new Request('http://localhost/api/recipes/from-photo', {
         method: 'POST',
@@ -410,7 +410,7 @@ describe('Recipe Management API Integration Tests', () => {
       // Add a photo to the recipe
       const testFile2 = await loadTestFile('recipe2.jpg');
       const formData2 = new FormData();
-      formData2.append('photoFile', new File([testFile2], 'recipe2.jpg', { type: 'image/jpeg' }));
+      formData2.append('photoFile', testFile2);
 
       const photoResponse = await app.request(new Request(`http://localhost/api/recipes/${createdRecipeId}/photo`, {
         method: 'PUT',
@@ -476,7 +476,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('photoFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData.append('photoFile', testFile);
 
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
         method: 'PUT',
@@ -502,7 +502,7 @@ describe('Recipe Management API Integration Tests', () => {
       const testFile1 = await loadTestFile('recipe1.jpg');
 
       const formData1 = new FormData();
-      formData1.append('photoFile', new File([testFile1], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData1.append('photoFile', testFile1);
 
       const firstUploadResponse = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
         method: 'PUT',
@@ -516,7 +516,7 @@ describe('Recipe Management API Integration Tests', () => {
       // when: upload a different photo to replace the existing one
       const testFile2 = await loadTestFile('recipe2.jpg');
       const formData2 = new FormData();
-      formData2.append('photoFile', new File([testFile2], 'recipe2.jpg', { type: 'image/jpeg' }));
+      formData2.append('photoFile', testFile2);
 
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
         method: 'PUT',
@@ -543,7 +543,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('photoFile', new File([testFile], 'recipe1.jpg', { type: 'image/jpeg' }));
+      formData.append('photoFile', testFile);
 
       const response = await app.request(new Request(`http://localhost/api/recipes/${nonExistentId}/photo`, {
         method: 'PUT',

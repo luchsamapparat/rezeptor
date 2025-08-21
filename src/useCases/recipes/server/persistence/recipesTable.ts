@@ -1,6 +1,6 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { foreignKey, key, primaryKey } from '../../../../common/persistence/databaseSchema';
-import { cookbooksTable } from '../../../cookbookManagement/server/persistence/cookbooksTable';
+import { cookbooksTable } from '../../../recipes/server/persistence/cookbooksTable';
 
 export const recipesTable = sqliteTable('recipes', {
   id: primaryKey(),

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getQueryClient } from '../../../application/client/queryClient';
-import { recipesQuery } from '../../recipeManagement/client/recipeManagementApiClient';
 import type { Route } from './+types/RecipeBrowserController';
+import { recipesQuery } from './recipesApiClient';
 
 export const loader = async ({ context }: Route.LoaderArgs) => ({ recipes: await getQueryClient(context).ensureQueryData(recipesQuery()) });
 

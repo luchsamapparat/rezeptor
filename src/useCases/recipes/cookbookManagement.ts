@@ -1,9 +1,9 @@
 import { isNull } from 'lodash-es';
 import type { Identifier } from '../../application/model/identifier';
-import type { DocumentAnalysisClient } from '../../application/server/external/DocumentAnalysisClient';
 import { NotFoundError, ValidationError } from '../../common/server/error';
-import type { BookSearchClient } from '../external/BookSearchClient';
-import type { CookbookRepository } from '../persistence/cookbookRepository';
+import type { BookSearchClient } from './server/external/BookSearchClient';
+import type { DocumentAnalysisClient } from './server/external/DocumentAnalysisClient';
+import type { CookbookRepository } from './server/persistence/cookbookRepository';
 
 type NewCookbook = {
   title: string;

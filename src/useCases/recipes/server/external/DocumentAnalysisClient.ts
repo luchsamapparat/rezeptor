@@ -1,8 +1,8 @@
 import type { FormRecognizerFeature } from '@azure/ai-form-recognizer';
 import { DocumentAnalysisClient as AzureDocumentAnalysisClient, AzureKeyCredential } from '@azure/ai-form-recognizer';
-import { getFileSize } from '../../../common/server/file';
-import { resizeImage } from '../../../common/server/image';
-import { sanitizeString } from '../../../common/server/string';
+import { getFileSize } from '../../../../common/server/file';
+import { resizeImage } from '../../../../common/server/image';
+import { sanitizeString } from '../../../../common/server/string';
 
 type Barcode = {
   ean13: string | null;
@@ -51,7 +51,7 @@ export class DocumentAnalysisClient {
   }
 
   private async analyzeDocument(file: File, features: FormRecognizerFeature[] = []) {
-    const document = (getFileSize(file) < 4) ? file : await resizeImage(file, 2048);
+    const document = (getFileSize(file) < 4) ? file : await resizeImage (file, 2048);
     const poller = await this.apiClient.beginAnalyzeDocument(
       'prebuilt-layout',
       await document.arrayBuffer(),

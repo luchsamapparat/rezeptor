@@ -1,15 +1,16 @@
 import { Hono } from 'hono';
 
 import z from 'zod';
-import { identifierSchema } from '../../../application/model/identifier';
-import { database, dependency, type ApplicationContext } from '../../../application/server/di';
-import { validator } from '../../../common/server/validation';
-import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from './application/cookbookManagement';
-import { BookSearchClient } from './external/BookSearchClient';
-import type { CookbookManagementDatabaseSchema } from './persistence/cookbookDatabaseModel';
-import { CookbookRepository } from './persistence/cookbookRepository';
+import { identifierSchema } from '../../../../application/model/identifier';
+import { database, dependency, type ApplicationContext } from '../../../../application/server/di';
+import { validator } from '../../../../common/server/validation';
+import { CookbookRepository } from '../../../recipes/server/persistence/cookbookRepository';
+import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from '../../cookbookManagement';
+import { BookSearchClient } from '../external/BookSearchClient';
+import { DocumentAnalysisClient } from '../external/DocumentAnalysisClient';
+import type { RecipesDatabaseSchema } from '../persistence/recipeDatabaseModel';
 
-const cookbookManagementPath = '/cookbooks';
+const cookbookPath = '/cookbooks';
 
 const cookbookIdentifierName = 'cookbookId';
 const cookbookIdentifierPathSchema = z.object({ [cookbookIdentifierName]: identifierSchema });
@@ -28,13 +29,15 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
     error: 'The uploaded file must be an image.',
   });
 
-const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<CookbookManagementDatabaseSchema>().resolve(c)), 'request');
+const cookbookRepository = dependency(async (_, c) => new CookbookRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
 const bookSearchClient = dependency(env => new BookSearchClient(env.bookSearch));
+const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
 
-export const cookbookManagementApi = new Hono<{ Variables: ApplicationContext<CookbookManagementDatabaseSchema> }>()
-  .basePath(cookbookManagementPath)
+export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
+  .basePath(cookbookPath)
   .use(cookbookRepository.middleware('cookbookRepository'))
   .use(bookSearchClient.middleware('bookSearchClient'))
+  .use(documentAnalysisClient.middleware('documentAnalysisClient'))
   .get(
     '/',
     async c => c.json(await getCookbooks(c.var)),

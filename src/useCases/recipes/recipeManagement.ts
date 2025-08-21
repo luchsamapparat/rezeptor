@@ -1,9 +1,9 @@
 import { isNull } from 'lodash-es';
-import type { Identifier } from '../../../../application/model/identifier';
-import type { DocumentAnalysisClient } from '../../../../application/server/external/DocumentAnalysisClient';
-import type { FileRepository } from '../../../../common/persistence/FileRepository';
-import { NotFoundError } from '../../../../common/server/error';
-import type { RecipeRepository } from '../persistence/recipeRepository';
+import type { Identifier } from '../../application/model/identifier';
+import type { FileRepository } from '../../common/persistence/FileRepository';
+import { NotFoundError } from '../../common/server/error';
+import type { DocumentAnalysisClient } from './server/external/DocumentAnalysisClient';
+import type { RecipeRepository } from './server/persistence/recipeRepository';
 
 type NewRecipe = {
   title: string;

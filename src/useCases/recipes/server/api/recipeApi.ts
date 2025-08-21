@@ -1,15 +1,15 @@
 import { Hono } from 'hono';
 import z from 'zod';
 
-import { identifierSchema } from '../../../application/model/identifier';
-import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../application/server/di';
-import { validator } from '../../../common/server/validation';
-import type { CookbookManagementDatabaseSchema } from '../../cookbookManagement/server/persistence/cookbookDatabaseModel';
-import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from './application/recipeManagement';
-import type { RecipeManagementDatabaseSchema } from './persistence/recipeManagementDatabaseModel';
-import { RecipeRepository } from './persistence/recipeRepository';
+import { identifierSchema } from '../../../../application/model/identifier';
+import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../../application/server/di';
+import { validator } from '../../../../common/server/validation';
+import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from '../../recipeManagement';
+import { DocumentAnalysisClient } from '../external/DocumentAnalysisClient';
+import type { RecipesDatabaseSchema } from '../persistence/recipeDatabaseModel';
+import { RecipeRepository } from '../persistence/recipeRepository';
 
-const recipeManagementPath = '/recipes';
+const recipePath = '/recipes';
 
 const recipeIdentifierName = 'recipeId';
 const recipeIdentifierPathSchema = z.object({ [recipeIdentifierName]: identifierSchema });
@@ -38,7 +38,7 @@ const addRecipePhotoDtoSchema = z.object({
   message: 'The uploaded file must be an image.',
 });
 
-const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipeManagementDatabaseSchema & CookbookManagementDatabaseSchema>().resolve(c)), 'request');
+const recipesRepository = dependency(async (_, c) => new RecipeRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
 const recipeFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipes');
@@ -47,12 +47,14 @@ const recipePhotoFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipePhotos');
 }, 'request');
+const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
 
-export const recipeManagementApi = new Hono<{ Variables: ApplicationContext<RecipeManagementDatabaseSchema> }>()
-  .basePath(recipeManagementPath)
+export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
+  .basePath(recipePath)
   .use(recipesRepository.middleware('recipesRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
   .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))
+  .use(documentAnalysisClient.middleware('documentAnalysisClient'))
   .get(
     '/',
     async c => c.json(await getRecipes(c.var)),

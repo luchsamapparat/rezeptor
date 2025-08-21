@@ -10,8 +10,6 @@
     "start": "dotenv -v NODE_ENV=production -- node dist/server/index.js",
     "lint": "eslint",
     "test": "vitest",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
-    "test:integration:watch": "vitest --config vitest.integration.config.ts",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
@@ -49,15 +47,16 @@
     "@types/react-dom": "19.1.5",
     "@types/stopword": "2.0.3",
     "drizzle-kit": "0.31.1",
-    "eslint": "9.27.0",
+    "eslint": "9.33.0",
     "eslint-plugin-react": "7.37.5",
     "fishery": "2.3.1",
     "globals": "16.2.0",
-    "typescript": "5.8.3",
-    "typescript-eslint": "8.33.0",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.40.0",
     "vite": "7.0.6",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.2.4"
+  "vitest": "3.2.4",
+  "mime": "4.0.4"
   },
   "overrides": {
     "drizzle-zod": {

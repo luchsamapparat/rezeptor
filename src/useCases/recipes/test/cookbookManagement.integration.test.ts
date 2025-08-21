@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { omit } from 'lodash-es';
 import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
-import { beforeEach, it } from '../../../tests/integration.test';
+import { beforeEach, it } from '../../../tests/integrationTest';
 import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from '../../../tests/mocks/azureAiFormRecognizer.mock';
 import { BookSearchResult } from '../server/external/BookSearchClient';
 import { CookbookRepository } from '../server/persistence/cookbookRepository';
@@ -253,7 +253,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+      formData.append('backCoverFile', testFile);
 
       const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
         method: 'POST',
@@ -285,7 +285,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+      formData.append('backCoverFile', testFile);
 
       const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
         method: 'POST',
@@ -321,7 +321,7 @@ describe('Cookbooks API Integration Tests', () => {
 
       // when:
       const formData = new FormData();
-      formData.append('backCoverFile', new File([testFile], 'backcover1.jpg', { type: 'image/jpeg' }));
+      formData.append('backCoverFile', testFile);
 
       const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
         method: 'POST',

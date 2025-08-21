@@ -6,7 +6,6 @@ import { FileRepositoryFactory } from '../../common/persistence/FileRepositoryFa
 import type { FileSystemOperations } from '../../common/server/FileSystemOperations';
 import { NodeFileSystem } from '../../common/server/NodeFileSystem';
 import { type Environment } from './environment';
-import { DocumentAnalysisClient } from './external/DocumentAnalysisClient';
 
 export const dependency = <E extends Env, T>(factory: (env: Environment, c: Context<E>) => T | Promise<T>, scope?: Scope) => new Dependency<T>(
   async (c) => {
@@ -40,7 +39,6 @@ export const database = memoize(<DatabaseSchema extends Record<string, unknown>>
 });
 
 export const fileRepositoryFactory = dependency(async (env, c) => new FileRepositoryFactory(env.fileUploadsPath, await fileSystem.resolve(c)), 'request');
-export const documentAnalysisClient = dependency(env => new DocumentAnalysisClient(env.documentAnalysis));
 
 type DependencyType<T> = T extends Dependency<infer U> ? U : never;
 
@@ -49,5 +47,4 @@ export type ApplicationContext<DatabaseSchema extends Record<string, unknown>> =
   fileSystem: DependencyType<typeof fileSystem>;
   database: Database<DatabaseSchema>;
   fileRepositoryFactory: DependencyType<typeof fileRepositoryFactory>;
-  documentAnalysisClient: DependencyType<typeof documentAnalysisClient>;
 };
