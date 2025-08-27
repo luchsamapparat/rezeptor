@@ -4,7 +4,7 @@ import z from 'zod';
 import { identifierSchema } from '../../../../application/model/identifier';
 import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
-import { AzureDocumentAnalysisClient } from '../../infrastructure/AzureDocumentAnalysisClient';
+import { AzureOpenAIClient } from '../../infrastructure/AzureOpenAIClient';
 import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
 import { RecipeDatabaseRepository } from '../../infrastructure/persistence/RecipeDatabaseRepository';
 import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from '../../recipeManagement';
@@ -47,14 +47,14 @@ const recipePhotoFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipePhotos');
 }, 'request');
-const recipeContentExtractionService = dependency(env => new AzureDocumentAnalysisClient(env.azureDocumentAnalysis));
+const recipeExtractionService = dependency(env => new AzureOpenAIClient({ ...env.azureOpenAI, instructions: env.recipeExtraction }));
 
 export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(recipePath)
   .use(recipeRepository.middleware('recipesRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
   .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))
-  .use(recipeContentExtractionService.middleware('recipeContentExtractionService'))
+  .use(recipeExtractionService.middleware('recipeExtractionService'))
   .get(
     '/',
     async c => c.json(await getRecipes(c.var)),

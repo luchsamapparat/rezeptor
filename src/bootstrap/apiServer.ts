@@ -1,10 +1,11 @@
 import { Hono } from 'hono';
+import { serializeError } from 'serialize-error';
 import { database, environment, fileRepositoryFactory, fileSystem, type ApplicationContext } from '../application/server/di';
 import type { Environment } from '../application/server/environment';
 import { initDatabaseConnection, type Database } from '../common/persistence/database';
 import { type FileSystemOperations } from '../common/server/FileSystemOperations';
 import { NodeFileSystem } from '../common/server/NodeFileSystem';
-import { NotFoundError, ValidationError } from '../common/server/error';
+import { ExternalServiceError, NotFoundError, ValidationError } from '../common/server/error';
 import { api } from './api';
 import { databaseSchema } from './databaseSchema';
 
@@ -26,6 +27,9 @@ export async function createApiServer(env: Environment, fs: FileSystemOperations
       }
       if (err instanceof ValidationError) {
         return c.json({ error: err.message }, 422);
+      }
+      if (err instanceof ExternalServiceError) {
+        return c.json({ error: err.message, cause: err.cause instanceof Error ? serializeError(err.cause) : serializeError }, 500);
       }
       console.error('Unhandled error:', err);
       return c.json({ error: 'Internal server error' }, 500);

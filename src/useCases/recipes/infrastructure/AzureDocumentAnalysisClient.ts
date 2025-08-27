@@ -4,14 +4,14 @@ import { getFileSize } from '../../../common/server/file';
 import { resizeImage } from '../../../common/server/image';
 import { sanitizeString } from '../../../common/server/string';
 import type { Barcode, BarcodeExtractionService } from '../cookbookManagement';
-import type { RecipeContentExtractionService, RecipeContents } from '../recipeManagement';
+import type { RecipeContents } from '../recipeManagement';
 
 type AzureDocumentAnalysisClientOptions = {
   endpoint: string;
   key: string;
 };
 
-export class AzureDocumentAnalysisClient implements BarcodeExtractionService, RecipeContentExtractionService {
+export class AzureDocumentAnalysisClient implements BarcodeExtractionService {
   private apiClient: DocumentAnalysisClient;
 
   constructor({ endpoint, key }: AzureDocumentAnalysisClientOptions) {

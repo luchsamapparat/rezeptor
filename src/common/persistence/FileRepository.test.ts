@@ -37,7 +37,7 @@ describe('FileRepository', () => {
       const fileSystemMock = new FileSystemMock();
       // Mock the unlink method to throw a non-ENOENT error
       fileSystemMock.unlink = async () => {
-        throw new Error('Permission denied');
+        throw new Error('Permission denied.');
       };
 
       const repository = new FileRepository('/test-dir', fileSystemMock);

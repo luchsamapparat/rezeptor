@@ -45,6 +45,16 @@ async function createTestApp() {
       key: faker.string.alphanumeric(),
     },
     fileUploadsPath: '/data',
+    azureOpenAI: {
+      endpoint: faker.internet.url(),
+      key: faker.string.alphanumeric(),
+      model: 'gpt-5-nano',
+      deployment: 'gpt-5-nano',
+    },
+    recipeExtraction: {
+      systemPrompt: faker.lorem.words(),
+      userPrompt: faker.lorem.words(),
+    },
   }, fileSystemMock);
 
   app.route('/', api);

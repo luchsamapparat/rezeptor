@@ -11,3 +11,10 @@ export class ValidationError extends Error {
     this.name = 'ValidationError';
   }
 }
+
+export class ExternalServiceError extends Error {
+  constructor(message: string, public cause?: unknown) {
+    super(message);
+    this.name = 'ExternalServiceError';
+  }
+}

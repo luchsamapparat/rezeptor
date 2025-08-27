@@ -21,7 +21,7 @@ export type RecipePhotoFileRepository = {
   remove(filename: string): Promise<void>;
 };
 
-export type RecipeContentExtractionService = {
+export type RecipeExtractionService = {
   extractRecipeContents(file: File): Promise<RecipeContents>;
 };
 
@@ -64,7 +64,7 @@ export const addRecipe = async ({ recipesRepository, recipe }: AddRecipeArgs) =>
 type AddRecipeFromPhotoArgs = {
   recipesRepository: RecipeRepository;
   recipeFileRepository: RecipeFileRepository;
-  recipeContentExtractionService: RecipeContentExtractionService;
+  recipeExtractionService: RecipeExtractionService;
   recipeFile: File;
   cookbookId?: string | null;
 };
@@ -72,11 +72,11 @@ type AddRecipeFromPhotoArgs = {
 export const addRecipeFromPhoto = async ({
   recipesRepository,
   recipeFileRepository,
-  recipeContentExtractionService,
+  recipeExtractionService,
   recipeFile,
   cookbookId,
 }: AddRecipeFromPhotoArgs) => {
-  const recipeContents = await recipeContentExtractionService.extractRecipeContents(recipeFile);
+  const recipeContents = await recipeExtractionService.extractRecipeContents(recipeFile);
   const recipeFileId = await recipeFileRepository.save(recipeFile);
 
   const recipeData: NewRecipe = {
