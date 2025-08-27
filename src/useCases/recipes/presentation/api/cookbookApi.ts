@@ -64,7 +64,7 @@ export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatab
     async c => c.json(await identifyCookbook({
       ...c.var,
       backCoverFile: c.req.valid('form').backCoverFile,
-    }), 201),
+    }), 200),
   )
   .patch(
     `/:${cookbookIdentifierName}`,

@@ -261,7 +261,7 @@ describe('Cookbooks API Integration Tests', () => {
       }));
 
       // then:
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
       const body = await response.json();
       expect(body).toEqual(expectedBookMetadata);
 
