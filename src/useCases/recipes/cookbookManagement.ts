@@ -68,7 +68,7 @@ export const editCookbook = async ({ cookbookRepository, cookbookId, cookbookCha
   const cookbook = await cookbookRepository.update(cookbookId, cookbookChanges);
 
   if (isNull(cookbook)) {
-    throw new NotFoundError(`No cookbook with ID ${cookbookId} not found`);
+    throw new NotFoundError(`No cookbook with ID ${cookbookId} not found.`);
   }
 
   return cookbook;
@@ -118,6 +118,6 @@ export const removeCookbook = async ({ cookbookRepository, cookbookId }: RemoveC
   const cookbook = await cookbookRepository.deleteById(cookbookId);
 
   if (isNull(cookbook)) {
-    throw new NotFoundError(`No cookbook with ID ${cookbookId} found`);
+    throw new NotFoundError(`No cookbook with ID ${cookbookId} found.`);
   }
 };

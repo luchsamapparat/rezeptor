@@ -19,7 +19,7 @@ export class GoogleBooksClient implements BookMetadataService {
     const sanitizedIsbn = isbn.replace(/\D/g, '');
 
     if (sanitizedIsbn.length === 0) {
-      throw new Error(`Invalid ISBN ${isbn}`);
+      throw new Error(`Invalid ISBN "${isbn}".`);
     }
 
     const volumes = await this.apiClient.volumes.list({

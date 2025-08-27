@@ -110,7 +110,7 @@ export const editRecipe = async ({ recipesRepository, recipeId, recipeChanges }:
   const recipe = await recipesRepository.update(recipeId, recipeChanges);
 
   if (isNull(recipe)) {
-    throw new NotFoundError(`No recipe with ID ${recipeId} found`);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
 
   return recipe;
@@ -125,7 +125,7 @@ export const getRecipe = async ({ recipesRepository, recipeId }: GetRecipeArgs) 
   const recipe = await recipesRepository.findById(recipeId);
 
   if (isNull(recipe)) {
-    throw new NotFoundError(`No recipe with ID ${recipeId} found`);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
 
   return recipe;
@@ -153,7 +153,7 @@ export const addRecipePhoto = async ({
   const recipe = await recipesRepository.findById(recipeId);
 
   if (isNull(recipe)) {
-    throw new NotFoundError(`No recipe with ID ${recipeId} found`);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
 
   const photoFileId = await recipePhotoFileRepository.save(photoFile);
@@ -171,7 +171,7 @@ type RemoveRecipeArgs = {
 export const removeRecipe = async ({ recipesRepository, recipePhotoFileRepository, recipeFileRepository, recipeId }: RemoveRecipeArgs) => {
   const recipe = await recipesRepository.findById(recipeId);
   if (!recipe) {
-    throw new NotFoundError(`No recipe with ID ${recipeId} found`);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
 
   await recipesRepository.deleteById(recipeId);

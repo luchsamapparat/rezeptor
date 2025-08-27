@@ -12,7 +12,7 @@ export const dependency = <E extends Env, T>(factory: (env: Environment, c: Cont
     const env = await environment.resolve(c);
 
     if (isNull(env)) {
-      throw new Error('No Environment provided');
+      throw new Error('No Environment provided.');
     }
 
     return factory(env, c);
