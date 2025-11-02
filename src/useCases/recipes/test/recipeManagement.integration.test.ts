@@ -8,11 +8,14 @@ import { RecipeDatabaseRepository } from '../infrastructure/persistence/RecipeDa
 import { insertCookbookEntityMock } from './data/cookbookMockData';
 import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
 import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
+import { setupAzureOpenAIMock } from './mocks/azureOpenAI.mock';
 
 vi.mock('@azure/ai-form-recognizer', () => ({
   DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
   AzureKeyCredential: vi.fn(),
 }));
+
+vi.mock('openai', () => import('./mocks/azureOpenAI.mock'));
 
 describe('Recipe Management API Integration Tests', () => {
   describe('GET /api/recipes', () => {
@@ -207,6 +210,11 @@ describe('Recipe Management API Integration Tests', () => {
         pageNumber: pageNumber?.toString(),
         text: content,
       });
+      setupAzureOpenAIMock({
+        title,
+        pageNumber,
+        content,
+      });
 
       const initialFileCount = fileSystemMock.getFileCount();
       const testFile = await loadTestFile('recipe1.jpg');
@@ -251,6 +259,11 @@ describe('Recipe Management API Integration Tests', () => {
         title,
         pageNumber: pageNumber?.toString(),
         text: content,
+      });
+      setupAzureOpenAIMock({
+        title,
+        pageNumber,
+        content,
       });
 
       const testFile = await loadTestFile('recipe1.jpg');
@@ -391,6 +404,11 @@ describe('Recipe Management API Integration Tests', () => {
         title: 'Test Recipe',
         pageNumber: '1',
         text: 'Test recipe content.',
+      });
+      setupAzureOpenAIMock({
+        title: 'Test Recipe',
+        pageNumber: 1,
+        content: 'Test recipe content.',
       });
 
       const testFile1 = await loadTestFile('recipe1.jpg');
