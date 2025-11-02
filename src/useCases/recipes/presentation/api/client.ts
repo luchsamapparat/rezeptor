@@ -11,6 +11,7 @@ export type AddFromPhotoRecipeDto = InferRequestType<typeof recipesApiClient.rec
 export type EditRecipeDto = InferRequestType<typeof recipesApiClient.recipes[':recipeId']['$patch']>['json'];
 
 const recipesQueryKey = ['recipes'];
+const recipeQueryKey = (id: string) => ['recipes', id];
 
 export const recipesQuery = ({ initialData }: { initialData?: RecipeDto[] } = {}) => ({
   initialData,
@@ -25,6 +26,109 @@ export const recipesQuery = ({ initialData }: { initialData?: RecipeDto[] } = {}
     return response.json();
   },
 });
+
+export const recipeQuery = (id: string, { initialData }: { initialData?: RecipeDto } = {}) => ({
+  initialData,
+  queryKey: recipeQueryKey(id),
+  queryFn: async () => {
+    const response = await recipesApiClient.recipes[':recipeId'].$get({
+      param: { recipeId: id },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch recipe: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+});
+
+export const addRecipe = async (recipe: AddRecipeDto) => {
+  const response = await recipesApiClient.recipes.$post({
+    json: recipe,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to add recipe: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const editRecipe = async (id: string, changes: EditRecipeDto) => {
+  const response = await recipesApiClient.recipes[':recipeId'].$patch({
+    param: { recipeId: id },
+    json: changes,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to edit recipe: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const removeRecipe = async (id: string) => {
+  const response = await recipesApiClient.recipes[':recipeId'].$delete({
+    param: { recipeId: id },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to remove recipe: ${response.statusText}`);
+  }
+};
+
+export const addRecipeFromPhoto = async (recipeFile: File, cookbookId?: string | null) => {
+  // Create FormData manually to ensure proper file handling
+  const formData = new FormData();
+  formData.append('recipeFile', recipeFile);
+  if (cookbookId) {
+    formData.append('cookbookId', cookbookId);
+  }
+
+  // hc does not support uploading files
+  // see https://github.com/honojs/website/pull/422
+  const response = await window.fetch(
+    '/api/recipes/from-photo',
+    {
+      method: 'POST',
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to extract recipe from photo: ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const addRecipePhoto = async (recipeId: string, photoFile: File) => {
+  // Create FormData manually to ensure proper file handling
+  const formData = new FormData();
+  formData.append('photoFile', photoFile);
+
+  // hc does not support uploading files
+  // see https://github.com/honojs/website/pull/422
+  const response = await window.fetch(
+    `/api/recipes/${recipeId}/photo`,
+    {
+      method: 'PUT',
+      body: formData,
+    },
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to upload recipe photo: ${response.statusText}`);
+  }
+
+  return response.json();
+};
 
 export type CookbookDto = InferResponseType<typeof recipesApiClient.cookbooks.$get>[0];
 export type CookbookIdentificationDto = InferResponseType<typeof recipesApiClient.cookbooks.identification.$post>;

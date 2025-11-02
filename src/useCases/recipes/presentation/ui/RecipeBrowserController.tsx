@@ -36,7 +36,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       <PageHeader
         title="Recipe Browser"
         actions={[
-          { label: 'Manage Cookbooks', to: '/cookbooks' },
+          { label: 'Add Recipe', to: '/recipes/new', variant: 'default' },
+          { label: 'Upload from Photo', to: '/recipes/from-photo', variant: 'secondary' },
+          { label: 'Manage Cookbooks', to: '/cookbooks', variant: 'outline' },
         ]}
       />
 
@@ -56,6 +58,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
                 {recipes.map(recipe => (
                   <RecipeCard
                     key={recipe.id}
+                    id={recipe.id}
                     title={recipe.title}
                     content={recipe.content}
                     photoUrl={recipe.photoFileId ? `/api/recipes/${recipe.id}/photo` : undefined}

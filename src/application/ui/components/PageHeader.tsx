@@ -6,6 +6,7 @@ interface PageHeaderAction {
   to?: string;
   onClick?: () => void;
   variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost';
+  disabled?: boolean;
 }
 
 interface PageHeaderProps {
@@ -22,7 +23,12 @@ export function PageHeader({ title, actions = [] }: PageHeaderProps) {
           {actions.map((action, index) =>
             action.to
               ? (
-                  <Button key={index} variant={action.variant || 'default'} asChild>
+                  <Button
+                    key={index}
+                    variant={action.variant || 'default'}
+                    disabled={action.disabled}
+                    asChild
+                  >
                     <Link to={action.to}>{action.label}</Link>
                   </Button>
                 )
@@ -31,6 +37,7 @@ export function PageHeader({ title, actions = [] }: PageHeaderProps) {
                     key={index}
                     variant={action.variant || 'default'}
                     onClick={action.onClick}
+                    disabled={action.disabled}
                   >
                     {action.label}
                   </Button>
