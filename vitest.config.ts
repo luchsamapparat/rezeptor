@@ -10,10 +10,6 @@ export default defineConfig({
     exclude: ['node_modules'],
     clearMocks: true,
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
   },
 });

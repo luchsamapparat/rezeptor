@@ -14,7 +14,7 @@ vi.mock('@googleapis/books', () => ({
 }));
 
 vi.mock('@azure/ai-form-recognizer', () => ({
-  DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
+  DocumentAnalysisClient: vi.fn().mockImplementation(function () { return DocumentAnalysisClientMock; }),
   AzureKeyCredential: vi.fn(),
 }));
 
