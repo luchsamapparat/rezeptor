@@ -4,7 +4,7 @@ import type { AzureOpenAI } from 'openai';
 import { describe, expect } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
-import { AzureOpenAIClient } from '../infrastructure/AzureOpenAIClient';
+import { AzureOpenAIRecipeExtractionService } from '../infrastructure/AzureOpenAIRecipeExtractionService';
 import { recipeExtractionService } from '../infrastructure/di';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from '../infrastructure/persistence/RecipeDatabaseRepository';
@@ -136,7 +136,7 @@ describe('Recipe Management API Integration Tests', () => {
 
   describe('POST /api/recipes', () => {
     beforeEach(({ env }) => {
-      recipeExtractionService.injection(new AzureOpenAIClient(azureOpenAIMock as unknown as AzureOpenAI, env.azureOpenAI.model, env.recipeExtraction));
+      recipeExtractionService.injection(new AzureOpenAIRecipeExtractionService(azureOpenAIMock as unknown as AzureOpenAI, env.azureOpenAI.model, env.recipeExtraction));
     });
 
     it('should create a new recipe with valid data', async ({ app, database }) => {

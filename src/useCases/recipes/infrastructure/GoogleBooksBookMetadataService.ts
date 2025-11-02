@@ -3,7 +3,7 @@ import { isEmpty, isUndefined } from 'lodash-es';
 import { ValidationError } from '../../../common/server/error';
 import type { BookMetadata, BookMetadataService } from '../cookbookManagement';
 
-export class GoogleBooksClient implements BookMetadataService {
+export class GoogleBooksBookMetadataService implements BookMetadataService {
   constructor(
     private apiClient: books_v1.Books,
   ) {

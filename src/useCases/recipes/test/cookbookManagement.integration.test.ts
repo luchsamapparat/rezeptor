@@ -6,9 +6,9 @@ import { describe, expect } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
 import type { BookMetadata } from '../cookbookManagement';
-import { AzureDocumentAnalysisClient } from '../infrastructure/AzureDocumentAnalysisClient';
+import { AzureDocumentAnalysisBarcodeExtractionService } from '../infrastructure/AzureDocumentAnalysisBarcodeExtractionService';
 import { barcodeExtractionService, bookMetadataService } from '../infrastructure/di';
-import { GoogleBooksClient } from '../infrastructure/GoogleBooksClient';
+import { GoogleBooksBookMetadataService } from '../infrastructure/GoogleBooksBookMetadataService';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
 import { documentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
@@ -230,7 +230,7 @@ describe('Cookbooks API Integration Tests', () => {
 
   describe('POST /api/cookbooks/identification', () => {
     beforeEach(() => {
-      barcodeExtractionService.injection(new AzureDocumentAnalysisClient(documentAnalysisClientMock as unknown as DocumentAnalysisClient));
+      barcodeExtractionService.injection(new AzureDocumentAnalysisBarcodeExtractionService(documentAnalysisClientMock as unknown as DocumentAnalysisClient));
     });
 
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
@@ -255,7 +255,7 @@ describe('Cookbooks API Integration Tests', () => {
       const formData = new FormData();
       formData.append('backCoverFile', testFile);
 
-      bookMetadataService.injection(new GoogleBooksClient(googleBooksMock as unknown as books_v1.Books));
+      bookMetadataService.injection(new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books));
 
       const response = await app
         .request(new Request('http://localhost/api/cookbooks/identification', {

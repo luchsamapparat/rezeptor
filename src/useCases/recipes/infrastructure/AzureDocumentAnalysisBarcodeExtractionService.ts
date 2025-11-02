@@ -6,7 +6,7 @@ import { sanitizeString } from '../../../common/server/string';
 import type { Barcode, BarcodeExtractionService } from '../cookbookManagement';
 import type { RecipeContents } from '../recipeManagement';
 
-export class AzureDocumentAnalysisClient implements BarcodeExtractionService {
+export class AzureDocumentAnalysisBarcodeExtractionService implements BarcodeExtractionService {
   constructor(
     private apiClient: DocumentAnalysisClient,
   ) {

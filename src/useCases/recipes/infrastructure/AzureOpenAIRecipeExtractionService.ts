@@ -11,7 +11,7 @@ type Prompts = {
   userPrompt: string;
 };
 
-export class AzureOpenAIClient implements RecipeExtractionService {
+export class AzureOpenAIRecipeExtractionService implements RecipeExtractionService {
   constructor(
     private apiClient: AzureOpenAI,
     private model: string,
