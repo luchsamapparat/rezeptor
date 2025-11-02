@@ -8,14 +8,15 @@ import { FileSystemMock } from './mocks/fileSystem.mock';
 export const test = baseTest
   .extend<{ setup: TestApp }>({
     setup: async ({ }, use) => {
-      const { app, database, fileSystemMock, cleanup } = await createTestApp();
+      const { env, app, database, fileSystemMock, cleanup } = await createTestApp();
 
-      await use({ app, database, fileSystemMock });
+      await use({ env, app, database, fileSystemMock });
 
       await cleanup();
     },
   })
   .extend<TestApp>({
+    env: async ({ setup }, use) => use(setup.env),
     app: async ({ setup }, use) => use(setup.app),
     database: async ({ setup }, use) => use(setup.database),
     fileSystemMock: async ({ setup }, use) => use(setup.fileSystemMock),
@@ -32,7 +33,7 @@ async function createTestApp() {
   const migrationsPath = join(import.meta.dirname, '../../database');
   const fileSystemMock = new FileSystemMock();
 
-  const { app: api, database } = await createApiServer({
+  const env = {
     database: {
       connectionString,
       migrationsPath,
@@ -55,11 +56,14 @@ async function createTestApp() {
       systemPrompt: faker.lorem.words(),
       userPrompt: faker.lorem.words(),
     },
-  }, fileSystemMock);
+  };
+
+  const { app: api, database } = await createApiServer(env, fileSystemMock);
 
   app.route('/', api);
 
   return {
+    env,
     app,
     database,
     fileSystemMock,
