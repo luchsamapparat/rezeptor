@@ -3,9 +3,9 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router';
 
 import type { PropsWithChildren } from 'react';
 import type { Route } from './+types/root';
-import './app.css';
 import { getOrCreateQueryClient, provideQueryClient } from './application/client/queryClient';
 import { ApplicationError } from './application/ui/ApplicationError';
+import './application/ui/stylesheet.css';
 
 export const links: Route.LinksFunction = () => [];
 

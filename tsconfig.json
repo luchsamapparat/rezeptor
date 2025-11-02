@@ -10,6 +10,9 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
-    "noErrorTruncation": true
+    "noErrorTruncation": true,
+    "paths": {
+      "@rezeptor-ui/*": ["./src/application/ui/*"]
+    },
   }
 }
