@@ -27,6 +27,25 @@ spec:
               value: /app/database
             - name: FILE_UPLOADS_PATH
               value: /data/uploads
+            - name: RECIPE_EXTRACTION_SYSTEM_PROMPT
+              value: |
+                You are a text extraction assistant specialized in processing cookbook photos. 
+                Your task is to extract structured recipe information from OCR-like text found in images of cookbook pages.
+
+                Follow these rules:
+                - Detect the recipe title. If it is written in ALL CAPS, convert it to normal capitalization (e.g., 'CHICKEN CURRY' → 'Chicken Curry').
+                - Extract the page number if present.
+                - Extract the full text content of the recipe (ingredients + instructions). Preserve line breaks and formatting where possible.
+                - If you cannot find a title or page number, return null for that field.
+                - Always return the result as a JSON object with this exact structure:
+
+                {
+                  'title': string | null,
+                  'pageNumber': number | null,
+                  'content': string
+                }
+            - name: RECIPE_EXTRACTION_USER_PROMPT
+              value: Here is a photo of a cookbook page. Please extract the recipe information and return it in the required JSON format.
             - name: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT
               value: https://rezeptor.cognitiveservices.azure.com/
             - name: AZURE_DOCUMENT_INTELLIGENCE_KEY
@@ -34,6 +53,17 @@ spec:
                 secretKeyRef:
                   name: rezeptor
                   key: AZURE_DOCUMENT_INTELLIGENCE_KEY
+            - name: AZURE_OPENAI_ENDPOINT
+              value: https://rezeptor-extraction.cognitiveservices.azure.com/
+            - name: AZURE_OPENAI_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rezeptor
+                  key: AZURE_OPENAI_KEY
+            - name: AZURE_OPENAI_MODEL
+              value: gpt-5-mini
+            - name: AZURE_OPENAI_DEPLOYMENT
+              value: gpt-5-mini
             - name: GOOGLE_API_KEY
               valueFrom:
                 secretKeyRef:
