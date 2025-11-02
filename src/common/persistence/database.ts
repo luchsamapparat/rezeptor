@@ -15,5 +15,4 @@ export async function initDatabaseConnection<Schema extends Record<string, unkno
   return database;
 }
 
-export type Database<Schema extends Record<string, unknown> = Record<string, unknown>> =
-  Awaited<ReturnType<typeof initDatabaseConnection<Schema>>>;
+export type Database<Schema extends Record<string, unknown> = Record<string, unknown>> = Awaited<ReturnType<typeof initDatabaseConnection<Schema>>>;
