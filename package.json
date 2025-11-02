@@ -10,6 +10,7 @@
     "start": "dotenv -v NODE_ENV=production -- node dist/server/index.js",
     "lint": "eslint",
     "test": "vitest --run",
+    "test:watch": "vitest --run",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
