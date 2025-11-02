@@ -5,6 +5,6 @@ export default {
   appDirectory: 'src',
   buildDirectory: 'dist',
   future: {
-    unstable_middleware: true,
+    v8_middleware: true,
   },
 } satisfies Config;

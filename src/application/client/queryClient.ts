@@ -1,14 +1,14 @@
 import { QueryClient } from '@tanstack/react-query';
 import { isNull } from 'lodash-es';
-import { unstable_createContext, unstable_RouterContextProvider } from 'react-router';
+import { createContext, type RouterContextProvider } from 'react-router';
 
-const queryClientContext = unstable_createContext<QueryClient | null>(null);
+const queryClientContext = createContext<QueryClient | null>(null);
 
-export const provideQueryClient = (context: Readonly<unstable_RouterContextProvider>, queryClient: QueryClient) => {
+export const provideQueryClient = (context: Readonly<RouterContextProvider>, queryClient: QueryClient) => {
   return context.set(queryClientContext, queryClient);
 };
 
-export const getQueryClient = (context: Readonly<unstable_RouterContextProvider>) => {
+export const getQueryClient = (context: Readonly<RouterContextProvider>) => {
   const queryClient = context.get(queryClientContext);
 
   if (isNull(queryClient)) {

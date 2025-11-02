@@ -8,12 +8,12 @@ import { ApplicationError } from './application/ui/ApplicationError';
 
 export const links: Route.LinksFunction = () => [];
 
-export const unstable_middleware: Route.unstable_MiddlewareFunction[] = [async ({ context }, next) => {
+export const middleware: Route.MiddlewareFunction[] = [async ({ context }, next) => {
   provideQueryClient(context, getOrCreateQueryClient());
   await next();
 }];
 
-export const unstable_clientMiddleware: Route.unstable_ClientMiddlewareFunction[] = [async ({ context }, next) => {
+export const clientMiddleware: Route.ClientMiddlewareFunction[] = [async ({ context }, next) => {
   provideQueryClient(context, getOrCreateQueryClient());
   await next();
 }];

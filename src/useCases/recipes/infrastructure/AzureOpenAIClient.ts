@@ -1,6 +1,6 @@
 import { isNull } from 'lodash-es';
 import { AzureOpenAI } from 'openai';
-import z, { ZodType } from 'zod';
+import z, { type ZodType } from 'zod';
 import { ExternalServiceError } from '../../../common/server/error';
 import { getFileSize } from '../../../common/server/file';
 import { resizeImage } from '../../../common/server/image';
