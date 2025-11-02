@@ -1,22 +1,18 @@
+import type { DocumentAnalysisClient } from '@azure/ai-form-recognizer';
 import { faker } from '@faker-js/faker';
+import type { books_v1 } from '@googleapis/books';
 import { omit } from 'lodash-es';
-import { describe, expect, vi } from 'vitest';
+import { describe, expect } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
 import type { BookMetadata } from '../cookbookManagement';
+import { AzureDocumentAnalysisClient } from '../infrastructure/AzureDocumentAnalysisClient';
+import { barcodeExtractionService, bookMetadataService } from '../infrastructure/di';
+import { GoogleBooksClient } from '../infrastructure/GoogleBooksClient';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
-import { documentAnalysisClientBeginAnalyzeDocument, DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
+import { documentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
 import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from './mocks/googleBooks.mock';
-
-vi.mock('@googleapis/books', () => ({
-  books: vi.fn(() => googleBooksMock),
-}));
-
-vi.mock('@azure/ai-form-recognizer', () => ({
-  DocumentAnalysisClient: vi.fn().mockImplementation(function () { return DocumentAnalysisClientMock; }),
-  AzureKeyCredential: vi.fn(),
-}));
 
 describe('Cookbooks API Integration Tests', () => {
   describe('GET /api/cookbooks', () => {
@@ -233,6 +229,10 @@ describe('Cookbooks API Integration Tests', () => {
   });
 
   describe('POST /api/cookbooks/identification', () => {
+    beforeEach(() => {
+      barcodeExtractionService.injection(new AzureDocumentAnalysisClient(documentAnalysisClientMock as unknown as DocumentAnalysisClient));
+    });
+
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
       // given:
       const expectedBookMetadata: BookMetadata = {
@@ -255,17 +255,20 @@ describe('Cookbooks API Integration Tests', () => {
       const formData = new FormData();
       formData.append('backCoverFile', testFile);
 
-      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
-        method: 'POST',
-        body: formData,
-      }));
+      bookMetadataService.injection(new GoogleBooksClient(googleBooksMock as unknown as books_v1.Books));
+
+      const response = await app
+        .request(new Request('http://localhost/api/cookbooks/identification', {
+          method: 'POST',
+          body: formData,
+        }));
 
       // then:
       expect(response.status).toBe(200);
       const body = await response.json();
       expect(body).toEqual(expectedBookMetadata);
 
-      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+      expect(documentAnalysisClientMock.beginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',
         expect.any(ArrayBuffer),
         { features: ['barcodes'] },
@@ -299,7 +302,7 @@ describe('Cookbooks API Integration Tests', () => {
         error: 'No EAN-13 barcode found in uploaded image.',
       });
 
-      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+      expect(documentAnalysisClientMock.beginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',
         expect.any(ArrayBuffer),
         { features: ['barcodes'] },
@@ -335,7 +338,7 @@ describe('Cookbooks API Integration Tests', () => {
         error: `No book found for the extracted EAN-13 barcode ${expectedEan13}.`,
       });
 
-      expect(documentAnalysisClientBeginAnalyzeDocument).toHaveBeenCalledWith(
+      expect(documentAnalysisClientMock.beginAnalyzeDocument).toHaveBeenCalledWith(
         'prebuilt-layout',
         expect.any(ArrayBuffer),
         { features: ['barcodes'] },

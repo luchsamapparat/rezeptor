@@ -1,15 +1,11 @@
 import { Hono } from 'hono';
 
-import { AzureKeyCredential, DocumentAnalysisClient } from '@azure/ai-form-recognizer';
-import { books } from '@googleapis/books';
 import z from 'zod';
 import { identifierSchema } from '../../../../application/model/identifier';
-import { database, dependency, type ApplicationContext } from '../../../../application/server/di';
+import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
 import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from '../../cookbookManagement';
-import { AzureDocumentAnalysisClient } from '../../infrastructure/AzureDocumentAnalysisClient';
-import { GoogleBooksClient } from '../../infrastructure/GoogleBooksClient';
-import { CookbookDatabaseRepository } from '../../infrastructure/persistence/CookbookDatabaseRepository';
+import { barcodeExtractionService, bookMetadataService, cookbookRepository } from '../../infrastructure/di';
 import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
 
 const cookbookPath = '/cookbooks';
@@ -30,17 +26,6 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
   .refine(({ backCoverFile }) => backCoverFile.type.startsWith('image/'), {
     error: 'The uploaded file must be an image.',
   });
-
-const cookbookRepository = dependency(async (_, c) => new CookbookDatabaseRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
-
-const googleBooks = dependency(env => books({ version: 'v1', key: env.googleBooks.key }));
-const bookMetadataService = dependency(async (_, c) => new GoogleBooksClient(await googleBooks.resolve(c)));
-
-const azureAiFormRecognizer = dependency(env => new DocumentAnalysisClient(
-  env.azureDocumentAnalysis.endpoint,
-  new AzureKeyCredential(env.azureDocumentAnalysis.key),
-));
-const barcodeExtractionService = dependency(async (_, c) => new AzureDocumentAnalysisClient(await azureAiFormRecognizer.resolve(c)));
 
 export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(cookbookPath)

@@ -1,13 +1,11 @@
 import { Hono } from 'hono';
 import z from 'zod';
 
-import { AzureOpenAI } from 'openai';
 import { identifierSchema } from '../../../../application/model/identifier';
-import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../../application/server/di';
+import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
-import { AzureOpenAIClient } from '../../infrastructure/AzureOpenAIClient';
+import { recipeExtractionService, recipeFileRepository, recipePhotoFileRepository, recipeRepository } from '../../infrastructure/di';
 import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
-import { RecipeDatabaseRepository } from '../../infrastructure/persistence/RecipeDatabaseRepository';
 import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipes, removeRecipe } from '../../recipeManagement';
 
 const recipePath = '/recipes';
@@ -38,29 +36,6 @@ const addRecipePhotoDtoSchema = z.object({
 }).refine(({ photoFile }) => photoFile.type.startsWith('image/'), {
   message: 'The uploaded file must be an image.',
 });
-
-const recipeRepository = dependency(async (_, c) => new RecipeDatabaseRepository(await database<RecipesDatabaseSchema>().resolve(c)), 'request');
-const recipeFileRepository = dependency(async (_, c) => {
-  const factory = await fileRepositoryFactory.resolve(c);
-  return factory.createFileRepository('recipes');
-}, 'request');
-const recipePhotoFileRepository = dependency(async (_, c) => {
-  const factory = await fileRepositoryFactory.resolve(c);
-  return factory.createFileRepository('recipePhotos');
-}, 'request');
-
-const azureOpenAI = dependency(env => new AzureOpenAI({
-  endpoint: env.azureOpenAI.endpoint,
-  apiKey: env.azureOpenAI.key,
-  deployment: env.azureOpenAI.deployment,
-  // see https://learn.microsoft.com/en-us/azure/ai-foundry/openai/reference
-  apiVersion: '2025-04-01-preview',
-}));
-const recipeExtractionService = dependency(async (env, c) => new AzureOpenAIClient(
-  await azureOpenAI.resolve(c),
-  env.azureOpenAI.model,
-  env.recipeExtraction,
-));
 
 export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(recipePath)

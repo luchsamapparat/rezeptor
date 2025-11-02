@@ -1,21 +1,17 @@
 import { faker } from '@faker-js/faker';
 import { omit } from 'lodash-es';
-import { describe, expect, vi } from 'vitest';
+import type { AzureOpenAI } from 'openai';
+import { describe, expect } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
+import { AzureOpenAIClient } from '../infrastructure/AzureOpenAIClient';
+import { recipeExtractionService } from '../infrastructure/di';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from '../infrastructure/persistence/RecipeDatabaseRepository';
 import { insertCookbookEntityMock } from './data/cookbookMockData';
 import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
-import { DocumentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
-import { setupAzureOpenAIMock } from './mocks/azureOpenAI.mock';
-
-vi.mock('@azure/ai-form-recognizer', () => ({
-  DocumentAnalysisClient: vi.fn().mockImplementation(() => DocumentAnalysisClientMock),
-  AzureKeyCredential: vi.fn(),
-}));
-
-vi.mock('openai', () => import('./mocks/azureOpenAI.mock'));
+import { setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
+import { azureOpenAIMock, setupAzureOpenAIMock } from './mocks/azureOpenAI.mock';
 
 describe('Recipe Management API Integration Tests', () => {
   describe('GET /api/recipes', () => {
@@ -139,6 +135,10 @@ describe('Recipe Management API Integration Tests', () => {
   });
 
   describe('POST /api/recipes', () => {
+    beforeEach(({ env }) => {
+      recipeExtractionService.injection(new AzureOpenAIClient(azureOpenAIMock as unknown as AzureOpenAI, env.azureOpenAI.model, env.recipeExtraction));
+    });
+
     it('should create a new recipe with valid data', async ({ app, database }) => {
       // given:
       const addRecipeDto = addRecipeDtoMock;

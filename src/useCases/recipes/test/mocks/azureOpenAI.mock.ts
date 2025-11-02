@@ -3,19 +3,13 @@ import type { RecipeContents } from '../../recipeManagement';
 
 type RecipeContentsMock = Partial<RecipeContents>;
 
-export const azureOpenAIChatCompletionsCreateMock = vi.fn();
-
-const AzureOpenAIConstructorMock = vi.fn(function AzureOpenAIClientMock() {
-  return {
-    chat: {
-      completions: {
-        create: azureOpenAIChatCompletionsCreateMock,
-      },
+export const azureOpenAIMock = {
+  chat: {
+    completions: {
+      create: vi.fn(),
     },
-  };
-});
-
-export { AzureOpenAIConstructorMock as AzureOpenAI };
+  },
+};
 
 export function setupAzureOpenAIMock(recipeContents: RecipeContentsMock = {}) {
   const defaultContents: RecipeContents = {
@@ -29,8 +23,8 @@ export function setupAzureOpenAIMock(recipeContents: RecipeContentsMock = {}) {
     ...recipeContents,
   };
 
-  azureOpenAIChatCompletionsCreateMock.mockReset();
-  azureOpenAIChatCompletionsCreateMock.mockResolvedValue({
+  azureOpenAIMock.chat.completions.create.mockReset();
+  azureOpenAIMock.chat.completions.create.mockResolvedValue({
     choices: [
       {
         message: {

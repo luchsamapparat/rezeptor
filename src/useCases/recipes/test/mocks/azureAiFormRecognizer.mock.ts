@@ -1,10 +1,8 @@
 import { isNull, isUndefined } from 'lodash-es';
 import { vi } from 'vitest';
 
-export const documentAnalysisClientBeginAnalyzeDocument = vi.fn();
-
-export const DocumentAnalysisClientMock = {
-  beginAnalyzeDocument: documentAnalysisClientBeginAnalyzeDocument,
+export const documentAnalysisClientMock = {
+  beginAnalyzeDocument: vi.fn(),
 };
 
 export function setupAzureFormRecognizerMock({
@@ -45,7 +43,7 @@ export function setupAzureFormRecognizerMock({
 
   const mockPollUntilDone = vi.fn().mockResolvedValue(response);
 
-  documentAnalysisClientBeginAnalyzeDocument.mockResolvedValue({
+  documentAnalysisClientMock.beginAnalyzeDocument.mockResolvedValue({
     pollUntilDone: mockPollUntilDone,
   });
 
