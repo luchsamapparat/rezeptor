@@ -170,6 +170,11 @@ npx shadcn@latest add form         # Add Form component
 
 Components are automatically installed to `src/application/ui/components/ui/` based on the path aliases in `components.json`.
 
+**After adding components, run the linter to fix any formatting issues:**
+```bash
+npm run lint -- --fix
+```
+
 ### Using Components
 Import components using the configured path aliases:
 ```typescript
