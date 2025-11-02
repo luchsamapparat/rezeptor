@@ -19,7 +19,7 @@ describe('FileRepository', () => {
       const repository = new FileRepository('/test-dir', fileSystemMock);
 
       // Create a file first
-      const content = new File([new Uint8Array(Buffer.from('test content'))], 'test-file.txt');
+      const content = new File([new TextEncoder().encode('test content')], 'test-file.txt');
       const filename = await repository.save(content);
 
       // Verify the file exists

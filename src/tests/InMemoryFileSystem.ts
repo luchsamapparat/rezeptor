@@ -5,7 +5,7 @@ import type { FileSystemOperations } from '../common/server/FileSystemOperations
  * Stores files in memory without touching the actual file system.
  */
 export class InMemoryFileSystem implements FileSystemOperations {
-  private files = new Map<string, Buffer>();
+  private files = new Map<string, Uint8Array>();
   private directories = new Set<string>();
 
   async mkdir(path: string, options?: { recursive?: boolean }): Promise<void> {
@@ -24,17 +24,22 @@ export class InMemoryFileSystem implements FileSystemOperations {
     }
   }
 
-  async writeFile(path: string, data: Buffer | Uint8Array): Promise<void> {
-    const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-    this.files.set(path, buffer);
+  async writeFile(path: string, data: ReadableStream<Uint8Array>): Promise<void> {
+    const arrayBuffer = await new Response(data).arrayBuffer();
+    this.files.set(path, new Uint8Array(arrayBuffer));
   }
 
-  async readFile(path: string): Promise<Buffer> {
+  async readFile(path: string): Promise<ReadableStream<Uint8Array>> {
     const data = this.files.get(path);
     if (!data) {
       throw new Error(`ENOENT: no such file or directory, open '${path}'`);
     }
-    return data;
+    return new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(data);
+        controller.close();
+      },
+    });
   }
 
   async unlink(path: string): Promise<void> {
@@ -66,7 +71,7 @@ export class InMemoryFileSystem implements FileSystemOperations {
   /**
    * Test utility: Get all stored files
    */
-  getAllFiles(): Map<string, Buffer> {
+  getAllFiles(): Map<string, Uint8Array> {
     return new Map(this.files);
   }
 }

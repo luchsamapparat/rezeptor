@@ -586,7 +586,7 @@ describe('Recipe Management API Integration Tests', () => {
     it('should return 422 for invalid file type', async ({ app }) => {
       // when:
       const formData = new FormData();
-      formData.append('photoFile', new File([Buffer.from('not an image')], 'test.txt', { type: 'text/plain' }));
+      formData.append('photoFile', new File([new TextEncoder().encode('not an image')], 'test.txt', { type: 'text/plain' }));
 
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
         method: 'PUT',

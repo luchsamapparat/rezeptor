@@ -9,8 +9,8 @@ export class FileSystemMock extends InMemoryFileSystem {
    * Test utility: Get the content of a file as a string
    */
   async getFileAsString(path: string): Promise<string> {
-    const buffer = await this.readFile(path);
-    return buffer.toString();
+    const stream = await this.readFile(path);
+    return await new Response(stream).text();
   }
 
   /**

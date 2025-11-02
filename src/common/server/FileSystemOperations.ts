@@ -9,14 +9,14 @@ export interface FileSystemOperations {
   mkdir(path: string, options?: { recursive?: boolean }): Promise<void>;
 
   /**
-   * Write data to a file.
+   * Write data to a file using a web stream.
    */
-  writeFile(path: string, data: Buffer | Uint8Array): Promise<void>;
+  writeFile(path: string, data: ReadableStream<Uint8Array>): Promise<void>;
 
   /**
-   * Read data from a file.
+   * Read data from a file as a web stream.
    */
-  readFile(path: string): Promise<Buffer>;
+  readFile(path: string): Promise<ReadableStream<Uint8Array>>;
 
   /**
    * Delete a file.

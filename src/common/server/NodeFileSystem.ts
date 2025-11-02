@@ -1,4 +1,7 @@
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import type { ReadableStream as WebReadableStream } from 'node:stream/web';
 import type { FileSystemOperations } from './FileSystemOperations';
 
 /**
@@ -10,14 +13,16 @@ export class NodeFileSystem implements FileSystemOperations {
     await mkdir(path, options);
   }
 
-  async writeFile(path: string, data: Buffer | Uint8Array): Promise<void> {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(path, data);
+  async writeFile(path: string, data: ReadableStream<Uint8Array>): Promise<void> {
+    const { createWriteStream } = await import('node:fs');
+    const writable = createWriteStream(path);
+    const nodeReadable = Readable.fromWeb(data as WebReadableStream<Uint8Array>);
+    await pipeline(nodeReadable, writable);
   }
 
-  async readFile(path: string): Promise<Buffer> {
-    const { readFile } = await import('node:fs/promises');
-    return await readFile(path);
+  async readFile(path: string): Promise<ReadableStream<Uint8Array>> {
+    const { createReadStream } = await import('node:fs');
+    return Readable.toWeb(createReadStream(path)) as unknown as ReadableStream<Uint8Array>;
   }
 
   async unlink(path: string): Promise<void> {

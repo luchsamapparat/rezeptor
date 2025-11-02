@@ -361,12 +361,10 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 422 when file is not an image', async ({ app }) => {
       // given:
-      const invalidFileBuffer = Buffer.from('This is not an image');
+      const formData = new FormData();
+      formData.append('backCoverFile', new File([new TextEncoder().encode('This is not an image')], 'test-file.txt', { type: 'text/plain' }));
 
       // when:
-      const formData = new FormData();
-      formData.append('backCoverFile', new File([invalidFileBuffer], 'test-file.txt', { type: 'text/plain' }));
-
       const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
         method: 'POST',
         body: formData,
