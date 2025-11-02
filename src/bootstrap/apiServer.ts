@@ -7,7 +7,7 @@ import { type FileSystemOperations } from '../common/server/FileSystemOperations
 import { NodeFileSystem } from '../common/server/NodeFileSystem';
 import { ExternalServiceError, NotFoundError, ValidationError } from '../common/server/error';
 import { api } from './api';
-import { databaseSchema } from './databaseSchema';
+import * as databaseSchema from './databaseSchema';
 
 type ApiServer<DatabaseSchema extends Record<string, unknown>> = {
   app: Hono<{ Variables: ApplicationContext<DatabaseSchema> }>;
