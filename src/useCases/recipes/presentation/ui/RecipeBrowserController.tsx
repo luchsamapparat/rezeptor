@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
+import { EmptyState, ErrorState, LoadingState, PageHeader, RecipeCard } from '../../../../application/ui/components';
 import { recipesQuery } from '../api/client';
 import type { Route } from './+types/RecipeBrowserController';
 
@@ -15,102 +15,53 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
 
   if (isLoading) {
     return (
-      <div>
-        <h1>Recipe Browser</h1>
-        <p>Loading recipes...</p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Recipe Browser" />
+        <LoadingState message="Loading recipes..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div>
-        <h1>Recipe Browser</h1>
-        <p style={{ color: 'red' }}>
-          Error:
-          {' '}
-          {error instanceof Error ? error.message : 'Unknown error occurred'}
-        </p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Recipe Browser" />
+        <ErrorState message={error instanceof Error ? error.message : 'Unknown error occurred'} />
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Recipe Browser</h1>
-        <Link
-          to="/cookbooks"
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            textDecoration: 'none',
-            borderRadius: '4px',
-          }}
-        >
-          Manage Cookbooks
-        </Link>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader
+        title="Recipe Browser"
+        actions={[
+          { label: 'Manage Cookbooks', to: '/cookbooks' },
+        ]}
+      />
 
       {recipes.length === 0
         ? (
-            <p>No recipes found. Add some recipes to get started!</p>
+            <EmptyState message="No recipes found. Add some recipes to get started!" />
           )
         : (
             <div>
-              <h2>
+              <h2 className="text-2xl font-semibold mb-6">
                 All Recipes (
                 {recipes.length}
                 )
               </h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {recipes.map(recipe => (
-                  <div key={recipe.id} style={{ border: '1px solid #ddd', borderRadius: '8px', padding: '1.5rem' }}>
-                    {recipe.photoFileId && (
-                      <div style={{ marginBottom: '1rem' }}>
-                        <img
-                          src={`/api/recipes/${recipe.id}/photo`}
-                          alt={`Photo of ${recipe.title}`}
-                          style={{
-                            width: '100%',
-                            height: '200px',
-                            objectFit: 'cover',
-                            borderRadius: '4px',
-                            border: '1px solid #eee',
-                          }}
-                          onError={(e) => {
-                            // Hide the image if it fails to load
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    <h3>{recipe.title}</h3>
-                    <div style={{ marginBottom: '1rem' }}>
-                      {recipe.content.length > 200
-                        ? `${recipe.content.substring(0, 200)}...`
-                        : recipe.content}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.875rem' }}>
-                      {recipe.pageNumber && (
-                        <span style={{ padding: '0.25rem 0.5rem', background: '#f5f5f5', borderRadius: '4px' }}>
-                          Page
-                          {' '}
-                          {recipe.pageNumber}
-                        </span>
-                      )}
-                      {recipe.cookbook && (
-                        <span style={{ padding: '0.25rem 0.5rem', background: '#f5f5f5', borderRadius: '4px' }}>
-                          From:
-                          {' '}
-                          {recipe.cookbook.title}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  <RecipeCard
+                    key={recipe.id}
+                    title={recipe.title}
+                    content={recipe.content}
+                    photoUrl={recipe.photoFileId ? `/api/recipes/${recipe.id}/photo` : undefined}
+                    pageNumber={recipe.pageNumber ?? undefined}
+                    cookbookTitle={recipe.cookbook?.title}
+                  />
                 ))}
               </div>
             </div>

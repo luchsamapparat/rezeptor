@@ -1,8 +1,14 @@
+import { Alert, AlertDescription, AlertTitle } from '@rezeptor/ui/components/ui/Alert';
+import { Button } from '@rezeptor/ui/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
+import { Input } from '@rezeptor/ui/components/ui/Input';
+import { Label } from '@rezeptor/ui/components/ui/Label';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { CheckCircle, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { addCookbook, cookbooksQuery, identifyCookbook, removeCookbook, type CookbookDto, type CookbookIdentificationDto } from '../api/client';
+import { CookbookCard, EmptyState, ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
+import { addCookbook, cookbooksQuery, identifyCookbook, removeCookbook, type CookbookIdentificationDto } from '../api/client';
 import type { Route } from './+types/CookbooksController';
 
 export const loader = async ({ context }: Route.LoaderArgs) => ({
@@ -68,378 +74,199 @@ export default function CookbooksController({ loaderData }: Route.ComponentProps
     }
   };
 
-  const handleRemoveCookbook = async (cookbook: CookbookDto) => {
-    if (confirm(`Are you sure you want to remove "${cookbook.title}"?`)) {
-      await removeCookbookMutation.mutateAsync(cookbook.id);
+  const handleRemoveCookbook = async (id: string) => {
+    const cookbook = cookbooks.find(c => c.id === id);
+    if (cookbook && confirm(`Are you sure you want to remove "${cookbook.title}"?`)) {
+      await removeCookbookMutation.mutateAsync(id);
     }
   };
 
   if (isLoading) {
     return (
-      <div>
-        <h1>Cookbook Management</h1>
-        <p>Loading cookbooks...</p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Cookbook Management" />
+        <LoadingState message="Loading cookbooks..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div>
-        <h1>Cookbook Management</h1>
-        <p style={{ color: 'red' }}>
-          Error:
-          {' '}
-          {error instanceof Error ? error.message : 'Unknown error occurred'}
-        </p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Cookbook Management" />
+        <ErrorState message={error instanceof Error ? error.message : 'Unknown error occurred'} />
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <Link
-            to="/"
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-              marginRight: '1rem',
-            }}
-          >
-            ← Back to Recipes
-          </Link>
-          <h1 style={{ display: 'inline', margin: 0 }}>Cookbook Management</h1>
-        </div>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button
-            onClick={() => {
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader
+        title="Cookbook Management"
+        actions={[
+          { label: '← Back to Recipes', to: '/', variant: 'secondary' },
+          {
+            label: showAddForm ? 'Cancel' : 'Add Cookbook',
+            onClick: () => {
               setShowAddForm(!showAddForm);
               setIdentificationResult(null);
-            }}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            {showAddForm ? 'Cancel' : 'Add Cookbook'}
-          </button>
-        </div>
-      </div>
+            },
+            variant: showAddForm ? 'outline' : 'default',
+          },
+        ]}
+      />
 
       {/* Add Cookbook Form */}
       {showAddForm && (
-        <div
-          style={{
-            marginBottom: '2rem',
-            padding: '1.5rem',
-            border: '1px solid #ddd',
-            borderRadius: '8px',
-            backgroundColor: '#f8f9fa',
-          }}
-        >
-          <h2>Add New Cookbook</h2>
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Add New Cookbook</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Identification Helper */}
+            {!identificationResult && (
+              <Alert>
+                <Lightbulb className="h-4 w-4" />
+                <AlertTitle>Auto-fill from back cover image</AlertTitle>
+                <AlertDescription>
+                  <p className="mb-4">
+                    Upload a photo of the cookbook&apos;s back cover to automatically fill out the form fields below.
+                  </p>
+                  <form onSubmit={handleIdentifyCookbook} className="space-y-4">
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <Input
+                          type="file"
+                          name="backCoverFile"
+                          accept="image/*"
+                          className="cursor-pointer"
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={identifyCookbookMutation.isPending}
+                      >
+                        {identifyCookbookMutation.isPending ? 'Identifying...' : 'Auto-fill'}
+                      </Button>
+                    </div>
+                    {identifyCookbookMutation.error && (
+                      <ErrorState message={identifyCookbookMutation.error.message} />
+                    )}
+                  </form>
+                </AlertDescription>
+              </Alert>
+            )}
 
-          {/* Identification Helper */}
-          {!identificationResult && (
-            <div
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1rem',
-                border: '1px solid #007bff',
-                borderRadius: '4px',
-                backgroundColor: '#e7f3ff',
-              }}
-            >
-              <h4 style={{ margin: '0 0 0.5rem 0', color: '#0056b3' }}>
-                💡 Auto-fill from back cover image
-              </h4>
-              <p style={{ margin: '0 0 1rem 0', fontSize: '0.875rem', color: '#0056b3' }}>
-                Upload a photo of the cookbook&apos;s back cover to automatically fill out the form fields below.
-              </p>
-              <form onSubmit={handleIdentifyCookbook}>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'end' }}>
-                  <div style={{ flex: 1 }}>
-                    <input
-                      type="file"
-                      name="backCoverFile"
-                      accept="image/*"
-                      style={{
-                        padding: '0.5rem',
-                        border: '1px solid #007bff',
-                        borderRadius: '4px',
-                        width: '100%',
-                      }}
+            {/* Success message for identification */}
+            {identificationResult && (
+              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertTitle className="text-green-600">Cookbook identified successfully!</AlertTitle>
+                <AlertDescription>
+                  <p className="mb-2 text-green-600">
+                    The form below has been filled with the identified information. You can edit the fields before saving.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => setIdentificationResult(null)}
+                    variant="outline"
+                    size="sm"
+                    className="border-green-600 text-green-600 hover:bg-green-100"
+                  >
+                    Clear and try again
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Manual Form */}
+            <div className={identificationResult ? 'border-t pt-6' : ''}>
+              <form onSubmit={handleAddCookbook} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Title *
+                  </Label>
+                  <Input
+                    type="text"
+                    id="title"
+                    name="title"
+                    defaultValue={identificationResult?.title || ''}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="authors">
+                    Authors (comma-separated) *
+                  </Label>
+                  <Input
+                    type="text"
+                    id="authors"
+                    name="authors"
+                    defaultValue={identificationResult?.authors?.join(', ') || ''}
+                    required
+                    placeholder="e.g., John Doe, Jane Smith"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="isbn10">ISBN-10</Label>
+                    <Input
+                      type="text"
+                      id="isbn10"
+                      name="isbn10"
+                      defaultValue={identificationResult?.isbn10 || ''}
                     />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={identifyCookbookMutation.isPending}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: identifyCookbookMutation.isPending ? 'not-allowed' : 'pointer',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {identifyCookbookMutation.isPending ? 'Identifying...' : 'Auto-fill'}
-                  </button>
+                  <div className="space-y-2">
+                    <Label htmlFor="isbn13">ISBN-13</Label>
+                    <Input
+                      type="text"
+                      id="isbn13"
+                      name="isbn13"
+                      defaultValue={identificationResult?.isbn13 || ''}
+                    />
+                  </div>
                 </div>
-                {identifyCookbookMutation.error && (
-                  <p style={{ color: '#dc3545', marginTop: '0.5rem', fontSize: '0.875rem' }}>
-                    {identifyCookbookMutation.error.message}
-                  </p>
-                )}
+                <Button
+                  type="submit"
+                  disabled={addCookbookMutation.isPending}
+                >
+                  {addCookbookMutation.isPending ? 'Adding...' : 'Add Cookbook'}
+                </Button>
               </form>
+
+              {addCookbookMutation.error && (
+                <ErrorState message={addCookbookMutation.error.message} />
+              )}
             </div>
-          )}
-
-          {/* Success message for identification */}
-          {identificationResult && (
-            <div
-              style={{
-                marginBottom: '1.5rem',
-                padding: '1rem',
-                border: '1px solid #28a745',
-                borderRadius: '4px',
-                backgroundColor: '#d4edda',
-              }}
-            >
-              <h4 style={{ margin: '0 0 0.5rem 0', color: '#155724' }}>
-                ✅ Cookbook identified successfully!
-              </h4>
-              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#155724' }}>
-                The form below has been filled with the identified information. You can edit the fields before saving.
-              </p>
-              <button
-                type="button"
-                onClick={() => setIdentificationResult(null)}
-                style={{
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: 'transparent',
-                  color: '#155724',
-                  border: '1px solid #155724',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '0.75rem',
-                }}
-              >
-                Clear and try again
-              </button>
-            </div>
-          )}
-
-          {/* Manual Form */}
-          <div style={{ borderTop: !identificationResult ? 'none' : '1px solid #ddd', paddingTop: !identificationResult ? '0' : '1rem' }}>
-            <form onSubmit={handleAddCookbook}>
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="title" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                  Title: *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  defaultValue={identificationResult?.title || ''}
-                  required
-                  style={{
-                    padding: '0.5rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    width: '100%',
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="authors" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                  Authors (comma-separated): *
-                </label>
-                <input
-                  type="text"
-                  id="authors"
-                  name="authors"
-                  defaultValue={identificationResult?.authors?.join(', ') || ''}
-                  required
-                  placeholder="e.g., John Doe, Jane Smith"
-                  style={{
-                    padding: '0.5rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    width: '100%',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                <div>
-                  <label htmlFor="isbn10" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                    ISBN-10:
-                  </label>
-                  <input
-                    type="text"
-                    id="isbn10"
-                    name="isbn10"
-                    defaultValue={identificationResult?.isbn10 || ''}
-                    style={{
-                      padding: '0.5rem',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      width: '100%',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="isbn13" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                    ISBN-13:
-                  </label>
-                  <input
-                    type="text"
-                    id="isbn13"
-                    name="isbn13"
-                    defaultValue={identificationResult?.isbn13 || ''}
-                    style={{
-                      padding: '0.5rem',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      width: '100%',
-                    }}
-                  />
-                </div>
-              </div>
-              <button
-                type="submit"
-                disabled={addCookbookMutation.isPending}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: addCookbookMutation.isPending ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {addCookbookMutation.isPending ? 'Adding...' : 'Add Cookbook'}
-              </button>
-            </form>
-
-            {addCookbookMutation.error && (
-              <p style={{ color: 'red', marginTop: '1rem' }}>
-                Error:
-                {' '}
-                {addCookbookMutation.error.message}
-              </p>
-            )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Cookbooks List */}
       {cookbooks.length === 0
         ? (
-            <p>No cookbooks found. Add some cookbooks to get started!</p>
+            <EmptyState message="No cookbooks found. Add some cookbooks to get started!" />
           )
         : (
             <div>
-              <h2>
+              <h2 className="text-2xl font-semibold mb-6">
                 All Cookbooks (
                 {cookbooks.length}
                 )
               </h2>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-                  gap: '1.5rem',
-                }}
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cookbooks.map(cookbook => (
-                  <div
+                  <CookbookCard
                     key={cookbook.id}
-                    style={{
-                      border: '1px solid #ddd',
-                      borderRadius: '8px',
-                      padding: '1.5rem',
-                      backgroundColor: 'white',
-                    }}
-                  >
-                    <div style={{ marginBottom: '1rem' }}>
-                      <h3 style={{ margin: '0 0 0.5rem 0' }}>{cookbook.title}</h3>
-                      <p style={{ margin: '0 0 0.5rem 0', color: '#666' }}>
-                        by
-                        {' '}
-                        {cookbook.authors.join(', ')}
-                      </p>
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', fontSize: '0.875rem' }}>
-                        {cookbook.isbn10 && (
-                          <span
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: '#e3f2fd',
-                              borderRadius: '4px',
-                            }}
-                          >
-                            ISBN-10:
-                            {' '}
-                            {cookbook.isbn10}
-                          </span>
-                        )}
-                        {cookbook.isbn13 && (
-                          <span
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              backgroundColor: '#e8f5e8',
-                              borderRadius: '4px',
-                            }}
-                          >
-                            ISBN-13:
-                            {' '}
-                            {cookbook.isbn13}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Link
-                        to={cookbook.id}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: '#007bff',
-                          color: 'white',
-                          textDecoration: 'none',
-                          borderRadius: '4px',
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        View Details
-                      </Link>
-                      <button
-                        onClick={() => handleRemoveCookbook(cookbook)}
-                        disabled={removeCookbookMutation.isPending}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          backgroundColor: '#dc3545',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: removeCookbookMutation.isPending ? 'not-allowed' : 'pointer',
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        {removeCookbookMutation.isPending ? 'Removing...' : 'Remove'}
-                      </button>
-                    </div>
-                  </div>
+                    id={cookbook.id}
+                    title={cookbook.title}
+                    authors={cookbook.authors}
+                    isbn10={cookbook.isbn10}
+                    isbn13={cookbook.isbn13}
+                    onRemove={handleRemoveCookbook}
+                    isRemoving={removeCookbookMutation.isPending}
+                  />
                 ))}
               </div>
             </div>

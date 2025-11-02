@@ -1,7 +1,12 @@
+import { Badge } from '@rezeptor/ui/components/ui/Badge';
+import { Button } from '@rezeptor/ui/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
+import { Input } from '@rezeptor/ui/components/ui/Input';
+import { Label } from '@rezeptor/ui/components/ui/Label';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
+import { ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
 import { cookbookQuery, editCookbook } from '../api/client';
 import type { Route } from './+types/CookbookDetailsController';
 
@@ -50,226 +55,146 @@ export default function CookbookDetailsController({ loaderData, params }: Route.
 
   if (isLoading) {
     return (
-      <div>
-        <h1>Cookbook Details</h1>
-        <p>Loading cookbook...</p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Cookbook Details" />
+        <LoadingState message="Loading cookbook..." />
       </div>
     );
   }
 
   if (error || !cookbook) {
     return (
-      <div>
-        <h1>Cookbook Details</h1>
-        <p style={{ color: 'red' }}>
-          Error:
-          {' '}
-          {error instanceof Error ? error.message : 'Cookbook not found'}
-        </p>
+      <div className="container mx-auto px-4 py-8">
+        <PageHeader title="Cookbook Details" />
+        <ErrorState message={error instanceof Error ? error.message : 'Cookbook not found'} />
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h1>Cookbook Details</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link
-            to="/cookbooks"
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              textDecoration: 'none',
-              borderRadius: '4px',
-            }}
-          >
-            Back to Cookbooks
-          </Link>
-          <button
-            onClick={() => setIsEditing(!isEditing)}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            {isEditing ? 'Cancel Edit' : 'Edit'}
-          </button>
-        </div>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <PageHeader
+        title="Cookbook Details"
+        actions={[
+          { label: 'Back to Cookbooks', to: '/cookbooks', variant: 'secondary' },
+          {
+            label: isEditing ? 'Cancel Edit' : 'Edit',
+            onClick: () => setIsEditing(!isEditing),
+            variant: isEditing ? 'outline' : 'default',
+          },
+        ]}
+      />
 
       {isEditing
         ? (
-            <div
-              style={{
-                marginBottom: '2rem',
-                padding: '1.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                backgroundColor: '#f8f9fa',
-              }}
-            >
-              <h2>Edit Cookbook</h2>
-              <form onSubmit={handleEditCookbook}>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label htmlFor="title" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                    Title: *
-                  </label>
-                  <input
-                    type="text"
-                    id="title"
-                    name="title"
-                    defaultValue={cookbook.title}
-                    required
-                    style={{
-                      padding: '0.5rem',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      width: '100%',
-                    }}
-                  />
-                </div>
-                <div style={{ marginBottom: '1rem' }}>
-                  <label htmlFor="authors" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                    Authors (comma-separated): *
-                  </label>
-                  <input
-                    type="text"
-                    id="authors"
-                    name="authors"
-                    defaultValue={cookbook.authors.join(', ')}
-                    required
-                    placeholder="e.g., John Doe, Jane Smith"
-                    style={{
-                      padding: '0.5rem',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                      width: '100%',
-                    }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                  <div>
-                    <label htmlFor="isbn10" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                      ISBN-10:
-                    </label>
-                    <input
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Cookbook</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleEditCookbook} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">
+                      Title *
+                    </Label>
+                    <Input
                       type="text"
-                      id="isbn10"
-                      name="isbn10"
-                      defaultValue={cookbook.isbn10 || ''}
-                      style={{
-                        padding: '0.5rem',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        width: '100%',
-                      }}
+                      id="title"
+                      name="title"
+                      defaultValue={cookbook.title}
+                      required
                     />
                   </div>
-                  <div>
-                    <label htmlFor="isbn13" style={{ display: 'block', marginBottom: '0.5rem' }}>
-                      ISBN-13:
-                    </label>
-                    <input
+                  <div className="space-y-2">
+                    <Label htmlFor="authors">
+                      Authors (comma-separated) *
+                    </Label>
+                    <Input
                       type="text"
-                      id="isbn13"
-                      name="isbn13"
-                      defaultValue={cookbook.isbn13 || ''}
-                      style={{
-                        padding: '0.5rem',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
-                        width: '100%',
-                      }}
+                      id="authors"
+                      name="authors"
+                      defaultValue={cookbook.authors.join(', ')}
+                      required
+                      placeholder="e.g., John Doe, Jane Smith"
                     />
                   </div>
-                </div>
-                <button
-                  type="submit"
-                  disabled={editCookbookMutation.isPending}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: editCookbookMutation.isPending ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {editCookbookMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </button>
-              </form>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="isbn10">ISBN-10</Label>
+                      <Input
+                        type="text"
+                        id="isbn10"
+                        name="isbn10"
+                        defaultValue={cookbook.isbn10 || ''}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="isbn13">ISBN-13</Label>
+                      <Input
+                        type="text"
+                        id="isbn13"
+                        name="isbn13"
+                        defaultValue={cookbook.isbn13 || ''}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={editCookbookMutation.isPending}
+                  >
+                    {editCookbookMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </form>
 
-              {editCookbookMutation.error && (
-                <p style={{ color: 'red', marginTop: '1rem' }}>
-                  Error:
-                  {' '}
-                  {editCookbookMutation.error.message}
-                </p>
-              )}
-            </div>
+                {editCookbookMutation.error && (
+                  <div className="mt-4">
+                    <ErrorState message={editCookbookMutation.error.message} />
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )
         : (
-            <div
-              style={{
-                padding: '1.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-              }}
-            >
-              <h2>{cookbook.title}</h2>
-              <div style={{ marginBottom: '1rem' }}>
-                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>Authors</h3>
-                <p style={{ margin: '0', color: '#666' }}>{cookbook.authors.join(', ')}</p>
-              </div>
-
-              {(cookbook.isbn10 || cookbook.isbn13) && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>ISBN Information</h3>
-                  <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                    {cookbook.isbn10 && (
-                      <span
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#e3f2fd',
-                          borderRadius: '4px',
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        <strong>ISBN-10:</strong>
-                        {' '}
-                        {cookbook.isbn10}
-                      </span>
-                    )}
-                    {cookbook.isbn13 && (
-                      <span
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#e8f5e8',
-                          borderRadius: '4px',
-                          fontFamily: 'monospace',
-                        }}
-                      >
-                        <strong>ISBN-13:</strong>
-                        {' '}
-                        {cookbook.isbn13}
-                      </span>
-                    )}
-                  </div>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-3xl">{cookbook.title}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">Authors</h3>
+                  <p className="text-muted-foreground">{cookbook.authors.join(', ')}</p>
                 </div>
-              )}
 
-              <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
-                <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>Cookbook ID</h3>
-                <code style={{ fontSize: '0.875rem', color: '#666' }}>{cookbook.id}</code>
-              </div>
-            </div>
+                {(cookbook.isbn10 || cookbook.isbn13) && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">ISBN Information</h3>
+                    <div className="flex gap-3 flex-wrap">
+                      {cookbook.isbn10 && (
+                        <Badge variant="secondary" className="px-4 py-2 text-sm font-mono">
+                          ISBN-10:
+                          {' '}
+                          {cookbook.isbn10}
+                        </Badge>
+                      )}
+                      {cookbook.isbn13 && (
+                        <Badge variant="outline" className="px-4 py-2 text-sm font-mono">
+                          ISBN-13:
+                          {' '}
+                          {cookbook.isbn13}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t">
+                  <h3 className="text-lg font-semibold mb-2">Cookbook ID</h3>
+                  <code className="text-sm text-muted-foreground bg-muted px-2 py-1 rounded">
+                    {cookbook.id}
+                  </code>
+                </div>
+              </CardContent>
+            </Card>
           )}
     </div>
   );

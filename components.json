@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@rezeptor-ui/components",
-    "utils": "@rezeptor-ui/lib/utils",
-    "ui": "@rezeptor-ui/components/ui",
-    "lib": "@rezeptor-ui/lib",
-    "hooks": "@rezeptor-ui/hooks"
+    "components": "@rezeptor/ui/components",
+    "utils": "@rezeptor/ui/lib/utils",
+    "ui": "@rezeptor/ui/components/ui",
+    "lib": "@rezeptor/ui/lib",
+    "hooks": "@rezeptor/ui/hooks"
   },
   "registries": {}
 }

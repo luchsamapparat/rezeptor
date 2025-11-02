@@ -12,7 +12,7 @@
     "noEmit": true,
     "noErrorTruncation": true,
     "paths": {
-      "@rezeptor-ui/*": ["./src/application/ui/*"]
+      "@rezeptor/ui/*": ["./src/application/ui/*"]
     },
   }
 }
