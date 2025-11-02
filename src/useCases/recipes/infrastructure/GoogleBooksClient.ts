@@ -1,19 +1,12 @@
-import { books, type books_v1 } from '@googleapis/books';
+import { type books_v1 } from '@googleapis/books';
 import { isEmpty, isUndefined } from 'lodash-es';
 import { ValidationError } from '../../../common/server/error';
 import type { BookMetadata, BookMetadataService } from '../cookbookManagement';
 
-type GoogleBooksClientOptions = {
-  key: string;
-};
-
 export class GoogleBooksClient implements BookMetadataService {
-  private apiClient: books_v1.Books;
-
   constructor(
-    { key }: GoogleBooksClientOptions,
+    private apiClient: books_v1.Books,
   ) {
-    this.apiClient = books({ version: 'v1', key });
   }
 
   async findBook(isbn: string): Promise<BookMetadata | null> {

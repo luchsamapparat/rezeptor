@@ -1,24 +1,15 @@
 import type { FormRecognizerFeature } from '@azure/ai-form-recognizer';
-import { AzureKeyCredential, DocumentAnalysisClient } from '@azure/ai-form-recognizer';
+import { DocumentAnalysisClient } from '@azure/ai-form-recognizer';
 import { getFileSize } from '../../../common/server/file';
 import { resizeImage } from '../../../common/server/image';
 import { sanitizeString } from '../../../common/server/string';
 import type { Barcode, BarcodeExtractionService } from '../cookbookManagement';
 import type { RecipeContents } from '../recipeManagement';
 
-type AzureDocumentAnalysisClientOptions = {
-  endpoint: string;
-  key: string;
-};
-
 export class AzureDocumentAnalysisClient implements BarcodeExtractionService {
-  private apiClient: DocumentAnalysisClient;
-
-  constructor({ endpoint, key }: AzureDocumentAnalysisClientOptions) {
-    this.apiClient = new DocumentAnalysisClient(
-      endpoint,
-      new AzureKeyCredential(key),
-    );
+  constructor(
+    private apiClient: DocumentAnalysisClient,
+  ) {
   }
 
   async extractBarcode(file: File): Promise<Barcode> {
@@ -43,7 +34,7 @@ export class AzureDocumentAnalysisClient implements BarcodeExtractionService {
   }
 
   private async analyzeDocument(file: File, features: FormRecognizerFeature[] = []) {
-    const document = (getFileSize(file) < 4) ? file : await resizeImage (file, 2048);
+    const document = (getFileSize(file) < 4) ? file : await resizeImage(file, 2048);
     const poller = await this.apiClient.beginAnalyzeDocument(
       'prebuilt-layout',
       await document.arrayBuffer(),

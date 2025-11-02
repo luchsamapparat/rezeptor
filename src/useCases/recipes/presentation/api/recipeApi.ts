@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import z from 'zod';
 
+import { AzureOpenAI } from 'openai';
 import { identifierSchema } from '../../../../application/model/identifier';
 import { database, dependency, fileRepositoryFactory, type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
@@ -47,7 +48,19 @@ const recipePhotoFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
   return factory.createFileRepository('recipePhotos');
 }, 'request');
-const recipeExtractionService = dependency(env => new AzureOpenAIClient({ ...env.azureOpenAI, instructions: env.recipeExtraction }));
+
+const azureOpenAI = dependency(env => new AzureOpenAI({
+  endpoint: env.azureOpenAI.endpoint,
+  apiKey: env.azureOpenAI.key,
+  deployment: env.azureOpenAI.deployment,
+  // see https://learn.microsoft.com/en-us/azure/ai-foundry/openai/reference
+  apiVersion: '2025-04-01-preview',
+}));
+const recipeExtractionService = dependency(async (env, c) => new AzureOpenAIClient(
+  await azureOpenAI.resolve(c),
+  env.azureOpenAI.model,
+  env.recipeExtraction,
+));
 
 export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
   .basePath(recipePath)

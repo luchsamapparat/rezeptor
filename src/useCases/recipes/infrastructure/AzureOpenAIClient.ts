@@ -11,33 +11,16 @@ type Prompts = {
   userPrompt: string;
 };
 
-type AzureOpenAIClientOptions = {
-  endpoint: string;
-  key: string;
-  deployment: string;
-  model: string;
-  instructions: Prompts;
-};
-
 export class AzureOpenAIClient implements RecipeExtractionService {
-  private apiClient: AzureOpenAI;
-  private model: string;
-  private instructions: Prompts;
-
-  constructor({ endpoint, key, deployment, model, instructions }: AzureOpenAIClientOptions) {
-    this.apiClient = new AzureOpenAI({
-      endpoint,
-      apiKey: key,
-      deployment,
-      // see https://learn.microsoft.com/en-us/azure/ai-foundry/openai/reference
-      apiVersion: '2025-04-01-preview',
-    });
-    this.model = model;
-    this.instructions = instructions;
+  constructor(
+    private apiClient: AzureOpenAI,
+    private model: string,
+    private instructions: Prompts,
+  ) {
   }
 
   async extractRecipeContents(file: File): Promise<RecipeContents> {
-    const document = (getFileSize(file) < 4) ? file : await resizeImage (file, 2048);
+    const document = (getFileSize(file) < 4) ? file : await resizeImage(file, 2048);
 
     let response: Awaited<ReturnType<typeof this.apiClient.chat.completions.create>>;
 
