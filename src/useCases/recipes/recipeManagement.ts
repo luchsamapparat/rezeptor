@@ -4,6 +4,10 @@ import type { FileRepository } from '../../common/persistence/FileRepository';
 import { NotFoundError } from '../../common/server/error';
 import type { Cookbook } from './cookbookManagement';
 
+/**
+ * Repository interface for recipe persistence operations.
+ * Provides CRUD operations for recipes and supports querying recipes with their associated cookbooks.
+ */
 export type RecipeRepository = {
   insert(newRecipe: NewRecipe): Promise<Recipe>;
   update(recipeId: Identifier, changes: RecipeChanges): Promise<Recipe | null>;
@@ -12,20 +16,35 @@ export type RecipeRepository = {
   deleteById(recipeId: Identifier): Promise<Recipe | null>;
 };
 
+/**
+ * Repository interface for managing recipe file storage.
+ * Handles saving and removing recipe source files (e.g., photographed recipe pages from cookbooks).
+ */
 export type RecipeFileRepository = {
   save(file: File): Promise<string>;
   remove(filename: string): Promise<void>;
 };
 
+/**
+ * Repository interface for managing recipe photo storage.
+ * Handles saving and removing recipe photos.
+ */
 export type RecipePhotoFileRepository = {
   save(file: File): Promise<string>;
   remove(filename: string): Promise<void>;
 };
 
+/**
+ * Service interface for extracting recipe data from recipe source files (e.g., photographed recipe pages from cookbooks).
+ * Uses external services to extract structured recipe information.
+ */
 export type RecipeExtractionService = {
   extractRecipeContents(file: File): Promise<RecipeContents>;
 };
 
+/**
+ * Represents extracted recipe contents from a recipe source file.
+ */
 export type RecipeContents = {
   title: string | null;
   pageNumber: number | null;
@@ -60,6 +79,14 @@ type AddRecipeArgs = {
   recipe: NewRecipe;
 };
 
+/**
+ * Adds a new recipe to the repository.
+ *
+ * @param args - The arguments containing the repository and recipe data
+ * @param args.recipesRepository - Repository for persisting recipes
+ * @param args.recipe - The new recipe data to insert
+ * @returns Promise resolving to the created recipe with generated ID
+ */
 export const addRecipe = async ({ recipesRepository, recipe }: AddRecipeArgs) => recipesRepository.insert(recipe);
 
 type AddRecipeFromPhotoArgs = {
@@ -70,6 +97,19 @@ type AddRecipeFromPhotoArgs = {
   cookbookId?: string | null;
 };
 
+/**
+ * Creates a new recipe by extracting contents from a photo file.
+ * Uses the recipe extraction service to extract and parse recipe information,
+ * then saves both the file and extracted data.
+ *
+ * @param args - The arguments containing repositories, services, and file data
+ * @param args.recipesRepository - Repository for persisting recipes
+ * @param args.recipeFileRepository - Repository for storing recipe files
+ * @param args.recipeExtractionService - Service for extracting recipe data from files
+ * @param args.recipeFile - The image file containing the recipe
+ * @param args.cookbookId - Optional cookbook ID to associate the recipe with
+ * @returns Promise resolving to the created recipe
+ */
 export const addRecipeFromPhoto = async ({
   recipesRepository,
   recipeFileRepository,
@@ -107,6 +147,16 @@ type EditRecipeArgs = {
   recipeChanges: RecipeChanges;
 };
 
+/**
+ * Updates an existing recipe with the provided changes.
+ *
+ * @param args - The arguments containing the repository, recipe ID, and changes
+ * @param args.recipesRepository - Repository for persisting recipes
+ * @param args.recipeId - ID of the recipe to update
+ * @param args.recipeChanges - Partial recipe data containing fields to update
+ * @returns Promise resolving to the updated recipe
+ * @throws {NotFoundError} If no recipe with the given ID exists
+ */
 export const editRecipe = async ({ recipesRepository, recipeId, recipeChanges }: EditRecipeArgs) => {
   const recipe = await recipesRepository.update(recipeId, recipeChanges);
 
@@ -122,6 +172,15 @@ type GetRecipeArgs = {
   recipeId: Identifier;
 };
 
+/**
+ * Retrieves a single recipe by its ID.
+ *
+ * @param args - The arguments containing the repository and recipe ID
+ * @param args.recipesRepository - Repository for retrieving recipes
+ * @param args.recipeId - ID of the recipe to retrieve
+ * @returns Promise resolving to the recipe
+ * @throws {NotFoundError} If no recipe with the given ID exists
+ */
 export const getRecipe = async ({ recipesRepository, recipeId }: GetRecipeArgs) => {
   const recipe = await recipesRepository.findById(recipeId);
 
@@ -136,6 +195,13 @@ type GetRecipesArgs = {
   recipesRepository: RecipeRepository;
 };
 
+/**
+ * Retrieves all recipes with their associated cookbook information.
+ *
+ * @param args - The arguments containing the repository
+ * @param args.recipesRepository - Repository for retrieving recipes
+ * @returns Promise resolving to an array of recipes with cookbook data
+ */
 export const getRecipes = async ({ recipesRepository }: GetRecipesArgs) => recipesRepository.getAllWithCookbooks();
 
 type AddRecipePhotoArgs = {
@@ -145,6 +211,18 @@ type AddRecipePhotoArgs = {
   photoFile: File;
 };
 
+/**
+ * Adds a photo to an existing recipe.
+ * Saves the photo file and updates the recipe with the photo file ID.
+ *
+ * @param args - The arguments containing repositories, recipe ID, and photo file
+ * @param args.recipesRepository - Repository for persisting recipes
+ * @param args.recipePhotoFileRepository - Repository for storing photo files
+ * @param args.recipeId - ID of the recipe to add the photo to
+ * @param args.photoFile - The photo file to add
+ * @returns Promise resolving to the updated recipe
+ * @throws {NotFoundError} If no recipe with the given ID exists
+ */
 export const addRecipePhoto = async ({
   recipesRepository,
   recipePhotoFileRepository,
@@ -168,6 +246,16 @@ type GetRecipePhotoArgs = {
   recipeId: Identifier;
 };
 
+/**
+ * Retrieves the photo file data for a recipe.
+ *
+ * @param args - The arguments containing repositories and recipe ID
+ * @param args.recipesRepository - Repository for retrieving recipes
+ * @param args.recipePhotoFileRepository - Repository for retrieving photo files
+ * @param args.recipeId - ID of the recipe to get the photo for
+ * @returns Promise resolving to the photo file data
+ * @throws {NotFoundError} If no recipe with the given ID exists or if the recipe has no photo
+ */
 export const getRecipePhoto = async ({ recipesRepository, recipePhotoFileRepository, recipeId }: GetRecipePhotoArgs) => {
   const recipe = await recipesRepository.findById(recipeId);
 
@@ -190,6 +278,18 @@ type RemoveRecipeArgs = {
   recipeId: Identifier;
 };
 
+/**
+ * Removes a recipe and all associated files.
+ * Deletes the recipe from the repository and removes any associated photo and recipe files.
+ *
+ * @param args - The arguments containing repositories and recipe ID
+ * @param args.recipesRepository - Repository for persisting recipes
+ * @param args.recipePhotoFileRepository - Repository for photo file storage
+ * @param args.recipeFileRepository - Repository for recipe file storage
+ * @param args.recipeId - ID of the recipe to remove
+ * @returns Promise that resolves when the recipe and files are removed
+ * @throws {NotFoundError} If no recipe with the given ID exists
+ */
 export const removeRecipe = async ({ recipesRepository, recipePhotoFileRepository, recipeFileRepository, recipeId }: RemoveRecipeArgs) => {
   const recipe = await recipesRepository.findById(recipeId);
   if (!recipe) {
