@@ -8,6 +8,7 @@
 - **Frontend/Backend**: React Router v7 with Hono server (`react-router-hono-server`)
 - **Database**: SQLite with Drizzle ORM
 - **DI System**: `hono-simple-di` for dependency injection throughout API layers
+- **UI Components**: Shadcn UI (New York style) with Tailwind CSS v4
 - **External Services**: Azure Document Intelligence (OCR), Azure OpenAI (recipe extraction), Google Books API
 
 ## Project Structure
@@ -144,6 +145,52 @@ Tests use `:memory:` database and mocked Azure/Google services.
 6. Aggregate schema in `useCases/index.ts` → `bootstrap/databaseSchema.ts`
 7. Generate migration: `npm run db:generate`
 
+## UI Components with Shadcn
+
+### Setup
+Shadcn UI is configured with:
+- **Style**: New York variant
+- **Styling**: Tailwind CSS v4 with CSS variables
+- **Icons**: Lucide React
+- **Base Color**: Neutral
+- **Location**: `src/application/ui/components/ui/`
+
+### Adding Components
+Use the Shadcn CLI to add new components:
+```bash
+npx shadcn@latest add <component-name>
+```
+
+Examples:
+```bash
+npx shadcn@latest add button       # Add Button component
+npx shadcn@latest add dialog       # Add Dialog component
+npx shadcn@latest add form         # Add Form component
+```
+
+Components are automatically installed to `src/application/ui/components/ui/` based on the path aliases in `components.json`.
+
+### Using Components
+Import components using the configured path aliases:
+```typescript
+import { Button } from '@rezeptor/ui/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
+import { Input } from '@rezeptor/ui/components/ui/Input';
+```
+
+### Customizing Components
+- **Modify Existing**: Edit component files in `src/application/ui/components/ui/`
+- **Styling**: Use Tailwind CSS classes and CSS variables defined in `src/application/ui/stylesheet.css`
+- **Variants**: Use `class-variance-authority` for component variants (already configured in base components)
+- **Utils**: Use `cn()` utility from `@rezeptor/ui/lib/utils` for conditional class merging
+
+### Available Path Aliases
+Defined in `components.json` and `tsconfig.json`:
+- `@rezeptor/ui/components` → `src/application/ui/components`
+- `@rezeptor/ui/components/ui` → `src/application/ui/components/ui`
+- `@rezeptor/ui/lib/utils` → `src/application/ui/lib/utils`
+- `@rezeptor/ui/hooks` → `src/hooks`
+
 ## Conventions
 
 - **Path Aliases**: Use absolute imports via `tsconfig.json` paths (e.g., `import { ... } from '../../common/...'`)
@@ -151,6 +198,7 @@ Tests use `:memory:` database and mocked Azure/Google services.
 - **File Naming**: `{Feature}Controller.tsx` for route modules, `{Feature}Api.ts` for API routes
 - **Database Tables**: `{entity}sTable` (plural) in Drizzle schema files
 - **Mock Data**: Use Fishery factories in `test/data/*MockData.ts` for test fixtures
+- **UI Components**: Use Shadcn components from `@rezeptor/ui/components/ui/*` for consistent styling
 
 ## Deployment
 
