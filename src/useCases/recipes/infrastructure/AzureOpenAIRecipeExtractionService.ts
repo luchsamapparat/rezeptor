@@ -71,5 +71,11 @@ export class AzureOpenAIRecipeExtractionService implements RecipeExtractionServi
 const recipeContentSchema = z.object({
   title: z.string().nullable(),
   pageNumber: z.number().nullable(),
-  content: z.string(),
+  instructions: z.string(),
+  ingredients: z.array(z.object({
+    quantity: z.string().nullable(),
+    unit: z.string().nullable(),
+    name: z.string(),
+    notes: z.string().nullable(),
+  })),
 }) satisfies ZodType<RecipeContents>;

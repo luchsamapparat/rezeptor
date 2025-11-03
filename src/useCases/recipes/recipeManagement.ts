@@ -48,26 +48,36 @@ export type RecipeExtractionService = {
 export type RecipeContents = {
   title: string | null;
   pageNumber: number | null;
-  content: string;
+  instructions: string;
+  ingredients: Ingredient[];
 };
 
-type Recipe = {
+export type Ingredient = {
+  quantity: string | null;
+  unit: string | null;
+  name: string;
+  notes: string | null;
+};
+
+export type Recipe = {
   id: Identifier;
   title: string;
-  content: string;
+  instructions: string;
+  ingredients: Ingredient[];
   photoFileId: string | null;
   recipeFileId: string | null;
   cookbookId: string | null;
   pageNumber: number | null;
 };
 
-type RecipeWithCookbook = Recipe & {
+export type RecipeWithCookbook = Recipe & {
   cookbook: Cookbook | null;
 };
 
-type NewRecipe = {
+export type NewRecipe = {
   title: string;
-  content: string;
+  instructions: string;
+  ingredients: Ingredient[];
   photoFileId?: string | null;
   recipeFileId?: string | null;
   cookbookId?: string | null;
@@ -122,7 +132,8 @@ export const addRecipeFromPhoto = async ({
 
   const recipeData: NewRecipe = {
     title: recipeContents.title || '',
-    content: recipeContents.content,
+    instructions: recipeContents.instructions,
+    ingredients: recipeContents.ingredients,
     pageNumber: recipeContents.pageNumber,
     recipeFileId,
     cookbookId: cookbookId || null,
@@ -132,9 +143,10 @@ export const addRecipeFromPhoto = async ({
   return recipesRepository.insert(recipeData);
 };
 
-type RecipeChanges = {
+export type RecipeChanges = {
   title?: string;
-  content?: string;
+  instructions?: string;
+  ingredients?: Ingredient[];
   photoFileId?: string | null;
   recipeFileId?: string | null;
   cookbookId?: string | null;

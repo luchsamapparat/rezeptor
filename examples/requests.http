@@ -57,7 +57,45 @@ Content-Type: application/json
 
 {
   "title": "Roasted Eggplant with Curry Yogurt",
-  "content": "Preheat oven to 220°C. Cut 2 large eggplants into 3cm chunks. Toss with olive oil, salt and pepper. Roast for 25-30 minutes until golden. Meanwhile, mix 200g Greek yogurt with 1 tsp curry powder, salt and lemon juice. Serve eggplant warm with curry yogurt drizzled on top.",
+  "instructions": "Preheat oven to 220°C. Cut 2 large eggplants into 3cm chunks. Toss with olive oil, salt and pepper. Roast for 25-30 minutes until golden. Meanwhile, mix 200g Greek yogurt with 1 tsp curry powder, salt and lemon juice. Serve eggplant warm with curry yogurt drizzled on top.",
+  "ingredients": [
+    {
+      "quantity": "2",
+      "unit": "large",
+      "name": "eggplants",
+      "notes": null
+    },
+    {
+      "quantity": "3",
+      "unit": "tbsp",
+      "name": "olive oil",
+      "notes": null
+    },
+    {
+      "quantity": "200",
+      "unit": "g",
+      "name": "Greek yogurt",
+      "notes": null
+    },
+    {
+      "quantity": "1",
+      "unit": "tsp",
+      "name": "curry powder",
+      "notes": null
+    },
+    {
+      "quantity": null,
+      "unit": null,
+      "name": "salt and pepper",
+      "notes": "to taste"
+    },
+    {
+      "quantity": "1",
+      "unit": "tbsp",
+      "name": "lemon juice",
+      "notes": "fresh"
+    }
+  ],
   "cookbookId": null,
   "pageNumber": 45,
   "photoFileId": null,
@@ -85,7 +123,21 @@ Content-Type: application/json
 
 {
   "title": "Roasted Eggplant with Spiced Curry Yogurt",
-  "content": "Updated recipe with more detailed instructions...",
+  "instructions": "Updated recipe with more detailed instructions...",
+  "ingredients": [
+    {
+      "quantity": "2",
+      "unit": "large",
+      "name": "eggplants",
+      "notes": "preferably globe eggplants"
+    },
+    {
+      "quantity": "3",
+      "unit": "tbsp",
+      "name": "olive oil",
+      "notes": "extra virgin"
+    }
+  ],
   "pageNumber": 46
 }
 

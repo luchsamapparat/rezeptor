@@ -9,8 +9,8 @@ import { recipeExtractionService } from '../infrastructure/di';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from '../infrastructure/persistence/RecipeDatabaseRepository';
 import { insertCookbookEntityMock } from './data/cookbookMockData';
-import { addRecipeDtoMock, insertRecipeEntityMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
-import { setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
+import { ingredientEntityMockList, toIngredient } from './data/ingredientMockData';
+import { addRecipeDtoMock, insertRecipeEntityMock, newRecipeMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
 import { azureOpenAIMock, setupAzureOpenAIMock } from './mocks/azureOpenAI.mock';
 
 describe('Recipe Management API Integration Tests', () => {
@@ -32,7 +32,7 @@ describe('Recipe Management API Integration Tests', () => {
       const recipeRepository = new RecipeDatabaseRepository(database);
       const insertRecipeEntity = insertRecipeEntityMock;
 
-      await recipeRepository.insert(insertRecipeEntity);
+      await recipeRepository.insert(newRecipeMock);
 
       // when:
       const response = await app.request(new Request('http://localhost/api/recipes', {
@@ -54,7 +54,7 @@ describe('Recipe Management API Integration Tests', () => {
 
       const recipeRepository = new RecipeDatabaseRepository(database);
       const recipeWithCookbook = {
-        ...insertRecipeEntityMock,
+        ...newRecipeMock,
         cookbookId: cookbookEntity.id,
       };
       await recipeRepository.insert(recipeWithCookbook);
@@ -78,7 +78,7 @@ describe('Recipe Management API Integration Tests', () => {
       // given:
       const recipeRepository = new RecipeDatabaseRepository(database);
       const recipeWithoutCookbook = {
-        ...insertRecipeEntityMock,
+        ...newRecipeMock,
         cookbookId: null,
       };
       await recipeRepository.insert(recipeWithoutCookbook);
@@ -102,7 +102,7 @@ describe('Recipe Management API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeDatabaseRepository(database);
-      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(newRecipeMock);
       recipeId = recipeEntity.id;
     });
 
@@ -115,9 +115,10 @@ describe('Recipe Management API Integration Tests', () => {
       // then:
       expect(response.status).toBe(200);
       const body = await response.json();
-      expect(body.id).toBe(recipeId);
-      expect(body.title).toBeDefined();
-      expect(body.content).toBeDefined();
+      expect(body).toMatchObject({
+        ...recipeEntityMock,
+        id: recipeId,
+      });
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
@@ -159,7 +160,10 @@ describe('Recipe Management API Integration Tests', () => {
       const recipeRepository = new RecipeDatabaseRepository(database);
       const recipes = await recipeRepository.getAll();
       expect(recipes).toHaveLength(1);
-      expect(recipes[0]).toMatchObject(addRecipeDto);
+      expect(recipes[0]).toMatchObject({
+        ...recipeEntityMock,
+        id: body.id,
+      });
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
@@ -202,18 +206,15 @@ describe('Recipe Management API Integration Tests', () => {
       const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
       const cookbookId = cookbookEntity.id;
 
-      const { title, pageNumber, content } = recipeEntityMock;
+      const { title, pageNumber, instructions } = recipeEntityMock;
+      const ingredients = ingredientEntityMockList.map(toIngredient);
 
-      // Setup the document analysis mock
-      setupAzureFormRecognizerMock({
-        title,
-        pageNumber: pageNumber?.toString(),
-        text: content,
-      });
+      // Setup the Azure OpenAI mock
       setupAzureOpenAIMock({
         title,
         pageNumber,
-        content,
+        instructions,
+        ingredients,
       });
 
       const initialFileCount = fileSystemMock.getFileCount();
@@ -234,8 +235,9 @@ describe('Recipe Management API Integration Tests', () => {
       const body = await response.json();
       expect(body).toMatchObject({
         title,
-        content,
         pageNumber,
+        instructions,
+        ingredients,
         cookbookId,
         photoFileId: null,
       });
@@ -253,17 +255,16 @@ describe('Recipe Management API Integration Tests', () => {
 
     it('should create a recipe from uploaded image file without cookbook context', async ({ app, database }) => {
       // given:
-      // Setup the document analysis mock
-      const { title, pageNumber, content } = recipeEntityMock;
-      setupAzureFormRecognizerMock({
-        title,
-        pageNumber: pageNumber?.toString(),
-        text: content,
-      });
+      // Setup the Azure OpenAI mock
+      const { title, pageNumber, instructions } = recipeEntityMock;
+      const ingredients = ingredientEntityMockList.map(toIngredient);
+
+      // Setup the Azure OpenAI mock
       setupAzureOpenAIMock({
         title,
         pageNumber,
-        content,
+        instructions,
+        ingredients,
       });
 
       const testFile = await loadTestFile('recipe1.jpg');
@@ -282,7 +283,8 @@ describe('Recipe Management API Integration Tests', () => {
       const body = await response.json();
       expect(body).toMatchObject({
         title,
-        content,
+        instructions,
+        ingredients,
         pageNumber,
         cookbookId: null,
         photoFileId: null,
@@ -400,15 +402,15 @@ describe('Recipe Management API Integration Tests', () => {
       // given: create a recipe with both photo and recipe files
 
       // First create a recipe with a recipe file
-      setupAzureFormRecognizerMock({
-        title: 'Test Recipe',
-        pageNumber: '1',
-        text: 'Test recipe content.',
-      });
+      const { title, pageNumber, instructions } = recipeEntityMock;
+      const ingredients = ingredientEntityMockList.map(toIngredient);
+
+      // Setup the Azure OpenAI mock
       setupAzureOpenAIMock({
-        title: 'Test Recipe',
-        pageNumber: 1,
-        content: 'Test recipe content.',
+        title,
+        pageNumber,
+        instructions,
+        ingredients,
       });
 
       const testFile1 = await loadTestFile('recipe1.jpg');
@@ -463,7 +465,7 @@ describe('Recipe Management API Integration Tests', () => {
     it('should delete recipe without files gracefully', async ({ app, database }) => {
       // given: create a recipe without any files (manually inserted)
       const recipeRepository = new RecipeDatabaseRepository(database);
-      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(newRecipeMock);
 
       // when: delete the recipe
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeEntity.id}`, {
@@ -483,7 +485,7 @@ describe('Recipe Management API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeDatabaseRepository(database);
-      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(newRecipeMock);
       recipeId = recipeEntity.id;
     });
 
@@ -603,7 +605,7 @@ describe('Recipe Management API Integration Tests', () => {
 
     beforeEach(async ({ database, app }) => {
       const recipeRepository = new RecipeDatabaseRepository(database);
-      const recipeEntity = await recipeRepository.insert(insertRecipeEntityMock);
+      const recipeEntity = await recipeRepository.insert(newRecipeMock);
       recipeId = recipeEntity.id;
 
       // Add a photo to the recipe
@@ -653,7 +655,7 @@ describe('Recipe Management API Integration Tests', () => {
       // given: create a recipe without a photo
       const recipeRepository = new RecipeDatabaseRepository(database);
       const recipeEntityWithoutPhoto = await recipeRepository.insert({
-        ...insertRecipeEntityMock,
+        ...newRecipeMock,
         photoFileId: null,
       });
 

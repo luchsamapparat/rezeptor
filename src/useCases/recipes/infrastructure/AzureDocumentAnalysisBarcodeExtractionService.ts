@@ -29,7 +29,8 @@ export class AzureDocumentAnalysisBarcodeExtractionService implements BarcodeExt
     return {
       title: (title === null) ? null : sanitizeString(title),
       pageNumber: (pageNumber === null) ? null : parseInt(pageNumber),
-      content,
+      instructions: content,
+      ingredients: [],
     };
   }
 

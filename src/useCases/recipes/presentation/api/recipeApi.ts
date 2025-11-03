@@ -15,7 +15,13 @@ const recipeIdentifierPathSchema = z.object({ [recipeIdentifierName]: identifier
 
 const recipeDtoSchema = z.object({
   title: z.string().min(1),
-  content: z.string().min(1),
+  instructions: z.string().min(1),
+  ingredients: z.array(z.object({
+    quantity: z.string().nullable(),
+    unit: z.string().nullable(),
+    name: z.string().min(1),
+    notes: z.string().nullable(),
+  })),
   photoFileId: z.string().nullable().optional(),
   recipeFileId: z.string().nullable().optional(),
   cookbookId: z.string().nullable().optional(),

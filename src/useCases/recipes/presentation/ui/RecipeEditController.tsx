@@ -5,12 +5,19 @@ import { Label } from '@rezeptor/ui/components/ui/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@rezeptor/ui/components/ui/Select';
 import { Textarea } from '@rezeptor/ui/components/ui/Textarea';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
 import { addRecipePhoto, cookbooksQuery, editRecipe, recipeQuery, removeRecipe } from '../api/client';
 import type { Route } from './+types/RecipeEditController';
+
+interface Ingredient {
+  quantity: string;
+  unit: string;
+  name: string;
+  notes: string;
+}
 
 export const loader = async ({ context, params }: Route.LoaderArgs) => {
   const recipe = await getQueryClient(context).ensureQueryData(recipeQuery(params.recipeId));
@@ -23,6 +30,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
 
   const {
     data: recipe,
@@ -31,6 +39,35 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
   } = useQuery(recipeQuery(params.recipeId, { initialData: loaderData.recipe }));
 
   const { data: cookbooks = [] } = useQuery(cookbooksQuery());
+
+  // Initialize ingredients when recipe data is loaded
+  useEffect(() => {
+    if (recipe?.ingredients) {
+      setIngredients(recipe.ingredients.map(ingredient => ({
+        quantity: ingredient.quantity || '',
+        unit: ingredient.unit || '',
+        name: ingredient.name,
+        notes: ingredient.notes || '',
+      })));
+    }
+    else {
+      setIngredients([{ quantity: '', unit: '', name: '', notes: '' }]);
+    }
+  }, [recipe]);
+
+  const addIngredient = () => {
+    setIngredients([...ingredients, { quantity: '', unit: '', name: '', notes: '' }]);
+  };
+
+  const removeIngredient = (index: number) => {
+    setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
+    const updated = [...ingredients];
+    updated[index][field] = value;
+    setIngredients(updated);
+  };
 
   const editRecipeMutation = useMutation({
     mutationFn: ({ id, changes }: { id: string; changes: Parameters<typeof editRecipe>[1] }) =>
@@ -71,11 +108,20 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
     const cookbookId = formData.get('cookbookId') as string;
     const pageNumber = formData.get('pageNumber') as string;
 
+    // Filter out empty ingredients
+    const validIngredients = ingredients.filter(ingredient => ingredient.name.trim() !== '').map(ingredient => ({
+      quantity: ingredient.quantity.trim() || null,
+      unit: ingredient.unit.trim() || null,
+      name: ingredient.name.trim(),
+      notes: ingredient.notes.trim() || null,
+    }));
+
     await editRecipeMutation.mutateAsync({
       id: params.recipeId,
       changes: {
         title: formData.get('title') as string,
-        content: formData.get('content') as string,
+        instructions: formData.get('instructions') as string,
+        ingredients: validIngredients,
         cookbookId: cookbookId === '__none__' ? null : cookbookId || null,
         pageNumber: pageNumber ? Number(pageNumber) : null,
       },
@@ -175,16 +221,73 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content">
-                Content *
+              <Label htmlFor="instructions">
+                Instructions *
               </Label>
               <Textarea
-                id="content"
-                name="content"
-                defaultValue={recipe.content}
+                id="instructions"
+                name="instructions"
+                defaultValue={recipe.instructions}
                 required
                 rows={10}
               />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Ingredients</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addIngredient}>
+                  Add Ingredient
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {ingredients.map((ingredient, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-2">
+                      <Input
+                        placeholder="Qty"
+                        value={ingredient.quantity}
+                        onChange={e => updateIngredient(index, 'quantity', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        placeholder="Unit"
+                        value={ingredient.unit}
+                        onChange={e => updateIngredient(index, 'unit', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <Input
+                        placeholder="Ingredient name"
+                        value={ingredient.name}
+                        onChange={e => updateIngredient(index, 'name', e.target.value)}
+                        required={ingredients.length === 1 && index === 0}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        placeholder="Notes (optional)"
+                        value={ingredient.notes}
+                        onChange={e => updateIngredient(index, 'notes', e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      {ingredients.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeIngredient(index)}
+                        >
+                          ×
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -5,7 +5,13 @@ import { Link } from 'react-router';
 interface RecipeCardProps {
   id: string;
   title: string;
-  content: string;
+  instructions: string;
+  ingredients: Array<{
+    quantity: string | null;
+    unit: string | null;
+    name: string;
+    notes: string | null;
+  }>;
   photoUrl?: string;
   pageNumber?: number;
   cookbookTitle?: string;
@@ -14,12 +20,16 @@ interface RecipeCardProps {
 export function RecipeCard({
   id,
   title,
-  content,
+  instructions,
+  ingredients,
   photoUrl,
   pageNumber,
   cookbookTitle,
 }: RecipeCardProps) {
-  const truncatedContent = content.length > 200 ? `${content.substring(0, 200)}...` : content;
+  const truncatedInstructions = instructions.length > 150 ? `${instructions.substring(0, 150)}...` : instructions;
+  const ingredientSummary = ingredients.length > 0
+    ? `${ingredients.length} ingredient${ingredients.length === 1 ? '' : 's'}`
+    : 'No ingredients listed';
 
   return (
     <Link to={`/recipes/${id}/edit`} className="block">
@@ -40,7 +50,10 @@ export function RecipeCard({
           <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-4">{truncatedContent}</p>
+          <div className="text-muted-foreground mb-2 text-sm">
+            <strong>{ingredientSummary}</strong>
+          </div>
+          <p className="text-muted-foreground mb-4">{truncatedInstructions}</p>
           <div className="flex gap-2 flex-wrap">
             {pageNumber && (
               <Badge variant="secondary">

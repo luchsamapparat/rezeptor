@@ -29,7 +29,7 @@ export const afterEach = baseAfterEach<TestApp>;
 async function createTestApp() {
   const app = new Hono();
 
-  const connectionString = `:memory:`;
+  const connectionString = ':memory:';
   const migrationsPath = join(import.meta.dirname, '../../database');
   const fileSystemMock = new FileSystemMock();
 

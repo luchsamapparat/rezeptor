@@ -60,7 +60,8 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
                     key={recipe.id}
                     id={recipe.id}
                     title={recipe.title}
-                    content={recipe.content}
+                    instructions={recipe.instructions}
+                    ingredients={recipe.ingredients}
                     photoUrl={recipe.photoFileId ? `/api/recipes/${recipe.id}/photo` : undefined}
                     pageNumber={recipe.pageNumber ?? undefined}
                     cookbookTitle={recipe.cookbook?.title}

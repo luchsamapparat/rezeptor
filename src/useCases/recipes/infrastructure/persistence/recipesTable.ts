@@ -5,7 +5,7 @@ import { cookbooksTable } from './cookbooksTable';
 export const recipesTable = sqliteTable('recipes', {
   id: primaryKey(),
   title: text().notNull(),
-  content: text().notNull(),
+  instructions: text().notNull(),
   photoFileId: key(),
   recipeFileId: key(),
   cookbookId: foreignKey(() => cookbooksTable.id, { onDelete: 'no action' }),

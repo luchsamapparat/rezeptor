@@ -15,7 +15,8 @@ export function setupAzureOpenAIMock(recipeContents: RecipeContentsMock = {}) {
   const defaultContents: RecipeContents = {
     title: null,
     pageNumber: null,
-    content: '',
+    instructions: '',
+    ingredients: [],
   };
 
   const contents: RecipeContents = {
