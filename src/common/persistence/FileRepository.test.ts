@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FileSystemMock } from '../../tests/mocks/fileSystem.mock';
+import { loggerMock } from '../../tests/mocks/logger.mock';
 import { FileRepository } from './FileRepository';
 
 describe('FileRepository', () => {
@@ -7,7 +8,7 @@ describe('FileRepository', () => {
     it('should not throw when removing a non-existent file', async () => {
       // given:
       const fileSystemMock = new FileSystemMock();
-      const repository = new FileRepository('/test-dir', fileSystemMock);
+      const repository = new FileRepository('/test-dir', fileSystemMock, loggerMock);
 
       // when/then: removing a non-existent file should not throw
       await expect(repository.remove('non-existent-file.txt')).resolves.toBeUndefined();
@@ -16,7 +17,7 @@ describe('FileRepository', () => {
     it('should successfully remove an existing file', async () => {
       // given:
       const fileSystemMock = new FileSystemMock();
-      const repository = new FileRepository('/test-dir', fileSystemMock);
+      const repository = new FileRepository('/test-dir', fileSystemMock, loggerMock);
 
       // Create a file first
       const content = new File([new TextEncoder().encode('test content')], 'test-file.txt');
@@ -40,7 +41,7 @@ describe('FileRepository', () => {
         throw new Error('Permission denied.');
       };
 
-      const repository = new FileRepository('/test-dir', fileSystemMock);
+      const repository = new FileRepository('/test-dir', fileSystemMock, loggerMock);
 
       // when/then:
       await expect(repository.remove('some-file.txt')).rejects.toThrow('Permission denied');

@@ -1,8 +1,9 @@
 import { eq, getTableColumns } from 'drizzle-orm';
 import { groupBy } from 'lodash-es';
 import type { Identifier } from '../../../../application/model/identifier';
+import type { Logger } from '../../../../application/server/logging';
 import type { Database } from '../../../../common/persistence/database';
-import { DatabaseRepository } from '../../../../common/persistence/DatabaseRepository';
+import { DatabaseRepository, createLogContext } from '../../../../common/persistence/DatabaseRepository';
 import type { NewRecipe, Recipe, RecipeChanges, RecipeRepository, RecipeWithCookbook } from '../../recipeManagement';
 import { cookbooksTable } from './cookbooksTable';
 import { ingredientsTable, type IngredientEntity } from './ingredientsTable';
@@ -15,8 +16,9 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
       cookbooksTable: typeof cookbooksTable;
       ingredientsTable: typeof ingredientsTable;
     }>,
+    logger: Logger,
   ) {
-    super(database, recipesTable);
+    super(database, recipesTable, logger);
   }
 
   async insert({ ingredients, ...newRecipe }: NewRecipe): Promise<Recipe> {
@@ -25,7 +27,9 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
       ...newRecipe,
     };
 
-    const [recipeEntity] = await this.database.insert(recipesTable).values(recipeWithId).returning();
+    const query = this.database.insert(recipesTable).values(recipeWithId).returning();
+    const { sql, params } = query.toSQL();
+    const [recipeEntity] = await query;
 
     let ingredientEntities: IngredientEntity[] = [];
 
@@ -40,15 +44,23 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
       ingredientEntities = await this.database.insert(ingredientsTable).values(ingredientsWithId).returning();
     }
 
+    this.log.info(createLogContext({
+      operation: 'INSERT',
+      sql,
+      params,
+      table: recipesTable,
+    }), 'Recipe created');
     return toRecipe(recipeEntity, ingredientEntities);
   }
 
   async update(recipeId: Identifier, { ingredients: ingredientChanges, ...recipeChanges }: RecipeChanges): Promise<Recipe | null> {
-    const [updatedRecipeEntity] = await this.database
+    const query = this.database
       .update(recipesTable)
       .set(recipeChanges)
       .where(eq(recipesTable.id, recipeId))
       .returning();
+    const { sql, params } = query.toSQL();
+    const [updatedRecipeEntity] = await query;
 
     if (updatedRecipeEntity === undefined) {
       return null;
@@ -75,6 +87,17 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
       .where(eq(ingredientsTable.recipeId, recipeId))
       .orderBy(ingredientsTable.sortOrder);
 
+    const updatedFields = Object.keys(recipeChanges);
+    if (ingredientChanges !== undefined) {
+      updatedFields.push('ingredients');
+    }
+    this.log.info(createLogContext({
+      operation: 'UPDATE',
+      sql,
+      params,
+      table: recipesTable,
+    }), 'Recipe updated');
+
     return toRecipe(updatedRecipeEntity, ingredientEntities);
   }
 
@@ -98,20 +121,30 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
   }
 
   async getAllWithCookbooks(): Promise<RecipeWithCookbook[]> {
-    const recipeEntitiesWithCookbooks = await this.database
+    const query = this.database
       .select({
         ...getTableColumns(recipesTable),
         cookbook: getTableColumns(cookbooksTable),
       })
       .from(recipesTable)
       .leftJoin(cookbooksTable, eq(recipesTable.cookbookId, cookbooksTable.id));
+    const { sql, params } = query.toSQL();
+    const recipeEntitiesWithCookbooks = await query;
 
     const ingredientEntitiesByRecipeId = groupBy(await this.database
       .select()
       .from(ingredientsTable)
       .orderBy(ingredientsTable.recipeId, ingredientsTable.sortOrder), 'recipeId');
 
-    return recipeEntitiesWithCookbooks.map(recipeEntity => toRecipe(recipeEntity, ingredientEntitiesByRecipeId[recipeEntity.id]));
+    const recipes = recipeEntitiesWithCookbooks.map(recipeEntity => toRecipe(recipeEntity, ingredientEntitiesByRecipeId[recipeEntity.id]));
+    this.log.debug(createLogContext({
+      operation: 'SELECT',
+      sql,
+      params,
+      table: recipesTable,
+      batchSize: recipes.length,
+    }), 'Fetched all recipes with cookbooks');
+    return recipes;
   }
 
   async deleteById(recipeId: Identifier): Promise<Recipe | null> {
@@ -126,8 +159,16 @@ export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesT
     await this.database.delete(ingredientsTable).where(eq(ingredientsTable.recipeId, recipeId));
 
     // Delete recipe
-    await this.database.delete(recipesTable).where(eq(recipesTable.id, recipeId));
+    const query = this.database.delete(recipesTable).where(eq(recipesTable.id, recipeId));
+    const { sql, params } = query.toSQL();
+    await query;
 
+    this.log.info(createLogContext({
+      operation: 'DELETE',
+      sql,
+      params,
+      table: recipesTable,
+    }), 'Recipe deleted');
     return recipe;
   }
 }

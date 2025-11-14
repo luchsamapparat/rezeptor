@@ -1,10 +1,13 @@
+import { ATTR_FILE_NAME, ATTR_FILE_PATH, ATTR_FILE_SIZE } from '@opentelemetry/semantic-conventions/incubating';
+import type { Logger } from '../../application/server/logging';
 import type { FileSystemOperations } from '../server/FileSystemOperations';
 
 export class FileRepository {
   constructor(
     private directory: string,
     private fileSystem: FileSystemOperations,
-  ) {}
+    private log: Logger,
+  ) { }
 
   /**
    * Saves a file to the repository directory.
@@ -15,6 +18,11 @@ export class FileRepository {
     const filePath = this.fileSystem.join(this.directory, filename);
     await this.fileSystem.mkdir(this.directory, { recursive: true });
     await this.fileSystem.writeFile(filePath, file.stream());
+    this.log.info({
+      [ATTR_FILE_NAME]: filename,
+      [ATTR_FILE_SIZE]: file.size,
+      [ATTR_FILE_PATH]: this.directory,
+    }, 'File saved');
     return filename;
   }
 
@@ -34,12 +42,20 @@ export class FileRepository {
     const filePath = this.fileSystem.join(this.directory, filename);
     try {
       await this.fileSystem.unlink(filePath);
+      this.log.info({
+        [ATTR_FILE_NAME]: filename,
+        [ATTR_FILE_PATH]: this.directory,
+      }, 'File deleted');
     }
     catch (error) {
       // Only ignore "file not found" errors (ENOENT)
       // Re-throw any other errors (e.g., permission issues)
       if (error instanceof Error && error.message.includes('ENOENT')) {
         // File doesn't exist, which is fine - nothing to delete
+        this.log.debug({
+          [ATTR_FILE_NAME]: filename,
+          [ATTR_FILE_PATH]: this.directory,
+        }, 'File not found for deletion');
         return;
       }
       throw error;

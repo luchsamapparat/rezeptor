@@ -5,6 +5,7 @@ import { omit } from 'lodash-es';
 import { describe, expect } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
+import { loggerMock } from '../../../tests/mocks/logger.mock';
 import type { BookMetadata } from '../cookbookManagement';
 import { AzureDocumentAnalysisBarcodeExtractionService } from '../infrastructure/AzureDocumentAnalysisBarcodeExtractionService';
 import { barcodeExtractionService, bookMetadataService } from '../infrastructure/di';
@@ -30,7 +31,7 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return all cookbooks when they exist', async ({ app, database }) => {
       // given:
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const cookbookEntities = cookbookEntityMockList.map(toInsertCookbookEntity);
 
       await cookbookRepository.insertMany(cookbookEntities);
@@ -69,7 +70,7 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(addCookbookDto);
       expect(body.id).toBeDefined();
 
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const cookbooks = await cookbookRepository.getAll();
       expect(cookbooks).toHaveLength(1);
       expect(cookbooks[0]).toMatchObject(addCookbookDto);
@@ -132,7 +133,7 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
       cookbookId = cookbookEntity.id;
     });
@@ -154,7 +155,7 @@ describe('Cookbooks API Integration Tests', () => {
       expect(body).toMatchObject(editCookbookDto);
       expect(body.id).toBe(cookbookId);
 
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const updatedCookbookEntity = await cookbookRepository.findById(cookbookId);
       expect(updatedCookbookEntity).toMatchObject(editCookbookDto);
     });
@@ -195,7 +196,7 @@ describe('Cookbooks API Integration Tests', () => {
     let cookbookId: string;
 
     beforeEach(async ({ database }) => {
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const [cookbookEntity] = await cookbookRepository.insertMany(cookbookEntityMockList);
       cookbookId = cookbookEntity.id;
     });
@@ -209,7 +210,7 @@ describe('Cookbooks API Integration Tests', () => {
       // then:
       expect(response.status).toBe(204);
 
-      const cookbookRepository = new CookbookDatabaseRepository(database);
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
       const cookbookEntities = await cookbookRepository.getAll();
       expect(cookbookEntities).toHaveLength(cookbookEntityMockList.length - 1);
     });
@@ -230,7 +231,7 @@ describe('Cookbooks API Integration Tests', () => {
 
   describe('POST /api/cookbooks/identification', () => {
     beforeEach(() => {
-      barcodeExtractionService.injection(new AzureDocumentAnalysisBarcodeExtractionService(documentAnalysisClientMock as unknown as DocumentAnalysisClient));
+      barcodeExtractionService.injection(new AzureDocumentAnalysisBarcodeExtractionService(documentAnalysisClientMock as unknown as DocumentAnalysisClient, loggerMock));
     });
 
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
@@ -255,7 +256,7 @@ describe('Cookbooks API Integration Tests', () => {
       const formData = new FormData();
       formData.append('backCoverFile', testFile);
 
-      bookMetadataService.injection(new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books));
+      bookMetadataService.injection(new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock));
 
       const response = await app
         .request(new Request('http://localhost/api/cookbooks/identification', {

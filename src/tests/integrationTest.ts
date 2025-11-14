@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach as baseAfterEach, beforeEach as baseBeforeEach, test as baseTest } from 'vitest';
 import { createApiServer } from '../bootstrap/apiServer';
 import { FileSystemMock } from './mocks/fileSystem.mock';
+import { loggerMock } from './mocks/logger.mock';
 
 export const test = baseTest
   .extend<{ setup: TestApp }>({
@@ -34,6 +35,14 @@ async function createTestApp() {
   const fileSystemMock = new FileSystemMock();
 
   const env = {
+    nodeEnv: 'test' as const,
+    logging: {
+      level: 'silent' as const,
+    },
+    openTelemetry: {
+      serviceName: undefined,
+      serviceVersion: undefined,
+    },
     database: {
       connectionString,
       migrationsPath,
@@ -58,7 +67,11 @@ async function createTestApp() {
     },
   };
 
-  const { app: api, database } = await createApiServer(env, fileSystemMock);
+  const { app: api, database } = await createApiServer({
+    env,
+    rootLogger: loggerMock,
+    fs: fileSystemMock,
+  });
 
   app.route('/', api);
 

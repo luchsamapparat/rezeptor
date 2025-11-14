@@ -8,6 +8,7 @@
 - **Frontend/Backend**: React Router v7 with Hono server (`react-router-hono-server`)
 - **Database**: SQLite with Drizzle ORM
 - **DI System**: `hono-simple-di` for dependency injection throughout API layers
+- **Logging**: `pino` with OpenTelemetry integration (`@opentelemetry/instrumentation-pino`)
 - **UI Components**: Shadcn UI (New York style) with Tailwind CSS v4
 - **External Services**: Azure Document Intelligence (OCR), Azure OpenAI (recipe extraction), Google Books API
 
@@ -52,6 +53,7 @@ export const recipeApi = new Hono()
 
 Core dependencies defined in `application/server/di.ts`:
 - `environment` - Validated environment config (Zod schema in `environment.ts`)
+- `logger` - Root pino logger instance (injected into context)
 - `database` - Database connection with schema
 - `fileSystem` - Abstracted file operations (`NodeFileSystem` or `FileSystemMock`)
 - `fileRepositoryFactory` - Creates file repositories for different upload types
@@ -82,13 +84,66 @@ Custom error types map to HTTP status codes in `bootstrap/apiServer.ts`:
 - `ValidationError` → 422
 - `ExternalServiceError` → 500 (with serialized cause)
 
-### 5. File Management
+### 5. Logging
+**Structured logging with `pino` and OpenTelemetry integration** (see `docs/LOGGING.md` for details):
+
+- **Root Logger**: Created in `application/server/logging.ts`, injected via DI
+- **Use Case Logger**: Child of root logger with `useCase` field (defined in use case `di.ts`)
+- **Component Logger**: Child of use case logger with `component` field (created in class constructors)
+
+```typescript
+// In use case di.ts
+export const useCaseLogger = dependency(async (_, c): Promise<Logger | null> => {
+  const rootLogger = await logger.resolve(c);
+  return rootLogger?.child({ useCase: 'recipes' }) ?? null;
+}, 'request');
+
+// In repository/service constructor
+constructor(database: Database, logger: Logger | null = null) {
+  this.log = logger?.child({ component: this.constructor.name }) ?? noopLogger;
+}
+
+// Usage with OpenTelemetry semantic conventions
+import { ATTR_DB_COLLECTION_NAME } from '@opentelemetry/semantic-conventions/incubating';
+
+this.log.info({
+  [ATTR_DB_COLLECTION_NAME]: 'recipes',
+  'rezeptor.recipe.id': recipeId,
+  'rezeptor.recipe.title': title,
+}, 'Recipe created successfully');
+
+this.log.error({
+  err,
+  'file.name': fileName,
+}, 'Failed to process image');
+```
+
+**Logging Guidelines**:
+- **Always use OpenTelemetry semantic convention constants** from `@opentelemetry/semantic-conventions/incubating`
+- Import constants at the top: `import { ATTR_HTTP_ROUTE, ATTR_DB_COLLECTION_NAME } from '@opentelemetry/semantic-conventions/incubating';`
+- Use constants as keys in log objects: `{ [ATTR_HTTP_ROUTE]: '/api/recipes' }`
+- Namespace domain-specific fields under `rezeptor.*` (e.g., `rezeptor.recipe.id`, `rezeptor.cookbook.title`)
+- Use appropriate log levels: `info` for business events, `debug` for details, `error` for failures
+- Include contextual fields using semantic conventions first, then domain-specific fields
+- Never log sensitive data (passwords, tokens, PII)
+- Request/response logging only at `trace` level (controlled by `LOG_LEVEL` env var)
+- Stack traces only in development mode
+
+**Common Semantic Convention Constants**:
+- HTTP: `ATTR_HTTP_REQUEST_METHOD`, `ATTR_HTTP_ROUTE`, `ATTR_HTTP_RESPONSE_STATUS_CODE`
+- Network: `ATTR_NETWORK_PEER_PORT`, `ATTR_URL_FULL`
+- Database: `ATTR_DB_COLLECTION_NAME`, `ATTR_DB_OPERATION_NAME`, `ATTR_DB_OPERATION_BATCH_SIZE`
+- Files: `ATTR_FILE_NAME`, `ATTR_FILE_SIZE`, `ATTR_FILE_PATH`
+- Errors: `ATTR_EXCEPTION_TYPE`, `ATTR_EXCEPTION_MESSAGE`, `ATTR_EXCEPTION_STACKTRACE`
+- AI: `ATTR_GEN_AI_RESPONSE_MODEL`
+
+### 6. File Management
 Files are stored via `FileRepository` (UUID filenames, subdirectories per type):
 - `FileRepositoryFactory` creates typed repositories: `factory.createFileRepository('recipePhotos')`
 - Path structure: `{FILE_UPLOADS_PATH}/{type}/{uuid}`
 - Always remove files when deleting parent entities (see `removeRecipe()`)
 
-### 6. React Router Integration
+### 7. React Router Integration
 - Routes defined in `useCases/routes.ts` → aggregated in `src/routes.ts`
 - Route modules use typed `Route` from `+types/{ComponentName}`:
   ```typescript

@@ -8,6 +8,9 @@ spec:
     matchLabels:
       app: app-name
   template:
+    metadata:
+      labels:
+        telemetry.luchsamappar.at/logs: "true"
     spec:
       containers:
         - name: app-name
@@ -21,6 +24,22 @@ spec:
                   fieldPath: spec.nodeName
             - name: PORT
               value: "80"
+            - name: LOG_LEVEL
+              value: "trace"
+            - name: OTEL_SERVICE_NAME
+              value: rezeptor
+            - name: OTEL_SERVICE_VERSION
+              value: "1.0.0"
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: http/protobuf
+            - name: OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
+              value: http://telemetry-alloy.telemetry.svc.cluster.local:4318/v1/traces
+            - name: OTEL_METRICS_EXPORTER
+              value: otlp
+            - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
+              value: http://telemetry-alloy.telemetry.svc.cluster.local:4318/v1/metrics
             - name: DB_CONNECTION_STRING
               value: file:/data/database.sqlite
             - name: DB_MIGRATIONS_PATH

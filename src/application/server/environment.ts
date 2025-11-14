@@ -1,6 +1,10 @@
 import z from 'zod';
 
 const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'silent']).default('info'),
+  OTEL_SERVICE_NAME: z.string().min(1).optional(),
+  OTEL_SERVICE_VERSION: z.string().min(1).optional(),
   DB_CONNECTION_STRING: z.string().min(1),
   DB_MIGRATIONS_PATH: z.string().min(1),
   FILE_UPLOADS_PATH: z.string().min(1),
@@ -14,6 +18,10 @@ const envSchema = z.object({
   AZURE_OPENAI_DEPLOYMENT: z.string(),
   GOOGLE_API_KEY: z.string(),
 }).transform(({
+  NODE_ENV,
+  LOG_LEVEL,
+  OTEL_SERVICE_NAME,
+  OTEL_SERVICE_VERSION,
   DB_CONNECTION_STRING,
   DB_MIGRATIONS_PATH,
   FILE_UPLOADS_PATH,
@@ -27,6 +35,14 @@ const envSchema = z.object({
   AZURE_OPENAI_DEPLOYMENT,
   GOOGLE_API_KEY,
 }) => ({
+  nodeEnv: NODE_ENV,
+  logging: {
+    level: LOG_LEVEL,
+  },
+  openTelemetry: {
+    serviceName: OTEL_SERVICE_NAME,
+    serviceVersion: OTEL_SERVICE_VERSION,
+  },
   database: {
     connectionString: DB_CONNECTION_STRING,
     migrationsPath: DB_MIGRATIONS_PATH,

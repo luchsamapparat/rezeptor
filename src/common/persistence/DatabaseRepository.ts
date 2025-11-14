@@ -1,11 +1,19 @@
-import { count, eq } from 'drizzle-orm';
+import {
+  ATTR_DB_COLLECTION_NAME,
+  ATTR_DB_OPERATION_BATCH_SIZE,
+  ATTR_DB_OPERATION_NAME,
+  ATTR_DB_QUERY_PARAMETER,
+  ATTR_DB_QUERY_TEXT,
+} from '@opentelemetry/semantic-conventions/incubating';
+import { count, eq, getTableName } from 'drizzle-orm';
 import type { SQLiteColumn, SQLiteTable } from 'drizzle-orm/sqlite-core';
+import type { Logger } from '../../application/server/logging';
 import type { Database } from './database';
-
 export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLiteColumn }> {
   constructor(
     protected readonly database: Database<Record<string, unknown>>,
     protected readonly table: TTable,
+    protected readonly log: Logger,
   ) {}
 
   /**
@@ -32,7 +40,17 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
       ...entity,
       id: crypto.randomUUID(),
     }) as TTable['$inferInsert']);
-    return this.database.insert(this.table).values(withIds).returning();
+    const query = this.database.insert(this.table).values(withIds).returning();
+    const { sql, params } = query.toSQL();
+    const results = await query;
+    this.log.info(createLogContext({
+      operation: 'INSERT',
+      sql,
+      params,
+      table: this.table,
+      batchSize: results.length,
+    }), 'Batch records created');
+    return results;
   }
 
   /**
@@ -47,7 +65,18 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
    * Delete a record by its ID
    */
   async deleteById(id: string): Promise<TTable['$inferSelect'] | null> {
-    const results = await this.database.delete(this.table).where(eq(this.table.id, id)).returning();
+    const query = this.database.delete(this.table).where(eq(this.table.id, id)).returning();
+    const { sql, params } = query.toSQL();
+    const results = await query;
+
+    if (results[0]) {
+      this.log.info(createLogContext({
+        operation: 'DELETE',
+        sql,
+        params,
+        table: this.table,
+      }), 'Record deleted');
+    }
     return results[0] ?? null;
   }
 
@@ -55,7 +84,18 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
    * Update a record by its ID
    */
   async update(id: string, updates: Partial<TTable['$inferInsert']>): Promise<TTable['$inferSelect'] | null> {
-    const results = await this.database.update(this.table).set(updates).where(eq(this.table.id, id)).returning();
+    const query = this.database.update(this.table).set(updates).where(eq(this.table.id, id)).returning();
+    const { sql, params } = query.toSQL();
+    const results = await query;
+
+    if (results[0]) {
+      this.log.info(createLogContext({
+        operation: 'UPDATE',
+        sql,
+        params,
+        table: this.table,
+      }), 'Record updated');
+    }
     return results[0] ?? null;
   }
 
@@ -74,4 +114,30 @@ export abstract class DatabaseRepository<TTable extends SQLiteTable & { id: SQLi
     const result = await this.database.select({ count: count() }).from(this.table);
     return result[0]?.count || 0;
   }
+}
+
+interface LogContextOptions {
+  operation: string;
+  sql: string;
+  params: unknown[];
+  table: SQLiteTable;
+  batchSize?: number;
+}
+
+export function createLogContext({ operation, sql, params, table, batchSize }: LogContextOptions): Record<string, unknown> {
+  const logContext: Record<string, unknown> = {
+    [ATTR_DB_COLLECTION_NAME]: getTableName(table),
+    [ATTR_DB_OPERATION_NAME]: operation,
+    [ATTR_DB_QUERY_TEXT]: sql,
+  };
+
+  if (batchSize !== undefined && batchSize > 1) {
+    logContext[ATTR_DB_OPERATION_BATCH_SIZE] = batchSize;
+  }
+
+  params.forEach((value, index) => {
+    logContext[ATTR_DB_QUERY_PARAMETER(index.toString())] = value;
+  });
+
+  return logContext;
 }
