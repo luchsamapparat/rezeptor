@@ -21,5 +21,5 @@ COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/dist /app/dist
 WORKDIR /app
 ENV NODE_ENV="production"
-ENV NODE_OPTIONS="--require @opentelemetry/auto-instrumentations-node/register"
+ENV NODE_OPTIONS="--import=data:text/javascript,import{register}from'node:module';import{pathToFileURL}from'node:url';register('@opentelemetry/instrumentation/hook.mjs',pathToFileURL('./'));export{} --import=@opentelemetry/auto-instrumentations-node/register"
 CMD ["node", "/app/dist/server/index.js"]
