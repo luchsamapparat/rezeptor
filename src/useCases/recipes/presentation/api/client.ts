@@ -233,7 +233,6 @@ export const identifyCookbook = async (backCoverFile: File) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({})) as { error?: string };
-    console.log(errorData);
     throw new Error(errorData.error || `Failed to identify cookbook: ${response.statusText}`);
   }
 

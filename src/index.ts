@@ -3,6 +3,7 @@ import { ATTR_URL_FULL } from '@opentelemetry/semantic-conventions/incubating';
 import { Hono } from 'hono';
 import { createHonoServer } from 'react-router-hono-server/node';
 import { initEnvironment } from './application/server/environment';
+import { createErrorHandler } from './application/server/errorHandling';
 import { createRequestLoggingMiddleware, createRootLogger } from './application/server/logging';
 import { createApiServer } from './bootstrap/apiServer';
 
@@ -18,9 +19,9 @@ app.use(httpInstrumentationMiddleware({
 }));
 
 app.use(createRequestLoggingMiddleware(rootLogger));
+app.onError(createErrorHandler(rootLogger));
 
 export const { app: api } = await createApiServer({ env, rootLogger });
-
 app.route('/', api);
 
 export default await createHonoServer({
