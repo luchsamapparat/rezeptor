@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
-import type { InsertRecipeEntity, RecipeEntity, UpdateRecipeEntity } from '../../infrastructure/persistence/recipesTable';
+import type { IngredientEntity } from '../../infrastructure/persistence/IngredientEntity';
+import type { InsertRecipeEntity, RecipeEntity, UpdateRecipeEntity } from '../../infrastructure/persistence/RecipeEntity';
 import type { AddFromPhotoRecipeDto, AddRecipeDto, EditRecipeDto } from '../../presentation/api/client';
 import type { NewRecipe } from '../../recipeManagement';
 import { ingredientEntityMockDataFactory, toIngredient } from './ingredientMockData';
@@ -23,11 +24,11 @@ export const toInsertRecipeEntity = (entity: RecipeEntity): InsertRecipeEntity =
   return insertEntity;
 };
 
-export const toNewRecipe = (entity: RecipeEntity): NewRecipe => {
+export const toNewRecipe = (entity: RecipeEntity, ingredients: IngredientEntity[]): NewRecipe => {
   const { id, ...insertEntity } = entity;
   return {
     ...insertEntity,
-    ingredients: ingredientEntityMockDataFactory.buildList(faker.number.int({ min: 3, max: 10 })).map(toIngredient),
+    ingredients: ingredients.map(toIngredient),
   };
 };
 
@@ -40,26 +41,28 @@ export const addFromPhotoRecipeDtoMockDataFactory = Factory.define<Omit<AddFromP
   cookbookId: faker.string.uuid(),
 }));
 
-export const toAddRecipeDto = (entity: RecipeEntity): AddRecipeDto => {
-  const { id, ...rest } = entity;
+export const toAddRecipeDto = (entity: RecipeEntity, ingredients: IngredientEntity[]): AddRecipeDto => {
+  const { id, ...addDto } = entity;
   return {
-    ...rest,
-    ingredients: ingredientEntityMockDataFactory.buildList(faker.number.int({ min: 3, max: 10 })).map(toIngredient),
+    ...addDto,
+    ingredients: ingredients.map(toIngredient),
   };
 };
 
-export const toEditRecipeDto = (entity: RecipeEntity): EditRecipeDto => {
-  const { id, ...rest } = entity;
+export const toEditRecipeDto = (entity: RecipeEntity, ingredients: IngredientEntity[]): EditRecipeDto => {
+  const { id, ...editDto } = entity;
   return {
-    ...rest,
-    ingredients: ingredientEntityMockDataFactory.buildList(faker.number.int({ min: 3, max: 10 })).map(toIngredient),
+    ...editDto,
+    ingredients: ingredients.map(toIngredient),
   };
 };
+
+const ingredients = ingredientEntityMockDataFactory.buildList(faker.number.int({ min: 3, max: 10 }));
 
 export const insertRecipeEntityMock = toInsertRecipeEntity(recipeEntityMock);
-export const newRecipeMock = toNewRecipe(recipeEntityMock);
+export const newRecipeMock = toNewRecipe(recipeEntityMock, ingredients);
 export const updateRecipeEntityMock = toUpdateRecipeEntity(recipeEntityMock);
-export const addRecipeDtoMock = toAddRecipeDto(recipeEntityMock);
-export const editRecipeDtoMock = toEditRecipeDto(recipeEntityMock);
+export const addRecipeDtoMock = toAddRecipeDto(recipeEntityMock, ingredients);
+export const editRecipeDtoMock = toEditRecipeDto(recipeEntityMock, ingredients);
 
 export const addFromPhotoRecipeDtoMock = addFromPhotoRecipeDtoMockDataFactory.build();

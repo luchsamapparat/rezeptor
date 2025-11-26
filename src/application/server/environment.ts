@@ -6,7 +6,6 @@ const envSchema = z.object({
   OTEL_SERVICE_NAME: z.string().min(1).optional(),
   OTEL_SERVICE_VERSION: z.string().min(1).optional(),
   DB_CONNECTION_STRING: z.string().min(1),
-  DB_MIGRATIONS_PATH: z.string().min(1),
   FILE_UPLOADS_PATH: z.string().min(1),
   RECIPE_EXTRACTION_SYSTEM_PROMPT: z.string(),
   RECIPE_EXTRACTION_USER_PROMPT: z.string(),
@@ -23,7 +22,6 @@ const envSchema = z.object({
   OTEL_SERVICE_NAME,
   OTEL_SERVICE_VERSION,
   DB_CONNECTION_STRING,
-  DB_MIGRATIONS_PATH,
   FILE_UPLOADS_PATH,
   RECIPE_EXTRACTION_SYSTEM_PROMPT,
   RECIPE_EXTRACTION_USER_PROMPT,
@@ -45,7 +43,6 @@ const envSchema = z.object({
   },
   database: {
     connectionString: DB_CONNECTION_STRING,
-    migrationsPath: DB_MIGRATIONS_PATH,
   },
   azureDocumentAnalysis: {
     endpoint: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT,

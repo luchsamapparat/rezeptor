@@ -5,7 +5,6 @@ import { identifierSchema } from '../../../../application/model/identifier';
 import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
 import { recipeExtractionService, recipeFileRepository, recipePhotoFileRepository, recipeRepository } from '../../infrastructure/di';
-import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
 import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipePhoto, getRecipes, removeRecipe } from '../../recipeManagement';
 
 const recipePath = '/recipes';
@@ -43,9 +42,9 @@ const addRecipePhotoDtoSchema = z.object({
   message: 'The uploaded file must be an image.',
 });
 
-export const recipeApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
+export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
   .basePath(recipePath)
-  .use(recipeRepository.middleware('recipesRepository'))
+  .use(recipeRepository.middleware('recipeRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
   .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))
   .use(recipeExtractionService.middleware('recipeExtractionService'))

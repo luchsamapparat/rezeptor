@@ -6,7 +6,6 @@ import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
 import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from '../../cookbookManagement';
 import { barcodeExtractionService, bookMetadataService, cookbookRepository } from '../../infrastructure/di';
-import type { RecipesDatabaseSchema } from '../../infrastructure/persistence/recipeDatabaseModel';
 
 const cookbookPath = '/cookbooks';
 
@@ -15,7 +14,9 @@ const cookbookIdentifierPathSchema = z.object({ [cookbookIdentifierName]: identi
 
 const cookbookDtoSchema = z.object({
   title: z.string().min(1),
-  authors: z.array(z.string().min(1)),
+  authors: z.array(z.object({
+    name: z.string().min(3),
+  })),
   isbn10: z.string().nullable(),
   isbn13: z.string().nullable(),
 });
@@ -27,7 +28,7 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
     error: 'The uploaded file must be an image.',
   });
 
-export const cookbookApi = new Hono<{ Variables: ApplicationContext<RecipesDatabaseSchema> }>()
+export const cookbookApi = new Hono<{ Variables: ApplicationContext }>()
   .basePath(cookbookPath)
   .use(cookbookRepository.middleware('cookbookRepository'))
   .use(bookMetadataService.middleware('bookMetadataService'))

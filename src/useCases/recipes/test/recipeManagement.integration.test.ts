@@ -9,9 +9,9 @@ import { AzureOpenAIRecipeExtractionService } from '../infrastructure/AzureOpenA
 import { recipeExtractionService } from '../infrastructure/di';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from '../infrastructure/persistence/RecipeDatabaseRepository';
-import { insertCookbookEntityMock } from './data/cookbookMockData';
-import { ingredientEntityMockList, toIngredient } from './data/ingredientMockData';
-import { addRecipeDtoMock, insertRecipeEntityMock, newRecipeMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toInsertRecipeEntity } from './data/recipeMockData';
+import { newCookbookMock } from './data/cookbookMockData';
+import { ingredientEntityMockDataFactory, ingredientEntityMockList, toIngredient } from './data/ingredientMockData';
+import { addRecipeDtoMock, insertRecipeEntityMock, newRecipeMock, recipeEntityMock, recipeEntityMockDataFactory, recipeEntityMockList, toEditRecipeDto, toNewRecipe } from './data/recipeMockData';
 import { azureOpenAIMock, setupAzureOpenAIMock } from './mocks/azureOpenAI.mock';
 
 describe('Recipe Management API Integration Tests', () => {
@@ -51,7 +51,7 @@ describe('Recipe Management API Integration Tests', () => {
     it('should return recipe with cookbook data when recipe has cookbook', async ({ app, database }) => {
       // given:
       const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
-      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookEntity = await cookbookRepository.insert(newCookbookMock);
 
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
       const recipeWithCookbook = {
@@ -204,7 +204,7 @@ describe('Recipe Management API Integration Tests', () => {
       // given:
       // Create a cookbook first
       const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
-      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookEntity = await cookbookRepository.insert(newCookbookMock);
       const cookbookId = cookbookEntity.id;
 
       const { title, pageNumber, instructions } = recipeEntityMock;
@@ -305,13 +305,16 @@ describe('Recipe Management API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
-      const [recipeEntity] = await recipeRepository.insertMany(recipeEntityMockList.map(toInsertRecipeEntity));
+      const [recipeEntity] = await recipeRepository.insertMany(
+        recipeEntityMockList.map(recipeEntity => toNewRecipe(recipeEntity, ingredientEntityMockDataFactory.buildList(5))),
+      );
       recipeId = recipeEntity.id;
     });
 
     it('should update recipe with valid data', async ({ app, database }) => {
       // given:
-      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
+      const ingredientEntities = ingredientEntityMockDataFactory.buildList(3);
+      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build(), ingredientEntities);
 
       // when:
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}`, {
@@ -333,7 +336,7 @@ describe('Recipe Management API Integration Tests', () => {
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
       // given:
-      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build());
+      const editRecipeDto = toEditRecipeDto(recipeEntityMockDataFactory.build(), []);
       const nonExistentId = faker.string.uuid();
 
       // when:
@@ -368,7 +371,9 @@ describe('Recipe Management API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
-      const [recipeEntity] = await recipeRepository.insertMany(recipeEntityMockList.map(toInsertRecipeEntity));
+      const [recipeEntity] = await recipeRepository.insertMany(
+        recipeEntityMockList.map(recipeEntity => toNewRecipe(recipeEntity, ingredientEntityMockDataFactory.buildList(5))),
+      );
       recipeId = recipeEntity.id;
     });
 

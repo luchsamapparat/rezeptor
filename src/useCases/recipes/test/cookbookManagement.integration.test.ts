@@ -11,7 +11,8 @@ import { AzureDocumentAnalysisBarcodeExtractionService } from '../infrastructure
 import { barcodeExtractionService, bookMetadataService } from '../infrastructure/di';
 import { GoogleBooksBookMetadataService } from '../infrastructure/GoogleBooksBookMetadataService';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
-import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMock, cookbookEntityMockDataFactory, cookbookEntityMockList, insertCookbookEntityMock, toEditCookbookDto, toInsertCookbookEntity } from './data/cookbookMockData';
+import { cookbookAuthorEntityMockDataFactory } from './data/cookbookAuthorMockData';
+import { addCookbookDtoMock, addCookbookWithoutIsbnDtoMock, cookbookEntityMockDataFactory, cookbookEntityMockList, newCookbookMock, toEditCookbookDto, toNewCookbook } from './data/cookbookMockData';
 import { documentAnalysisClientMock, setupAzureFormRecognizerMock } from './mocks/azureAiFormRecognizer.mock';
 import { googleBooksMock, googleBookVolumesListMockFn, setupGoogleBooksMock } from './mocks/googleBooks.mock';
 
@@ -32,7 +33,7 @@ describe('Cookbooks API Integration Tests', () => {
     it('should return all cookbooks when they exist', async ({ app, database }) => {
       // given:
       const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
-      const cookbookEntities = cookbookEntityMockList.map(toInsertCookbookEntity);
+      const cookbookEntities = cookbookEntityMockList.map(cookbookEntity => toNewCookbook(cookbookEntity, cookbookAuthorEntityMockDataFactory.buildList(2)));
 
       await cookbookRepository.insertMany(cookbookEntities);
 
@@ -115,7 +116,7 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 422 when required fields are missing', async ({ app }) => {
       // given:
-      const incompleteAddCookbookDto = omit(addCookbookDtoMock, 'authors');
+      const incompleteAddCookbookDto = omit(addCookbookDtoMock, 'title');
 
       // when:
       const response = await app.request(new Request('http://localhost/api/cookbooks', {
@@ -134,13 +135,14 @@ describe('Cookbooks API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
-      const cookbookEntity = await cookbookRepository.insert(insertCookbookEntityMock);
+      const cookbookEntity = await cookbookRepository.insert(newCookbookMock);
       cookbookId = cookbookEntity.id;
     });
 
     it('should update cookbook with valid data', async ({ app, database }) => {
       // given:
-      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
+      const cookbookAuthorEntities = cookbookAuthorEntityMockDataFactory.buildList(2);
+      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build(), cookbookAuthorEntities);
 
       // when:
       const response = await app.request(new Request(`http://localhost/api/cookbooks/${cookbookId}`, {
@@ -162,7 +164,7 @@ describe('Cookbooks API Integration Tests', () => {
 
     it('should return 404 for non-existent cookbook', async ({ app }) => {
       // given:
-      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build());
+      const editCookbookDto = toEditCookbookDto(cookbookEntityMockDataFactory.build(), []);
       const nonExistentId = faker.string.uuid();
 
       // when:
@@ -197,7 +199,9 @@ describe('Cookbooks API Integration Tests', () => {
 
     beforeEach(async ({ database }) => {
       const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
-      const [cookbookEntity] = await cookbookRepository.insertMany(cookbookEntityMockList);
+      const [cookbookEntity] = await cookbookRepository.insertMany(
+        cookbookEntityMockList.map(cookbookEntity => toNewCookbook(cookbookEntity, cookbookAuthorEntityMockDataFactory.buildList(2))),
+      );
       cookbookId = cookbookEntity.id;
     });
 
@@ -237,10 +241,10 @@ describe('Cookbooks API Integration Tests', () => {
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
       // given:
       const expectedBookMetadata: BookMetadata = {
-        title: cookbookEntityMock.title,
-        authors: cookbookEntityMock.authors,
-        isbn10: cookbookEntityMock.isbn10?.toString() ?? null,
-        isbn13: cookbookEntityMock.isbn13?.toString() ?? null,
+        title: addCookbookDtoMock.title,
+        authors: addCookbookDtoMock.authors.map(({ name }) => name),
+        isbn10: addCookbookDtoMock.isbn10?.toString() ?? null,
+        isbn13: addCookbookDtoMock.isbn13?.toString() ?? null,
       };
 
       const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });

@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app-name
+  name: rezeptor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: app-name
+      app: rezeptor
   template:
     metadata:
       labels:
         telemetry.luchsamappar.at/logs: "true"
     spec:
       containers:
-        - name: app-name
-          image: IMAGE
+        - name: rezeptor
+          image: ghcr.io/luchsamapparat/rezeptor:latest
           ports:
             - containerPort: 80
           env:
@@ -41,9 +41,12 @@ spec:
             - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
               value: http://telemetry-alloy.telemetry.svc.cluster.local:4318/v1/metrics
             - name: DB_CONNECTION_STRING
-              value: file:/data/database.sqlite
-            - name: DB_MIGRATIONS_PATH
-              value: /app/database
+              value: postgres://rezeptor:$(POSTGRES_PASSWORD)@postgres:5432/rezeptor
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rezeptor
+                  key: POSTGRES_PASSWORD
             - name: FILE_UPLOADS_PATH
               value: /data/uploads
             - name: RECIPE_EXTRACTION_SYSTEM_PROMPT
@@ -143,4 +146,4 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: app-name
+            claimName: rezeptor

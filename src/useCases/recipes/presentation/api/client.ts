@@ -170,7 +170,7 @@ export const cookbookQuery = (id: string, { initialData }: { initialData?: Cookb
 
 export const addCookbook = async (cookbook: {
   title: string;
-  authors: string[];
+  authors: { name: string }[];
   isbn10: string | null;
   isbn13: string | null;
 }) => {
@@ -188,7 +188,7 @@ export const addCookbook = async (cookbook: {
 
 export const editCookbook = async (id: string, changes: {
   title?: string;
-  authors?: string[];
+  authors: { name: string }[];
   isbn10?: string | null;
   isbn13?: string | null;
 }) => {

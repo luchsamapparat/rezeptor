@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: app-name
+  name: rezeptor
 spec:
   type: ClusterIP
   ports:
@@ -14,4 +14,4 @@ spec:
       port: 4180
       targetPort: 4180
   selector:
-    app: app-name
+    app: rezeptor

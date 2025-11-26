@@ -6,10 +6,12 @@ import { initEnvironment } from './application/server/environment';
 import { createErrorHandler } from './application/server/errorHandling';
 import { createRequestLoggingMiddleware, createRootLogger } from './application/server/logging';
 import { createApiServer } from './bootstrap/apiServer';
+import { createDatabaseClient } from './common/persistence/database';
 
 const env = initEnvironment(process.env);
 
 const rootLogger = createRootLogger(env);
+const databaseClient = createDatabaseClient(env.database.connectionString);
 
 const app = new Hono();
 
@@ -19,10 +21,9 @@ app.use(httpInstrumentationMiddleware({
 }));
 
 app.use(createRequestLoggingMiddleware(rootLogger));
-app.onError(createErrorHandler(rootLogger));
 
-export const { app: api } = await createApiServer({ env, rootLogger });
-app.route('/', api);
+app.route('/', await createApiServer({ env, rootLogger, database: databaseClient }));
+app.onError(createErrorHandler(rootLogger));
 
 export default await createHonoServer({
   app,

@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 import { toNumber, uniqueId } from 'lodash-es';
-import type { IngredientEntity } from '../../infrastructure/persistence/ingredientsTable';
+import type { IngredientEntity } from '../../infrastructure/persistence/IngredientEntity';
 import type { Ingredient } from '../../recipeManagement';
 
 export const ingredientEntityMockDataFactory = Factory.define<IngredientEntity>(() => {
@@ -17,7 +17,7 @@ export const ingredientEntityMockDataFactory = Factory.define<IngredientEntity>(
   };
 });
 
-export const ingredientEntityMockList = ingredientEntityMockDataFactory.buildList(faker.number.int({ min: 3, max: 10 }));
+export const ingredientEntityMockList = ingredientEntityMockDataFactory.buildList(20);
 
 export const toIngredient = (entity: IngredientEntity): Ingredient => {
   const { id, sortOrder, recipeId, ...ingredient } = entity;

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rezeptor-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rezeptor-database
+  template:
+    metadata:
+      labels:
+        app: rezeptor-database
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:18
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: rezeptor
+            - name: POSTGRES_USER
+              value: rezeptor
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rezeptor
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: rezeptor-database
+

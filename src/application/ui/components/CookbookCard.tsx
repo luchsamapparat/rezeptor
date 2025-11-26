@@ -7,7 +7,7 @@ import { Link } from 'react-router';
 interface CookbookCardProps {
   id: string;
   title: string;
-  authors: string[];
+  authors: { name: string }[];
   isbn10?: string | null;
   isbn13?: string | null;
   onRemove?: (id: string) => void | Promise<void>;
@@ -30,7 +30,7 @@ export function CookbookCard({
         <p className="text-muted-foreground text-sm">
           by
           {' '}
-          {authors.join(', ')}
+          {authors.map(({ name }) => name).join(', ')}
         </p>
       </CardHeader>
       <CardContent>

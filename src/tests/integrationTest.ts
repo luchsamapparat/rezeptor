@@ -1,15 +1,16 @@
 import { faker } from '@faker-js/faker';
 import { Hono } from 'hono';
-import { join } from 'node:path';
 import { afterEach as baseAfterEach, beforeEach as baseBeforeEach, test as baseTest } from 'vitest';
 import { createApiServer } from '../bootstrap/apiServer';
+import type { DatabaseClient } from '../common/persistence/database';
 import { FileSystemMock } from './mocks/fileSystem.mock';
 import { loggerMock } from './mocks/logger.mock';
+import { getTestDatabase } from './testDatabase';
 
 export const test = baseTest
   .extend<{ setup: TestApp }>({
-    setup: async ({ }, use) => {
-      const { env, app, database, fileSystemMock, cleanup } = await createTestApp();
+    setup: async ({}, use) => {
+      const { env, app, database, fileSystemMock, cleanup } = await createTestApp(getTestDatabase().databaseClient);
 
       await use({ env, app, database, fileSystemMock });
 
@@ -27,12 +28,8 @@ export const it = test;
 export const beforeEach = baseBeforeEach<TestApp>;
 export const afterEach = baseAfterEach<TestApp>;
 
-async function createTestApp() {
+async function createTestApp(database: DatabaseClient) {
   const app = new Hono();
-
-  const connectionString = ':memory:';
-  const migrationsPath = join(import.meta.dirname, '../../database');
-  const fileSystemMock = new FileSystemMock();
 
   const env = {
     nodeEnv: 'test' as const,
@@ -44,8 +41,7 @@ async function createTestApp() {
       serviceVersion: undefined,
     },
     database: {
-      connectionString,
-      migrationsPath,
+      connectionString: faker.string.alphanumeric(),
     },
     azureDocumentAnalysis: {
       endpoint: faker.internet.url(),
@@ -67,21 +63,22 @@ async function createTestApp() {
     },
   };
 
-  const { app: api, database } = await createApiServer({
+  const fileSystem = new FileSystemMock();
+
+  app.route('/', await createApiServer({
     env,
     rootLogger: loggerMock,
-    fs: fileSystemMock,
-  });
-
-  app.route('/', api);
+    fileSystem,
+    database,
+  }));
 
   return {
     env,
     app,
     database,
-    fileSystemMock,
+    fileSystemMock: fileSystem,
     async cleanup() {
-      fileSystemMock.clear();
+      fileSystem.clear();
     },
   };
 }

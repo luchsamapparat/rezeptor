@@ -2,11 +2,11 @@
 
 ## Architecture Overview
 
-**Rezeptor** is a recipe management system built with React Router v7 + Hono (SSR), Drizzle ORM (SQLite), and integrates Azure AI services for OCR/recipe extraction.
+**Rezeptor** is a recipe management system built with React Router v7 + Hono (SSR), Prisma ORM (Postgres), and integrates Azure AI services for OCR/recipe extraction.
 
 ### Tech Stack
 - **Frontend/Backend**: React Router v7 with Hono server (`react-router-hono-server`)
-- **Database**: SQLite with Drizzle ORM
+- **Database**: Postgres with Prisma ORM
 - **DI System**: `hono-simple-di` for dependency injection throughout API layers
 - **Logging**: `pino` with OpenTelemetry integration (`@opentelemetry/instrumentation-pino`)
 - **UI Components**: Shadcn UI (New York style) with Tailwind CSS v4
@@ -47,7 +47,7 @@ export const recipeRepository = dependency(
 
 // Use in API routes via middleware
 export const recipeApi = new Hono()
-  .use(recipeRepository.middleware('recipesRepository'))
+  .use(recipeRepository.middleware('recipeRepository'))
   .get('/', async c => c.json(await getRecipes(c.var)));
 ```
 
@@ -63,8 +63,8 @@ Functions in `recipeManagement.ts` and `cookbookManagement.ts` are pure - they a
 
 ```typescript
 // Business logic receives dependencies as args
-export const addRecipe = async ({ recipesRepository, recipe }: AddRecipeArgs) =>
-  recipesRepository.insert(recipe);
+export const addRecipe = async ({ recipeRepository, recipe }: AddRecipeArgs) =>
+  recipeRepository.insert(recipe);
 
 // API routes resolve dependencies and call business logic
 .post('/', validator('json', addRecipeDtoSchema), async c =>
@@ -73,10 +73,11 @@ export const addRecipe = async ({ recipesRepository, recipe }: AddRecipeArgs) =>
 ```
 
 ### 3. Database Layer
-- **Base Repository**: Extend `DatabaseRepository<TTable>` for standard CRUD operations
-- **UUIDs**: Generated via `crypto.randomUUID()` in base `insert()`/`insertMany()` methods
-- **Schema**: Define in `infrastructure/persistence/*Table.ts`, aggregate in `recipeDatabaseModel.ts`
-- **Migrations**: Drizzle Kit generates from `bootstrap/databaseSchema.ts`
+- **ORM**: Prisma ORM with PostgreSQL
+- **Client**: Use `PrismaClient` as the `DatabaseClient` type (see `src/common/persistence/database.ts`)
+- **Repositories**: Implement repository classes using Prisma client methods (see `RecipeDatabaseRepository.ts`, `CookbookDatabaseRepository.ts`)
+- **Schema**: Define in `database/schema.prisma`, configure via `prisma.config.ts`
+- **Migrations**: Managed by Prisma CLI (`npm run db:*`)
 
 ### 4. Error Handling
 Custom error types map to HTTP status codes in `bootstrap/apiServer.ts`:
@@ -156,18 +157,19 @@ Files are stored via `FileRepository` (UUID filenames, subdirectories per type):
 
 ### Environment Setup
 1. Copy/create `.env` with required vars (see `environment.ts` schema):
-   - `DB_CONNECTION_STRING`, `DB_MIGRATIONS_PATH`, `FILE_UPLOADS_PATH`
-   - Azure keys: `AZURE_DOCUMENT_INTELLIGENCE_*`, `AZURE_OPENAI_*`
-   - `GOOGLE_API_KEY`, recipe extraction prompts
-2. Run `npm run db:migrate` to apply Drizzle migrations
+  - `DB_CONNECTION_STRING`, `FILE_UPLOADS_PATH`
+  - Azure keys: `AZURE_DOCUMENT_INTELLIGENCE_*`, `AZURE_OPENAI_*`
+  - `GOOGLE_API_KEY`, recipe extraction prompts
+2. Run `npm run db:dev` to apply Prisma migrations (or `npm run db:generate` to generate Prisma client)
 
 ### Commands
+```bash
 ```bash
 npm run dev              # Development server (port 3000)
 npm run build            # Production build
 npm start                # Run production build
-npm run db:generate      # Generate migrations from schema
-npm run db:migrate       # Apply migrations
+npm run db:generate      # Generate Prisma client from schema
+npm run db:dev           # Apply Prisma migrations (development)
 npm test                 # Run tests (Vitest)
 npm run typecheck        # TypeScript + React Router type generation
 ```
@@ -179,7 +181,7 @@ import { it } from '../../../tests/integrationTest';
 
 it('should create a recipe', async ({ app, database, fileSystemMock }) => {
   // app: Hono instance with full middleware
-  // database: In-memory SQLite
+  // database: Prisma instance
   // fileSystemMock: Mock file system operations
   const response = await app.request(new Request('http://localhost/api/recipes', {
     method: 'POST',
@@ -194,11 +196,12 @@ Tests use `:memory:` database and mocked Azure/Google services.
 ### Adding a New Use Case
 1. Create `useCases/{feature}/{feature}.ts` with pure functions
 2. Add `infrastructure/di.ts` for service dependencies
-3. Define database schema in `infrastructure/persistence/*Table.ts`
-4. Create API routes in `presentation/api/server.ts`
-5. Add React routes in `presentation/ui/{feature}Routes.ts`
-6. Aggregate schema in `useCases/index.ts` → `bootstrap/databaseSchema.ts`
-7. Generate migration: `npm run db:generate`
+3. Define database schema in `database/schema.prisma`
+4. Create repository in `infrastructure/persistence/{feature}DatabaseRepository.ts` using Prisma client
+5. Create API routes in `presentation/api/server.ts`
+6. Add React routes in `presentation/ui/{feature}Routes.ts`
+7. Run `npm run db:generate` to update Prisma client after schema changes
+8. Run `npm run db:dev` to apply migrations
 
 ## UI Components with Shadcn
 
@@ -256,7 +259,7 @@ Defined in `components.json` and `tsconfig.json`:
 - **Path Aliases**: Use absolute imports via `tsconfig.json` paths (e.g., `import { ... } from '../../common/...'`)
 - **Validation**: Zod schemas for DTOs, use `validator()` helper from `common/server/validation.ts`
 - **File Naming**: `{Feature}Controller.tsx` for route modules, `{Feature}Api.ts` for API routes
-- **Database Tables**: `{entity}sTable` (plural) in Drizzle schema files
+- **Database Tables**: Define in `database/schema.prisma` (Prisma models)
 - **Mock Data**: Use Fishery factories in `test/data/*MockData.ts` for test fixtures
 - **UI Components**: Use Shadcn components from `@rezeptor/ui/components/ui/*` for consistent styling
 
@@ -273,4 +276,6 @@ Multi-stage Dockerfile builds production image:
 - `src/application/server/di.ts` - Core dependency definitions
 - `src/tests/integrationTest.ts` - Test fixtures and setup
 - `vite.config.ts` - React Router + Hono server plugin config
-- `drizzle.config.ts` - Database connection & migration settings
+- `src/common/persistence/database.ts` - Prisma client integration and factory
+- `prisma.config.ts` - Prisma CLI configuration
+- `database/schema.prisma` - Database schema (Prisma)
