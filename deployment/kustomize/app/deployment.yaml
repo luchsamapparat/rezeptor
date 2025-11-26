@@ -10,6 +10,7 @@ spec:
   template:
     metadata:
       labels:
+        app: rezeptor
         telemetry.luchsamappar.at/logs: "true"
     spec:
       containers:
