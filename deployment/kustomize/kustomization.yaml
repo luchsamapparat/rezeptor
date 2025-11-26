@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - app/deployment.yaml
   - app/hpa.yaml
+  - app/pvc.yaml
   - app/service.yaml
   - database/deployment.yaml
   - database/pvc.yaml
