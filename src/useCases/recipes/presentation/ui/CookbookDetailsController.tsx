@@ -40,7 +40,7 @@ export default function CookbookDetailsController({ loaderData, params }: Route.
     const formData = new FormData(event.currentTarget);
 
     const authors = formData.get('authors') as string;
-    const authorsArray = authors.split(',').map(author => author.trim()).filter(Boolean);
+    const authorsArray = authors.split(',').map(author => ({ name: author.trim() })).filter(Boolean);
 
     await editCookbookMutation.mutateAsync({
       id: params.cookbookId,
@@ -113,7 +113,7 @@ export default function CookbookDetailsController({ loaderData, params }: Route.
                       type="text"
                       id="authors"
                       name="authors"
-                      defaultValue={cookbook.authors.join(', ')}
+                      defaultValue={cookbook.authors.map(({ name }) => name).join(', ')}
                       required
                       placeholder="e.g., John Doe, Jane Smith"
                     />

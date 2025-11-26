@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_STRING")
+}
+
+model Cookbook {
+  id        String            @id @default(uuid())
+  title     String
+  isbn10    String?
+  isbn13    String?
+  recipes   Recipe[]
+  authors   CookbookAuthor[]
+}
+
+model CookbookAuthor {
+  id         String    @id @default(uuid())
+  cookbookId String
+  name       String
+  sortOrder  Int       @default(0)
+  cookbook   Cookbook  @relation(fields: [cookbookId], references: [id], onDelete: Cascade)
+}
+
+model Recipe {
+  id            String       @id @default(uuid())
+  title         String
+  instructions  String
+  photoFileId   String?
+  recipeFileId  String?
+  cookbookId    String?
+  pageNumber    Int?
+  ingredients   Ingredient[]
+  cookbook      Cookbook?    @relation(fields: [cookbookId], references: [id], onDelete: NoAction)
+}
+
+model Ingredient {
+  id         String   @id @default(uuid())
+  recipeId   String
+  quantity   String?
+  unit       String?
+  name       String
+  notes      String?
+  sortOrder  Int      @default(0)
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}

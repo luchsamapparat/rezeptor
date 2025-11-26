@@ -7,7 +7,6 @@ import { AzureDocumentAnalysisBarcodeExtractionService } from './AzureDocumentAn
 import { AzureOpenAIRecipeExtractionService } from './AzureOpenAIRecipeExtractionService';
 import { GoogleBooksBookMetadataService } from './GoogleBooksBookMetadataService';
 import { CookbookDatabaseRepository } from './persistence/CookbookDatabaseRepository';
-import type { RecipesDatabaseSchema } from './persistence/recipeDatabaseModel';
 import { RecipeDatabaseRepository } from './persistence/RecipeDatabaseRepository';
 
 const useCaseLogger = dependency(async (_, c): Promise<Logger> => {
@@ -16,9 +15,9 @@ const useCaseLogger = dependency(async (_, c): Promise<Logger> => {
 }, 'request');
 
 export const cookbookRepository = dependency(async (_, c) => {
-  const db = await database<RecipesDatabaseSchema>().resolve(c);
+  const client = await database.resolve(c);
   const logger = await createChildLogger(c, useCaseLogger, { component: 'CookbookDatabaseRepository' });
-  return new CookbookDatabaseRepository(db, logger);
+  return new CookbookDatabaseRepository(client, logger);
 }, 'request');
 
 const googleBooks = dependency(env => books({ version: 'v1', key: env.googleBooks.key }));
@@ -39,9 +38,9 @@ export const barcodeExtractionService = dependency(async (_, c) => {
 });
 
 export const recipeRepository = dependency(async (_, c) => {
-  const db = await database<RecipesDatabaseSchema>().resolve(c);
+  const client = await database.resolve(c);
   const logger = await createChildLogger(c, useCaseLogger, { component: 'RecipeDatabaseRepository' });
-  return new RecipeDatabaseRepository(db, logger);
+  return new RecipeDatabaseRepository(client, logger);
 }, 'request');
 export const recipeFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);

@@ -1,7 +1,7 @@
 import { type Context, type Env } from 'hono';
 import { Dependency, type Scope } from 'hono-simple-di';
-import { isNull, memoize } from 'lodash-es';
-import { type Database } from '../../common/persistence/database';
+import { isNull } from 'lodash-es';
+import { createDatabaseClient, type DatabaseClient } from '../../common/persistence/database';
 import { FileRepositoryFactory } from '../../common/persistence/FileRepositoryFactory';
 import type { FileSystemOperations } from '../../common/server/FileSystemOperations';
 import { NodeFileSystem } from '../../common/server/NodeFileSystem';
@@ -38,32 +38,19 @@ export const createChildLogger = async <E extends Env>(
 
 export const fileSystem = new Dependency<FileSystemOperations>(() => new NodeFileSystem());
 
-const optionalDatabase = memoize(<DatabaseSchema extends Record<string, unknown>>() => new Dependency<Database<DatabaseSchema> | null>(() => null));
-export const database = memoize(<DatabaseSchema extends Record<string, unknown>>() => {
-  const databaseDependency = optionalDatabase<DatabaseSchema>();
-  const originalResolve = databaseDependency.resolve;
-  const resolve = async (c: Context) => {
-    const db = await originalResolve.bind(databaseDependency)(c);
-    if (isNull(db)) {
-      throw new Error('No Database provided');
-    }
-    return db;
-  };
-  databaseDependency.resolve = resolve.bind(databaseDependency);
-  return databaseDependency as Dependency<Database<DatabaseSchema>>;
-});
-
 export const fileRepositoryFactory = dependency(async (env, c) => {
   const log = await logger.resolve(c);
   return new FileRepositoryFactory(env.fileUploadsPath, await fileSystem.resolve(c), log);
 }, 'request');
 
+export const database = dependency(async env => createDatabaseClient(env.database.connectionString));
+
 type DependencyType<T> = T extends Dependency<infer U> ? U : never;
 
-export type ApplicationContext<DatabaseSchema extends Record<string, unknown>> = {
+export type ApplicationContext = {
   environment: DependencyType<typeof environment>;
   logger: DependencyType<typeof logger>;
   fileSystem: DependencyType<typeof fileSystem>;
-  database: Database<DatabaseSchema>;
+  database: DatabaseClient;
   fileRepositoryFactory: DependencyType<typeof fileRepositoryFactory>;
 };

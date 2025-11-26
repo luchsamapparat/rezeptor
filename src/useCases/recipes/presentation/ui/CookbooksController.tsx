@@ -54,7 +54,7 @@ export default function CookbooksController({ loaderData }: Route.ComponentProps
     const formData = new FormData(event.currentTarget);
 
     const authors = formData.get('authors') as string;
-    const authorsArray = authors.split(',').map(author => author.trim()).filter(Boolean);
+    const authorsArray = authors.split(',').map(author => ({ name: author.trim() })).filter(Boolean);
 
     await addCookbookMutation.mutateAsync({
       title: formData.get('title') as string,

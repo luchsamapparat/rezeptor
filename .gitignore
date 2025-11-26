@@ -4,5 +4,6 @@
 *.tsbuildinfo
 /.react-router/
 /dist/
+/database/migration.sql
 /data/uploads
-/data/database.sqlite
+/data/database

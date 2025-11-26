@@ -11,7 +11,7 @@ export type CookbookRepository = {
   update(cookbookId: Identifier, changes: CookbookChanges): Promise<Cookbook | null>;
   findById(cookbookId: Identifier): Promise<Cookbook | null>;
   getAll(): Promise<Cookbook[]>;
-  deleteById(cookbookId: Identifier): Promise<Cookbook | null>;
+  delete(cookbookId: Identifier): Promise<Cookbook | null>;
 };
 
 /**
@@ -55,14 +55,14 @@ export type Barcode = {
 export type Cookbook = {
   id: Identifier;
   title: string;
-  authors: string[];
+  authors: CookbookAuthor[];
   isbn10: string | null;
   isbn13: string | null;
 };
 
-type NewCookbook = {
+export type NewCookbook = {
   title: string;
-  authors: string[];
+  authors: CookbookAuthor[];
   isbn10: string | null;
   isbn13: string | null;
 };
@@ -70,6 +70,10 @@ type NewCookbook = {
 type AddCookbookArgs = {
   cookbookRepository: CookbookRepository;
   cookbook: NewCookbook;
+};
+
+export type CookbookAuthor = {
+  name: string;
 };
 
 /**
@@ -82,9 +86,9 @@ type AddCookbookArgs = {
  */
 export const addCookbook = async ({ cookbookRepository, cookbook }: AddCookbookArgs) => cookbookRepository.insert(cookbook);
 
-type CookbookChanges = {
+export type CookbookChanges = {
   title?: string;
-  authors?: string[];
+  authors?: CookbookAuthor[];
   isbn10?: string | null;
   isbn13?: string | null;
 };
@@ -189,10 +193,9 @@ type RemoveCookbookArgs = {
  * @param args.cookbookRepository - Repository to perform deletion
  * @param args.cookbookId - Unique identifier of the cookbook to remove
  * @returns Promise that resolves when the cookbook is deleted
- * @throws {NotFoundError} When no cookbook with the given ID exists
  */
 export const removeCookbook = async ({ cookbookRepository, cookbookId }: RemoveCookbookArgs) => {
-  const cookbook = await cookbookRepository.deleteById(cookbookId);
+  const cookbook = await cookbookRepository.delete(cookbookId);
 
   if (isNull(cookbook)) {
     throw new NotFoundError(`No cookbook with ID ${cookbookId} found.`);

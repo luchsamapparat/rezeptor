@@ -1,181 +1,125 @@
-import { eq, getTableColumns } from 'drizzle-orm';
-import { groupBy } from 'lodash-es';
+import type { Prisma } from '@prisma/client';
+import { isArray } from 'lodash-es';
 import type { Identifier } from '../../../../application/model/identifier';
 import type { Logger } from '../../../../application/server/logging';
-import type { Database } from '../../../../common/persistence/database';
-import { DatabaseRepository, createLogContext } from '../../../../common/persistence/DatabaseRepository';
+import type { DatabaseClient } from '../../../../common/persistence/database';
+import { DatabaseRepository } from '../../../../common/persistence/DatabaseRepository';
 import type { NewRecipe, Recipe, RecipeChanges, RecipeRepository, RecipeWithCookbook } from '../../recipeManagement';
-import { cookbooksTable } from './cookbooksTable';
-import { ingredientsTable, type IngredientEntity } from './ingredientsTable';
-import { recipesTable, type RecipeEntity } from './recipesTable';
 
-export class RecipeDatabaseRepository extends DatabaseRepository<typeof recipesTable> implements RecipeRepository {
+export class RecipeDatabaseRepository extends DatabaseRepository implements RecipeRepository {
   constructor(
-    database: Database<{
-      recipesTable: typeof recipesTable;
-      cookbooksTable: typeof cookbooksTable;
-      ingredientsTable: typeof ingredientsTable;
-    }>,
-    logger: Logger,
+    private readonly database: DatabaseClient,
+    log: Logger,
   ) {
-    super(database, recipesTable, logger);
+    super(log);
   }
 
-  async insert({ ingredients, ...newRecipe }: NewRecipe): Promise<Recipe> {
-    const recipeWithId = {
-      id: crypto.randomUUID(),
-      ...newRecipe,
-    };
-
-    const query = this.database.insert(recipesTable).values(recipeWithId).returning();
-    const { sql, params } = query.toSQL();
-    const [recipeEntity] = await query;
-
-    let ingredientEntities: IngredientEntity[] = [];
-
-    if (ingredients.length > 0) {
-      const ingredientsWithId = ingredients.map((ingredient, index: number) => ({
-        id: crypto.randomUUID(),
-        recipeId: recipeEntity.id,
-        sortOrder: index,
-        ...ingredient,
-      }));
-
-      ingredientEntities = await this.database.insert(ingredientsTable).values(ingredientsWithId).returning();
-    }
-
-    this.log.info(createLogContext({
-      operation: 'INSERT',
-      sql,
-      params,
-      table: recipesTable,
-    }), 'Recipe created');
-    return toRecipe(recipeEntity, ingredientEntities);
+  async insert(newRecipe: NewRecipe): Promise<Recipe> {
+    return this.database.recipe.create({
+      data: {
+        ...newRecipe,
+        ingredients: {
+          createMany: {
+            data: newRecipe.ingredients.map((ingredient, index) => ({
+              sortOrder: index,
+              ...ingredient,
+            })),
+          },
+        },
+      },
+      include: {
+        ingredients: { orderBy: { sortOrder: 'asc' } },
+      },
+    });
   }
 
-  async update(recipeId: Identifier, { ingredients: ingredientChanges, ...recipeChanges }: RecipeChanges): Promise<Recipe | null> {
-    const query = this.database
-      .update(recipesTable)
-      .set(recipeChanges)
-      .where(eq(recipesTable.id, recipeId))
-      .returning();
-    const { sql, params } = query.toSQL();
-    const [updatedRecipeEntity] = await query;
+  async insertMany(newRecipes: NewRecipe[]): Promise<Recipe[]> {
+    // Prisma does not support creating multiple records and multiple related records
+    // https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries#create-multiple-records-and-multiple-related-records
+    return this.database.$transaction(async (tx: Prisma.TransactionClient) => {
+      const recipes: Recipe[] = [];
 
-    if (updatedRecipeEntity === undefined) {
-      return null;
-    }
-
-    if (ingredientChanges !== undefined) {
-      await this.database.delete(ingredientsTable).where(eq(ingredientsTable.recipeId, recipeId));
-
-      if (ingredientChanges.length > 0) {
-        const ingredientsWithId = ingredientChanges.map((ingredient, index: number) => ({
-          id: crypto.randomUUID(),
-          recipeId: recipeId,
-          sortOrder: index,
-          ...ingredient,
+      for (const newRecipe of newRecipes) {
+        recipes.push(await tx.recipe.create({
+          data: {
+            ...newRecipe,
+            ingredients: {
+              createMany: {
+                data: newRecipe.ingredients.map((ingredient, index) => ({
+                  sortOrder: index,
+                  ...ingredient,
+                })),
+              },
+            },
+          },
+          include: {
+            ingredients: { orderBy: { sortOrder: 'asc' } },
+          },
         }));
-
-        await this.database.insert(ingredientsTable).values(ingredientsWithId);
       }
+
+      return recipes;
+    });
+  }
+
+  async update(recipeId: Identifier, recipeChanges: RecipeChanges): Promise<Recipe | null> {
+    try {
+      return await this.database.recipe.update({
+        where: { id: recipeId },
+        data: {
+          ...recipeChanges,
+          ingredients: isArray(recipeChanges.ingredients)
+            ? {
+                deleteMany: {},
+                createMany: {
+                  data: recipeChanges.ingredients.map((ingredient, index) => ({
+                    sortOrder: index,
+                    ...ingredient,
+                  })),
+                },
+              }
+            : undefined,
+        },
+        include: {
+          ingredients: { orderBy: { sortOrder: 'asc' } },
+        },
+      });
     }
-
-    const ingredientEntities = await this.database
-      .select()
-      .from(ingredientsTable)
-      .where(eq(ingredientsTable.recipeId, recipeId))
-      .orderBy(ingredientsTable.sortOrder);
-
-    const updatedFields = Object.keys(recipeChanges);
-    if (ingredientChanges !== undefined) {
-      updatedFields.push('ingredients');
+    catch (error: unknown) {
+      return this.handleMissingEntityError(error);
     }
-    this.log.info(createLogContext({
-      operation: 'UPDATE',
-      sql,
-      params,
-      table: recipesTable,
-    }), 'Recipe updated');
-
-    return toRecipe(updatedRecipeEntity, ingredientEntities);
   }
 
   async findById(recipeId: Identifier): Promise<Recipe | null> {
-    const [recipeEntity] = await this.database
-      .select()
-      .from(recipesTable)
-      .where(eq(recipesTable.id, recipeId));
-
-    if (recipeEntity === undefined) {
-      return null;
-    }
-
-    const ingredientEntities = await this.database
-      .select()
-      .from(ingredientsTable)
-      .where(eq(ingredientsTable.recipeId, recipeId))
-      .orderBy(ingredientsTable.sortOrder);
-
-    return toRecipe(recipeEntity, ingredientEntities);
+    return this.database.recipe.findUnique({
+      where: { id: recipeId },
+      include: {
+        ingredients: { orderBy: { sortOrder: 'asc' } },
+      },
+    });
   }
 
-  async getAllWithCookbooks(): Promise<RecipeWithCookbook[]> {
-    const query = this.database
-      .select({
-        ...getTableColumns(recipesTable),
-        cookbook: getTableColumns(cookbooksTable),
-      })
-      .from(recipesTable)
-      .leftJoin(cookbooksTable, eq(recipesTable.cookbookId, cookbooksTable.id));
-    const { sql, params } = query.toSQL();
-    const recipeEntitiesWithCookbooks = await query;
-
-    const ingredientEntitiesByRecipeId = groupBy(await this.database
-      .select()
-      .from(ingredientsTable)
-      .orderBy(ingredientsTable.recipeId, ingredientsTable.sortOrder), 'recipeId');
-
-    const recipes = recipeEntitiesWithCookbooks.map(recipeEntity => toRecipe(recipeEntity, ingredientEntitiesByRecipeId[recipeEntity.id]));
-    this.log.debug(createLogContext({
-      operation: 'SELECT',
-      sql,
-      params,
-      table: recipesTable,
-      batchSize: recipes.length,
-    }), 'Fetched all recipes with cookbooks');
-    return recipes;
+  async getAll(): Promise<RecipeWithCookbook[]> {
+    return this.database.recipe.findMany({
+      include: {
+        ingredients: { orderBy: { sortOrder: 'asc' } },
+        cookbook: { include: { authors: { orderBy: { sortOrder: 'asc' } } } },
+      },
+      orderBy: { title: 'asc' },
+    });
   }
 
-  async deleteById(recipeId: Identifier): Promise<Recipe | null> {
-    // Get recipe with ingredients before deletion
-    const recipe = await this.findById(recipeId);
-
-    if (!recipe) {
-      return null;
+  async delete(recipeId: Identifier): Promise<Recipe | null> {
+    try {
+      return await this.database.recipe.delete({
+        where: { id: recipeId },
+        include: {
+          ingredients: { orderBy: { sortOrder: 'asc' } },
+        },
+      });
     }
-
-    // Delete ingredients (will cascade delete due to foreign key)
-    await this.database.delete(ingredientsTable).where(eq(ingredientsTable.recipeId, recipeId));
-
-    // Delete recipe
-    const query = this.database.delete(recipesTable).where(eq(recipesTable.id, recipeId));
-    const { sql, params } = query.toSQL();
-    await query;
-
-    this.log.info(createLogContext({
-      operation: 'DELETE',
-      sql,
-      params,
-      table: recipesTable,
-    }), 'Recipe deleted');
-    return recipe;
+    catch (error: unknown) {
+      return this.handleMissingEntityError(error);
+    }
   }
 }
-
-const toRecipe = <R extends RecipeEntity>(recipeEntity: R, ingredientEntities: IngredientEntity[]) => {
-  return {
-    ...recipeEntity,
-    ingredients: ingredientEntities.map(({ id, sortOrder, ...ingredient }) => ingredient),
-  };
-};

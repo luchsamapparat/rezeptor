@@ -1,7 +1,10 @@
 import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
-import type { CookbookEntity, InsertCookbookEntity, UpdateCookbookEntity } from '../../infrastructure/persistence/cookbooksTable';
-import type { AddCookbookDto, EditCookbookDto } from '../../presentation/api/client';
+import type { NewCookbook } from '../../cookbookManagement';
+import type { CookbookAuthorEntity } from '../../infrastructure/persistence/CookbookAuthorEntity';
+import type { CookbookEntity, InsertCookbookEntity, UpdateCookbookEntity } from '../../infrastructure/persistence/CookbookEntity';
+import type { AddCookbookDto, CookbookDto, EditCookbookDto } from '../../presentation/api/client';
+import { cookbookAuthorEntityMockDataFactory, toCookbookAuthor } from './cookbookAuthorMockData';
 
 export const cookbookEntityMockDataFactory = Factory.define<CookbookEntity>(() => ({
   id: faker.string.uuid(),
@@ -19,27 +22,52 @@ export const toInsertCookbookEntity = (entity: CookbookEntity): InsertCookbookEn
   return insertEntity;
 };
 
+export const toNewCookbook = (entity: CookbookEntity, authors: CookbookAuthorEntity[]): NewCookbook => {
+  const { id, ...insertEntity } = entity;
+  return {
+    ...insertEntity,
+    authors: authors.map(toCookbookAuthor),
+  };
+};
+
 export const toUpdateCookbookEntity = (entity: CookbookEntity): UpdateCookbookEntity => {
   const { id, ...updateEntity } = entity;
   return updateEntity;
 };
 
-export const toAddCookbookDto = (entity: CookbookEntity): AddCookbookDto => {
-  const { id, ...addDto } = entity;
-  return addDto;
+export const toCookbookDto = (entity: CookbookEntity, authors: CookbookAuthorEntity[]): CookbookDto => {
+  return {
+    ...entity,
+    authors: authors.map(toCookbookAuthor),
+  };
 };
 
-export const toEditCookbookDto = (entity: CookbookEntity): EditCookbookDto => {
-  const { id, ...editDto } = entity;
-  return editDto;
+export const toAddCookbookDto = (entity: CookbookEntity, authors: CookbookAuthorEntity[]): AddCookbookDto => {
+  const { id, ...addDto } = entity;
+  return {
+    ...addDto,
+    authors: authors.map(toCookbookAuthor),
+  };
 };
+
+export const toEditCookbookDto = (entity: CookbookEntity, authors: CookbookAuthorEntity[]): EditCookbookDto => {
+  const { id, ...editDto } = entity;
+  return {
+    ...editDto,
+    authors: authors.map(toCookbookAuthor),
+  };
+};
+
+const authors = cookbookAuthorEntityMockDataFactory.buildList(faker.number.int({ min: 1, max: 3 }));
 
 export const insertCookbookEntityMock = toInsertCookbookEntity(cookbookEntityMock);
+export const newCookbookMock = toNewCookbook(cookbookEntityMock, authors);
 export const updateCookbookEntityMock = toUpdateCookbookEntity(cookbookEntityMock);
-export const addCookbookDtoMock = toAddCookbookDto(cookbookEntityMock);
-export const editCookbookDtoMock = toEditCookbookDto(cookbookEntityMock);
+export const cookbookDtoMock = toCookbookDto(cookbookEntityMock, authors);
+export const addCookbookDtoMock = toAddCookbookDto(cookbookEntityMock, authors);
+export const editCookbookDtoMock = toEditCookbookDto(cookbookEntityMock, authors);
 
 export const addCookbookWithoutIsbnDtoMock = toAddCookbookDto(cookbookEntityMockDataFactory.build({
   isbn10: null,
   isbn13: null,
-}));
+}), authors);
