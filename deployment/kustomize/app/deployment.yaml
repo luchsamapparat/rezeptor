@@ -41,8 +41,14 @@ spec:
               value: otlp
             - name: OTEL_EXPORTER_OTLP_METRICS_ENDPOINT
               value: http://telemetry-alloy.telemetry.svc.cluster.local:4318/v1/metrics
-            - name: DB_CONNECTION_STRING
-              value: postgres://rezeptor:$(POSTGRES_PASSWORD)@rezeptor-database:5432/rezeptor
+            - name: POSTGRES_HOSTNAME
+              value: rezeptor-database
+            - name: POSTGRES_PORT
+              value: "5432"
+            - name: POSTGRES_DATABASE
+              value: rezeptor
+            - name: POSTGRES_USER
+              value: rezeptor
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:

@@ -5,7 +5,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'silent']).default('info'),
   OTEL_SERVICE_NAME: z.string().min(1).optional(),
   OTEL_SERVICE_VERSION: z.string().min(1).optional(),
-  DB_CONNECTION_STRING: z.string().min(1),
+  DATABASE_URL: z.string().min(1),
   FILE_UPLOADS_PATH: z.string().min(1),
   RECIPE_EXTRACTION_SYSTEM_PROMPT: z.string(),
   RECIPE_EXTRACTION_USER_PROMPT: z.string(),
@@ -21,7 +21,7 @@ const envSchema = z.object({
   LOG_LEVEL,
   OTEL_SERVICE_NAME,
   OTEL_SERVICE_VERSION,
-  DB_CONNECTION_STRING,
+  DATABASE_URL,
   FILE_UPLOADS_PATH,
   RECIPE_EXTRACTION_SYSTEM_PROMPT,
   RECIPE_EXTRACTION_USER_PROMPT,
@@ -42,7 +42,7 @@ const envSchema = z.object({
     serviceVersion: OTEL_SERVICE_VERSION,
   },
   database: {
-    connectionString: DB_CONNECTION_STRING,
+    connectionString: DATABASE_URL,
   },
   azureDocumentAnalysis: {
     endpoint: AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT,

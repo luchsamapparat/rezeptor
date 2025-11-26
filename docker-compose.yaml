@@ -1,11 +1,24 @@
 services:
-  postgres:
-    image: postgres:18
-    container_name: rezeptor-postgres
+  app:
+    build:
+      context: .
+      dockerfile: deployment/Dockerfile
+    container_name: rezeptor-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
     environment:
-      POSTGRES_USER: rezeptor
-      POSTGRES_PASSWORD: rezeptor
-      POSTGRES_DB: rezeptor
+      NODE_ENV: production
+      POSTGRES_HOSTNAME: rezeptor-database
+      DATABASE_URL: postgresql://rezeptor:rezeptor@rezeptor-database:5432/rezeptor
+    depends_on:
+      - database
+  database:
+    image: postgres:18
+    container_name: rezeptor-database
+    env_file:
+      - ./.env
     ports:
       - "5432:5432"
     volumes:

@@ -157,7 +157,7 @@ Files are stored via `FileRepository` (UUID filenames, subdirectories per type):
 
 ### Environment Setup
 1. Copy/create `.env` with required vars (see `environment.ts` schema):
-  - `DB_CONNECTION_STRING`, `FILE_UPLOADS_PATH`
+  - `POSTGRES_*`, `FILE_UPLOADS_PATH`
   - Azure keys: `AZURE_DOCUMENT_INTELLIGENCE_*`, `AZURE_OPENAI_*`
   - `GOOGLE_API_KEY`, recipe extraction prompts
 2. Run `npm run db:dev` to apply Prisma migrations (or `npm run db:generate` to generate Prisma client)

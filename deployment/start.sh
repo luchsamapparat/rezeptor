@@ -1,3 +1,4 @@
+export DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
 npx prisma migrate deploy
 node \
   --import="data:text/javascript,import{register}from'node:module';import{pathToFileURL}from'node:url';register('@opentelemetry/instrumentation/hook.mjs',pathToFileURL('./'));export{}" \
