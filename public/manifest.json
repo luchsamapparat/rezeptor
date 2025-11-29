@@ -5,7 +5,7 @@
   "lang": "de",
   "theme_color": "#c94f44",
   "background_color": "#dae1d6",
-  "display": "fullscreen ",
+  "display": "standalone",
   "orientation": "portrait",
   "icons": [
     {
