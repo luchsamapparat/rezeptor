@@ -1,6 +1,6 @@
 import { type RouteConfig } from '@react-router/dev/routes';
-import { recipesRoutes } from './recipes/presentation/ui/recipesRoutes';
+import { adminRoutes } from './recipes/presentation/admin-ui/adminRoutes';
 
 export const useCaseRoutes = [
-  ...recipesRoutes,
+  ...adminRoutes,
 ] satisfies RouteConfig;

@@ -32,7 +32,7 @@ export function RecipeCard({
     : 'No ingredients listed';
 
   return (
-    <Link to={`/recipes/${id}/edit`} className="block">
+    <Link to={`/admin/recipes/${id}/edit`} className="block">
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer h-full">
         <CardHeader>
           {photoUrl && (

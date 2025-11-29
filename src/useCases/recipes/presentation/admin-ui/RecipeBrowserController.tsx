@@ -36,9 +36,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       <PageHeader
         title="Recipe Browser"
         actions={[
-          { label: 'Add Recipe', to: '/recipes/new', variant: 'default' },
-          { label: 'Upload from Photo', to: '/recipes/from-photo', variant: 'secondary' },
-          { label: 'Manage Cookbooks', to: '/cookbooks', variant: 'outline' },
+          { label: 'Add Recipe', to: '/admin/recipes/new', variant: 'default' },
+          { label: 'Upload from Photo', to: '/admin/recipes/from-photo', variant: 'secondary' },
+          { label: 'Manage Cookbooks', to: '/admin/cookbooks', variant: 'outline' },
         ]}
       />
 

@@ -5,7 +5,6 @@ import type { PropsWithChildren } from 'react';
 import type { Route } from './+types/root';
 import { getOrCreateQueryClient, provideQueryClient } from './application/client/queryClient';
 import { ApplicationError } from './application/ui/ApplicationError';
-import './application/ui/stylesheet.css';
 
 export const links: Route.LinksFunction = () => [];
 

@@ -24,7 +24,7 @@ export default function RecipeFromPhotoController() {
     onSuccess: (recipe) => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       // Navigate to edit page for the newly created recipe
-      navigate(`/recipes/${recipe.id}/edit`);
+      navigate(`/admin/recipes/${recipe.id}/edit`);
     },
   });
 
@@ -66,7 +66,7 @@ export default function RecipeFromPhotoController() {
       <PageHeader
         title="Add Recipe from Photo"
         actions={[
-          { label: 'Back to Recipes', to: '/', variant: 'secondary' },
+          { label: 'Back to Recipes', to: '/admin/', variant: 'secondary' },
         ]}
       />
 

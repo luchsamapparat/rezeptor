@@ -44,7 +44,7 @@ export default function RecipeFormController() {
     mutationFn: addRecipe,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      navigate('/');
+      navigate('/admin/');
     },
   });
 
@@ -77,7 +77,7 @@ export default function RecipeFormController() {
       <PageHeader
         title="Add New Recipe"
         actions={[
-          { label: 'Back to Recipes', to: '/', variant: 'secondary' },
+          { label: 'Back to Recipes', to: '/admin/', variant: 'secondary' },
         ]}
       />
 

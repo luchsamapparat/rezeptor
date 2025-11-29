@@ -75,7 +75,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       queryClient.invalidateQueries({ queryKey: ['recipes', params.recipeId] });
-      navigate('/');
+      navigate('/admin/');
     },
   });
 
@@ -97,7 +97,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
     mutationFn: removeRecipe,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
-      navigate('/');
+      navigate('/admin/');
     },
   });
 
@@ -191,7 +191,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
       <PageHeader
         title="Edit Recipe"
         actions={[
-          { label: 'Back to Recipes', to: '/', variant: 'secondary' },
+          { label: 'Back to Recipes', to: '/admin/', variant: 'secondary' },
           {
             label: isDeleting ? 'Deleting...' : 'Delete Recipe',
             onClick: handleDeleteRecipe,

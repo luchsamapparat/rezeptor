@@ -104,7 +104,7 @@ export default function CookbooksController({ loaderData }: Route.ComponentProps
       <PageHeader
         title="Cookbook Management"
         actions={[
-          { label: '← Back to Recipes', to: '/', variant: 'secondary' },
+          { label: '← Back to Recipes', to: '/admin', variant: 'secondary' },
           {
             label: showAddForm ? 'Cancel' : 'Add Cookbook',
             onClick: () => {

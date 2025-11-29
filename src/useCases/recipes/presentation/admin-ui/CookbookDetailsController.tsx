@@ -76,7 +76,7 @@ export default function CookbookDetailsController({ loaderData, params }: Route.
       <PageHeader
         title="Cookbook Details"
         actions={[
-          { label: 'Back to Cookbooks', to: '/cookbooks', variant: 'secondary' },
+          { label: 'Back to Cookbooks', to: '/admin/cookbooks', variant: 'secondary' },
           {
             label: isEditing ? 'Cancel Edit' : 'Edit',
             onClick: () => setIsEditing(!isEditing),
