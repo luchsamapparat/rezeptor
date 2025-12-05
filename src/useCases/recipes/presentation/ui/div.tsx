@@ -3,8 +3,6 @@ import { isNull } from 'lodash-es';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { Navigation, Pagination } from 'swiper/modules';
-import { Swiper, SwiperSlide } from 'swiper/react';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { recipesQuery } from '../api/client';
 import type { Route } from './+types/RecipeBrowserController';
@@ -37,35 +35,12 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const recipesWithPhotos = recipes.filter(recipe => !isNull(recipe.photoFileId));
 
   return (
-
-    <>
-
-      {
-        recipesWithPhotos.length === 0
-          ? (
-              <p>No recipes found. Add some recipes to get started!</p>
-            )
-          : (
-              <Swiper
-                slidesPerView={1}
-                loop={true}
-                modules={[Pagination, Navigation]}
-              >
-                {recipesWithPhotos.map(recipe => (
-                  <SwiperSlide
-                    key={recipe.id}
-                    style={{
-                      backgroundImage: recipe.photoFileId ? `url('/api/recipes/${recipe.photoFileId}/photo')` : undefined,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: 'cover',
-                    }}
-                  >
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            )
-      }
-    </>
+    <div style={{
+      backgroundImage: `url('/api/recipes/${recipesWithPhotos[0].id}/photo')`,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundSize: 'cover',
+    }}
+    />
   );
 }
