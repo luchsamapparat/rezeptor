@@ -4,6 +4,8 @@ metadata:
   name: rezeptor
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: rezeptor
