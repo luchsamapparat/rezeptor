@@ -55,7 +55,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
                   <SwiperSlide
                     key={recipe.id}
                     style={{
-                      backgroundImage: recipe.photoFileId ? `url('/api/recipes/${recipe.photoFileId}/photo')` : undefined,
+                      backgroundImage: recipe.photoFileId ? `url('/api/recipes/${recipe.id}/photo')` : undefined,
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
                       backgroundSize: 'cover',
