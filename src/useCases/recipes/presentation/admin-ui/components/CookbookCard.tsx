@@ -1,6 +1,6 @@
-import { Badge } from '@rezeptor/ui/components/ui/Badge';
-import { Button } from '@rezeptor/ui/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
+import { Badge } from './ui/Badge';
+import { Button } from './ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Trash2 } from 'lucide-react';
 import { Link } from 'react-router';
 

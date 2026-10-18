@@ -1,13 +1,13 @@
-import { Button } from '@rezeptor/ui/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
-import { Input } from '@rezeptor/ui/components/ui/Input';
-import { Label } from '@rezeptor/ui/components/ui/Label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@rezeptor/ui/components/ui/Select';
+import { Button } from './components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
+import { Input } from './components/ui/Input';
+import { Label } from './components/ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/Select';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ErrorState, PageHeader } from '../../../../application/ui/components';
-import { Alert, AlertDescription } from '../../../../application/ui/components/ui/Alert';
+import { ErrorState, PageHeader } from './components';
+import { Alert, AlertDescription } from './components/ui/Alert';
 import { addRecipeFromPhoto, cookbooksQuery } from '../api/client';
 
 export default function RecipeFromPhotoController() {

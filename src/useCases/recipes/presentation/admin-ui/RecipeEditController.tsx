@@ -1,14 +1,14 @@
-import { Button } from '@rezeptor/ui/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
-import { Input } from '@rezeptor/ui/components/ui/Input';
-import { Label } from '@rezeptor/ui/components/ui/Label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@rezeptor/ui/components/ui/Select';
-import { Textarea } from '@rezeptor/ui/components/ui/Textarea';
+import { Button } from './components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
+import { Input } from './components/ui/Input';
+import { Label } from './components/ui/Label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/Select';
+import { Textarea } from './components/ui/Textarea';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
+import { ErrorState, LoadingState, PageHeader } from './components';
 import { addRecipePhoto, cookbooksQuery, editRecipe, recipeQuery, removeRecipe } from '../api/client';
 import type { Route } from './+types/RecipeEditController';
 

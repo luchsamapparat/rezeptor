@@ -1,4 +1,4 @@
-import { Button } from '@rezeptor/ui/components/ui/Button';
+import { Button } from './ui/Button';
 import { Link } from 'react-router';
 
 interface PageHeaderAction {

@@ -12,7 +12,7 @@
     "noEmit": true,
     "noErrorTruncation": true,
     "paths": {
-      "@rezeptor/ui/*": ["./src/application/ui/*"]
+      "@rezeptor/admin-ui/*": ["./src/useCases/recipes/presentation/admin-ui/*"]
     },
   }
 }

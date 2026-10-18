@@ -1,13 +1,13 @@
-import { Alert, AlertDescription, AlertTitle } from '@rezeptor/ui/components/ui/Alert';
-import { Button } from '@rezeptor/ui/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
-import { Input } from '@rezeptor/ui/components/ui/Input';
-import { Label } from '@rezeptor/ui/components/ui/Label';
+import { Alert, AlertDescription, AlertTitle } from './components/ui/Alert';
+import { Button } from './components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
+import { Input } from './components/ui/Input';
+import { Label } from './components/ui/Label';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { CookbookCard, EmptyState, ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
+import { CookbookCard, EmptyState, ErrorState, LoadingState, PageHeader } from './components';
 import { addCookbook, cookbooksQuery, identifyCookbook, removeCookbook, type CookbookIdentificationDto } from '../api/client';
 import type { Route } from './+types/CookbooksController';
 

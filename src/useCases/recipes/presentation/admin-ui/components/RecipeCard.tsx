@@ -1,5 +1,5 @@
-import { Badge } from '@rezeptor/ui/components/ui/Badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
+import { Badge } from './ui/Badge';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/Card';
 import { Link } from 'react-router';
 
 interface RecipeCardProps {

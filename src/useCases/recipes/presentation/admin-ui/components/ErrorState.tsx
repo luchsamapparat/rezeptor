@@ -1,4 +1,4 @@
-import { Alert, AlertDescription, AlertTitle } from '@rezeptor/ui/components/ui/Alert';
+import { Alert, AlertDescription, AlertTitle } from './ui/Alert';
 import { AlertCircle } from 'lucide-react';
 
 interface ErrorStateProps {

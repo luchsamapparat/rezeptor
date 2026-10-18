@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { EmptyState, ErrorState, LoadingState, PageHeader, RecipeCard } from '../../../../application/ui/components';
+import { EmptyState, ErrorState, LoadingState, PageHeader, RecipeCard } from './components';
 import { recipesQuery } from '../api/client';
 import type { Route } from './+types/RecipeBrowserController';
 

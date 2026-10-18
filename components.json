@@ -5,18 +5,18 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/application/ui/stylesheet.css",
+    "css": "src/useCases/recipes/presentation/admin-ui/stylesheet.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@rezeptor/ui/components",
-    "utils": "@rezeptor/ui/lib/utils",
-    "ui": "@rezeptor/ui/components/ui",
-    "lib": "@rezeptor/ui/lib",
-    "hooks": "@rezeptor/ui/hooks"
+    "components": "@rezeptor/admin-ui/components",
+    "utils": "@rezeptor/admin-ui/lib/utils",
+    "ui": "@rezeptor/admin-ui/components/ui",
+    "lib": "@rezeptor/admin-ui/lib",
+    "hooks": "@rezeptor/admin-ui/hooks"
   },
   "registries": {}
 }

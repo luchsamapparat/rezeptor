@@ -1,12 +1,12 @@
-import { Badge } from '@rezeptor/ui/components/ui/Badge';
-import { Button } from '@rezeptor/ui/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@rezeptor/ui/components/ui/Card';
-import { Input } from '@rezeptor/ui/components/ui/Input';
-import { Label } from '@rezeptor/ui/components/ui/Label';
+import { Badge } from './components/ui/Badge';
+import { Button } from './components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from './components/ui/Card';
+import { Input } from './components/ui/Input';
+import { Label } from './components/ui/Label';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { ErrorState, LoadingState, PageHeader } from '../../../../application/ui/components';
+import { ErrorState, LoadingState, PageHeader } from './components';
 import { cookbookQuery, editCookbook } from '../api/client';
 import type { Route } from './+types/CookbookDetailsController';
 

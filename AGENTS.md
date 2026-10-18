@@ -11,12 +11,12 @@ Rezeptor is a recipe management application. React Router 7 renders the UI throu
 
 ## Implementation conventions
 
-- Follow the existing TypeScript and ESLint style in nearby files. Use the `@rezeptor/ui/*` alias for shared UI code; use relative imports for other modules, as the codebase does.
+- Follow the existing TypeScript and ESLint style in nearby files. Use relative imports unless an established alias applies.
 - Keep API routes focused on validation, dependency injection, and HTTP responses. Use the Zod-based `validator()` helper in `src/common/server/validation.ts` for request input. Put application operations in `recipeManagement.ts` or `cookbookManagement.ts`; pass repositories and services as arguments instead of resolving DI inside those functions.
 - Register infrastructure dependencies in the relevant `infrastructure/di.ts` and attach their middleware to Hono routes. Shared dependencies are defined in `src/application/server/di.ts`. Repository classes use the Prisma client from `src/common/persistence/database.ts`.
 - Follow the existing file repository abstraction for uploads. Recipe source files and recipe photos use separate repositories. Preserve associated-file cleanup when changing recipe deletion or upload flows.
 - Use the existing Pino logger hierarchy and structured fields. Prefer OpenTelemetry semantic-convention keys where applicable and `rezeptor.*` for domain fields. Do not log credentials, tokens, or personal data. See `src/application/server/logging.ts` and `src/useCases/recipes/infrastructure/di.ts` for the current setup.
-- Place shared UI primitives in `src/application/ui/components/ui/`. The UI uses Tailwind CSS 4 and shadcn components configured by `components.json`; use the existing CSS variables and `cn()` helper when styling them.
+- Treat `src/useCases/recipes/presentation/admin-ui/` as the legacy admin presentation. Its Tailwind CSS 4 and shadcn components, configuration targets, CSS variables, and `cn()` helper must remain inside that folder; do not introduce shadcn dependencies into other presentation code. New UI development follows the Figma concept and stays independent of the legacy admin UI.
 - When changing API errors, check `src/application/server/errorHandling.ts`: not-found errors return 404, validation errors 422, and external-service errors 500 with a serialized cause. When changing configuration, use the Zod schema in `src/application/server/environment.ts` as the source of truth for environment variable names.
 
 ## Validation and local commands
