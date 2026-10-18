@@ -19,6 +19,11 @@ export interface FileSystemOperations {
   readFile(path: string): Promise<ReadableStream<Uint8Array>>;
 
   /**
+   * Check whether a file exists.
+   */
+  exists(path: string): Promise<boolean>;
+
+  /**
    * Delete a file.
    */
   unlink(path: string): Promise<void>;

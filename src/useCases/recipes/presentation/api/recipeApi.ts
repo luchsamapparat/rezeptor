@@ -11,6 +11,7 @@ const recipePath = '/recipes';
 
 const recipeIdentifierName = 'recipeId';
 const recipeIdentifierPathSchema = z.object({ [recipeIdentifierName]: identifierSchema });
+const recipePhotoQuerySchema = z.object({ variant: z.enum(['preview', 'display']).default('display') });
 
 const recipeDtoSchema = z.object({
   title: z.string().min(1),
@@ -106,16 +107,18 @@ export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
   .get(
     `/:${recipeIdentifierName}/photo`,
     validator('param', recipeIdentifierPathSchema),
+    validator('query', recipePhotoQuerySchema),
     async (c) => {
       const photoData = await getRecipePhoto({
         ...c.var,
         recipeId: c.req.valid('param')[recipeIdentifierName],
+        variant: c.req.valid('query').variant,
       });
 
       // Return the image with appropriate headers
       return c.body(photoData, 200, {
-        'Content-Type': 'image/jpeg',
-        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=31536000, immutable',
       });
     },
   )

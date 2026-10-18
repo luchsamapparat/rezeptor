@@ -42,6 +42,10 @@ export class InMemoryFileSystem implements FileSystemOperations {
     });
   }
 
+  async exists(path: string): Promise<boolean> {
+    return this.files.has(path);
+  }
+
   async unlink(path: string): Promise<void> {
     if (!this.files.has(path)) {
       throw new Error(`ENOENT: no such file or directory, unlink '${path}'`);

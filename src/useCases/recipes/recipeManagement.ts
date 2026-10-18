@@ -1,6 +1,5 @@
 import { isNull } from 'lodash-es';
 import type { Identifier } from '../../application/model/identifier';
-import type { FileRepository } from '../../common/persistence/FileRepository';
 import { NotFoundError } from '../../common/server/error';
 import type { Cookbook } from './cookbookManagement';
 
@@ -31,8 +30,11 @@ export type RecipeFileRepository = {
  */
 export type RecipePhotoFileRepository = {
   save(file: File): Promise<string>;
+  get(filename: string, variant: RecipePhotoVariant): Promise<ReadableStream<Uint8Array>>;
   remove(filename: string): Promise<void>;
 };
+
+export type RecipePhotoVariant = 'preview' | 'display';
 
 /**
  * Service interface for extracting recipe data from recipe source files (e.g., photographed recipe pages from cookbooks).
@@ -251,15 +253,33 @@ export const addRecipePhoto = async ({
     throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
 
+  const previousPhotoFileId = recipe.photoFileId;
   const photoFileId = await recipePhotoFileRepository.save(photoFile);
 
-  return recipeRepository.update(recipeId, { photoFileId });
+  let updatedRecipe: Recipe | null;
+  try {
+    updatedRecipe = await recipeRepository.update(recipeId, { photoFileId });
+  }
+  catch (error) {
+    await recipePhotoFileRepository.remove(photoFileId);
+    throw error;
+  }
+
+  if (isNull(updatedRecipe)) {
+    await recipePhotoFileRepository.remove(photoFileId);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
+  }
+  if (previousPhotoFileId) {
+    await recipePhotoFileRepository.remove(previousPhotoFileId);
+  }
+  return updatedRecipe;
 };
 
 type GetRecipePhotoArgs = {
   recipeRepository: RecipeRepository;
-  recipePhotoFileRepository: FileRepository;
+  recipePhotoFileRepository: RecipePhotoFileRepository;
   recipeId: Identifier;
+  variant: RecipePhotoVariant;
 };
 
 /**
@@ -272,7 +292,7 @@ type GetRecipePhotoArgs = {
  * @returns Promise resolving to the photo file data
  * @throws {NotFoundError} If no recipe with the given ID exists or if the recipe has no photo
  */
-export const getRecipePhoto = async ({ recipeRepository, recipePhotoFileRepository, recipeId }: GetRecipePhotoArgs) => {
+export const getRecipePhoto = async ({ recipeRepository, recipePhotoFileRepository, recipeId, variant }: GetRecipePhotoArgs) => {
   const recipe = await recipeRepository.findById(recipeId);
 
   if (isNull(recipe)) {
@@ -283,7 +303,7 @@ export const getRecipePhoto = async ({ recipeRepository, recipePhotoFileReposito
     throw new NotFoundError(`Recipe with ID ${recipeId} has no photo`);
   }
 
-  const photoData = await recipePhotoFileRepository.get(recipe.photoFileId);
+  const photoData = await recipePhotoFileRepository.get(recipe.photoFileId, variant);
   return photoData;
 };
 

@@ -15,6 +15,19 @@ export class FileRepository {
    */
   async save(file: File): Promise<string> {
     const filename = crypto.randomUUID();
+    await this.saveAs(filename, file);
+    return filename;
+  }
+
+  /**
+   * Saves a file using a caller-provided filename.
+   * Intended for derived files whose name is tied to another stored file.
+   */
+  async saveAs(filename: string, file: File): Promise<void> {
+    if (filename === '.' || filename === '..' || filename.includes('/') || filename.includes('\\')) {
+      throw new Error('Filename must not contain path segments.');
+    }
+
     const filePath = this.fileSystem.join(this.directory, filename);
     await this.fileSystem.mkdir(this.directory, { recursive: true });
     await this.fileSystem.writeFile(filePath, file.stream());
@@ -23,7 +36,6 @@ export class FileRepository {
       [ATTR_FILE_SIZE]: file.size,
       [ATTR_FILE_PATH]: this.directory,
     }, 'File saved');
-    return filename;
   }
 
   /**
@@ -32,6 +44,11 @@ export class FileRepository {
   async get(filename: string): Promise<ReadableStream<Uint8Array>> {
     const filePath = this.fileSystem.join(this.directory, filename);
     return await this.fileSystem.readFile(filePath);
+  }
+
+  async exists(filename: string): Promise<boolean> {
+    const filePath = this.fileSystem.join(this.directory, filename);
+    return await this.fileSystem.exists(filePath);
   }
 
   /**

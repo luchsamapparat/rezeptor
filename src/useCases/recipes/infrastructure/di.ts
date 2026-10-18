@@ -8,6 +8,7 @@ import { AzureDocumentAnalysisBarcodeExtractionService } from './AzureDocumentAn
 import { AzureOpenAIRecipeExtractionService } from './AzureOpenAIRecipeExtractionService';
 import { DnbBookMetadataService } from './DnbBookMetadataService';
 import { GoogleBooksBookMetadataService } from './GoogleBooksBookMetadataService';
+import { RecipePhotoFileRepository } from './RecipePhotoFileRepository';
 import { CookbookDatabaseRepository } from './persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from './persistence/RecipeDatabaseRepository';
 
@@ -54,7 +55,7 @@ export const recipeFileRepository = dependency(async (_, c) => {
 }, 'request');
 export const recipePhotoFileRepository = dependency(async (_, c) => {
   const factory = await fileRepositoryFactory.resolve(c);
-  return factory.createFileRepository('recipePhotos');
+  return new RecipePhotoFileRepository(factory.createFileRepository('recipePhotos'));
 }, 'request');
 
 const azureOpenAI = dependency(env => new AzureOpenAI({

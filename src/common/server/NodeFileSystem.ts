@@ -25,6 +25,18 @@ export class NodeFileSystem implements FileSystemOperations {
     return Readable.toWeb(createReadStream(path)) as unknown as ReadableStream<Uint8Array>;
   }
 
+  async exists(path: string): Promise<boolean> {
+    const { access } = await import('node:fs/promises');
+    try {
+      await access(path);
+      return true;
+    }
+    catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+      throw error;
+    }
+  }
+
   async unlink(path: string): Promise<void> {
     const { unlink } = await import('node:fs/promises');
     await unlink(path);

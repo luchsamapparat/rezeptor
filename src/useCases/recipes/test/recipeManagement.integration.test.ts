@@ -450,6 +450,8 @@ describe('Recipe Management API Integration Tests', () => {
       // Verify files exist
       expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(true);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}.preview.webp`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}.display.webp`)).toBe(true);
 
       // when: delete the recipe
       const deleteResponse = await app.request(new Request(`http://localhost/api/recipes/${createdRecipeId}`, {
@@ -466,6 +468,8 @@ describe('Recipe Management API Integration Tests', () => {
       // and: verify files are also deleted
       expect(fileSystemMock.fileExists(`/data/recipes/${recipeFileId}`)).toBe(false);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}.preview.webp`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${photoFileId}.display.webp`)).toBe(false);
     });
 
     it('should delete recipe without files gracefully', async ({ app, database }) => {
@@ -499,6 +503,7 @@ describe('Recipe Management API Integration Tests', () => {
       // given:
       const initialFileCount = fileSystemMock.getFileCount();
       const testFile = await loadTestFile('recipe1.jpg');
+      const originalPhoto = new Uint8Array(await testFile.arrayBuffer());
 
       // when:
       const formData = new FormData();
@@ -515,15 +520,19 @@ describe('Recipe Management API Integration Tests', () => {
       expect(body.id).toBe(recipeId);
       expect(body.photoFileId).toBeDefined();
       expect(body.photoFileId).not.toBeNull();
-      expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 1);
+      expect(fileSystemMock.getFileCount()).toBe(initialFileCount + 3);
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${body.photoFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${body.photoFileId}.preview.webp`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${body.photoFileId}.display.webp`)).toBe(true);
+      const storedOriginal = new Uint8Array(await new Response(await fileSystemMock.readFile(`/data/recipePhotos/${body.photoFileId}`)).arrayBuffer());
+      expect(storedOriginal).toEqual(originalPhoto);
 
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
       const updatedRecipeEntity = await recipeRepository.findById(recipeId);
       expect(updatedRecipeEntity?.photoFileId).not.toBeNull();
     });
 
-    it('should replace existing photo', async ({ app, database }) => {
+    it('should replace existing photo and remove all variants of the previous photo', async ({ app, database, fileSystemMock }) => {
       // given: recipe with existing photo - first upload a photo
       const testFile1 = await loadTestFile('recipe1.jpg');
 
@@ -560,6 +569,9 @@ describe('Recipe Management API Integration Tests', () => {
       const updatedRecipeEntity = await recipeRepository.findById(recipeId);
       expect(updatedRecipeEntity?.photoFileId).not.toBe(existingPhotoFileId);
       expect(updatedRecipeEntity?.photoFileId).not.toBe(null);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${existingPhotoFileId}`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${existingPhotoFileId}.preview.webp`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${existingPhotoFileId}.display.webp`)).toBe(false);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
@@ -636,12 +648,52 @@ describe('Recipe Management API Integration Tests', () => {
 
       // then:
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('image/jpeg');
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=31536000');
+      expect(response.headers.get('Content-Type')).toBe('image/webp');
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=31536000, immutable');
 
       // Verify we get back image data
       const photoData = await response.arrayBuffer();
       expect(photoData.byteLength).toBeGreaterThan(0);
+    });
+
+    it('should return a low-quality preview', async ({ app }) => {
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo?variant=preview`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Content-Type')).toBe('image/webp');
+      const photoData = await response.arrayBuffer();
+      expect(photoData.byteLength).toBeGreaterThan(0);
+    });
+
+    it('should generate missing variants for an existing original without changing it', async ({ app, database, fileSystemMock }) => {
+      // given:
+      const legacyPhotoId = faker.string.uuid();
+      const legacyPhoto = await loadTestFile('recipe1.jpg');
+      const originalPhoto = new Uint8Array(await legacyPhoto.arrayBuffer());
+      await fileSystemMock.mkdir('/data/recipePhotos', { recursive: true });
+      await fileSystemMock.writeFile(`/data/recipePhotos/${legacyPhotoId}`, legacyPhoto.stream());
+
+      const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
+      const legacyRecipe = await recipeRepository.insert({
+        ...newRecipeMock,
+        photoFileId: legacyPhotoId,
+      });
+
+      // when:
+      const response = await app.request(new Request(`http://localhost/api/recipes/${legacyRecipe.id}/photo?variant=preview`, {
+        method: 'GET',
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${legacyPhotoId}.preview.webp`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${legacyPhotoId}.display.webp`)).toBe(true);
+      const storedOriginal = new Uint8Array(await new Response(await fileSystemMock.readFile(`/data/recipePhotos/${legacyPhotoId}`)).arrayBuffer());
+      expect(storedOriginal).toEqual(originalPhoto);
     });
 
     it('should return 404 for non-existent recipe', async ({ app }) => {

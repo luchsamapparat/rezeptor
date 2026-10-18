@@ -1,5 +1,5 @@
 import { clsx } from 'clsx';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper/types';
 import type { RecipeDto } from '../api/client';
@@ -12,6 +12,54 @@ type Props = {
   blocked: boolean;
   onActiveChange: (id: string) => void;
 };
+
+type RecipePhotoProps = {
+  recipe: RecipeDto;
+  eager: boolean;
+  active: boolean;
+};
+
+function RecipePhoto({ recipe, eager, active }: RecipePhotoProps) {
+  const [loaded, setLoaded] = useState(false);
+  const displayRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    const display = displayRef.current;
+    if (display?.complete && display.naturalWidth > 0) setLoaded(true);
+  }, [recipe.photoFileId]);
+
+  if (recipe.photoFileId === null) {
+    return <img className={clsx(styles.photo, styles.placeholder)} src={placeholderRecipePhoto} alt="" draggable={false} />;
+  }
+
+  const version = encodeURIComponent(recipe.photoFileId);
+  const photoUrl = `/api/recipes/${recipe.id}/photo?v=${version}`;
+
+  return (
+    <>
+      <img
+        className={clsx(styles.photo, styles.preview)}
+        src={`${photoUrl}&variant=preview`}
+        alt=""
+        aria-hidden="true"
+        loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={active ? 'high' : 'auto'}
+        draggable={false}
+      />
+      <img
+        ref={displayRef}
+        className={clsx(styles.photo, styles.display, { [styles.loaded]: loaded })}
+        src={`${photoUrl}&variant=display`}
+        alt={`Foto von ${recipe.title}`}
+        loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={active ? 'high' : 'auto'}
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        draggable={false}
+      />
+    </>
+  );
+}
 
 export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: Props) {
   const swiperRef = useRef<SwiperInstance | null>(null);
@@ -40,13 +88,11 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
     >
       {recipes.map((recipe, slideIndex) => (
         <SwiperSlide key={recipe.id} className={styles.slide}>
-          <img
-            className={clsx(styles.photo, { [styles.placeholder]: recipe.photoFileId === null })}
-            src={recipe.photoFileId === null ? placeholderRecipePhoto : `/api/recipes/${recipe.id}/photo?v=${encodeURIComponent(recipe.photoFileId)}`}
-            alt={recipe.photoFileId === null ? '' : `Foto von ${recipe.title}`}
-            loading={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1)) ? 'eager' : 'lazy'}
-            fetchPriority={slideIndex === index ? 'high' : 'auto'}
-            draggable={false}
+          <RecipePhoto
+            key={recipe.photoFileId ?? 'placeholder'}
+            recipe={recipe}
+            eager={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1))}
+            active={slideIndex === index}
           />
         </SwiperSlide>
       ))}
