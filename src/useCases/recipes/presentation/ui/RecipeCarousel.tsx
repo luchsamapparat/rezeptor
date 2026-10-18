@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper/types';
 import type { RecipeDto } from '../api/client';
 import placeholderRecipePhoto from './assets/placeholder-recipe-photo.webp';
+import { setSwiperTouchEnabled } from './recipeCarouselState';
 import styles from './RecipeCarousel.module.css';
 
 type Props = {
@@ -64,11 +65,21 @@ function RecipePhoto({ recipe, eager, active }: RecipePhotoProps) {
 export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: Props) {
   const swiperRef = useRef<SwiperInstance | null>(null);
   const index = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
+  const touchEnabled = !blocked && recipes.length > 1;
 
   useEffect(() => {
     const swiper = swiperRef.current;
     if (swiper && swiper.realIndex !== index) swiper.slideToLoop(index, 0);
   }, [index]);
+
+  useEffect(() => {
+    const swiper = swiperRef.current;
+    if (!swiper) return;
+
+    // Swiper React updates the parameter, but not the live instance property
+    // consulted by the touch handlers.
+    setSwiperTouchEnabled(swiper, touchEnabled);
+  }, [touchEnabled]);
 
   return (
     <Swiper
@@ -77,10 +88,13 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
       slidesPerView={1}
       initialSlide={index}
       loop={recipes.length >= 2}
-      allowTouchMove={!blocked && recipes.length > 1}
+      allowTouchMove={touchEnabled}
       noSwiping
       noSwipingClass="swiper-no-swiping"
-      onSwiper={(swiper) => { swiperRef.current = swiper; }}
+      onSwiper={(swiper) => {
+        swiperRef.current = swiper;
+        setSwiperTouchEnabled(swiper, touchEnabled);
+      }}
       onSlideChange={(swiper) => {
         const recipe = recipes[swiper.realIndex];
         if (recipe) onActiveChange(recipe.id);
