@@ -1,13 +1,13 @@
-html {
-  height: calc(100% + env(safe-area-inset-top));
-}
-
 body {
-  height: calc(100% + env(safe-area-inset-top));
   margin: 0;
 }
 
+html:has(.swiper),
+body:has(.swiper) {
+  overflow: hidden;
+}
+
 .swiper {
-  position: absolute;
-  inset: 0
+  position: fixed;
+  inset: 0 0 calc(0px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) 0;
 }
