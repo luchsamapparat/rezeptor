@@ -40,7 +40,7 @@
     "hono-simple-di": "0.2.1",
     "isbot": "5.1.31",
     "lodash-es": "4.17.21",
-    "lucide-react": "0.552.0",
+    "lucide-react": "1.59.0",
     "openai": "6.7.0",
     "pg": "8.16.3",
     "pino": "10.1.0",

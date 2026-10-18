@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Apple, Book, BookMarked, BookOpen, BookPlus, Camera, Carrot, Croissant, Pizza, Soup } from 'lucide-react';
+import { Apple, Book, BookCopy, BookMarked, BookPlus, Camera, Carrot, Croissant, Pizza, Soup } from 'lucide-react';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { addRecipeFromPhoto, cookbooksQuery } from '../api/client';
@@ -153,7 +153,7 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
             type="button"
             onClick={() => setStep('cookbook')}
           >
-            <BookOpen aria-hidden="true" size={32} strokeWidth={1.5} />
+            <BookCopy aria-hidden="true" size={32} strokeWidth={1.5} />
             <span>Kochbuch ändern</span>
           </button>
         </div>

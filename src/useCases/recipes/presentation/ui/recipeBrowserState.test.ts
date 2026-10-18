@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { RecipeDto } from '../api/client';
-import { clampSheetHeight, formatRecipeSource, shouldExpandSheet } from './recipeBrowserState';
+import { clampSheetHeight, formatRecipeSource, getNextRecipeIdAfterRemoval, shouldExpandSheet } from './recipeBrowserState';
 
 const recipe = (cookbook: RecipeDto['cookbook'], pageNumber: number | null) => ({ cookbook, pageNumber }) as RecipeDto;
 
@@ -21,5 +21,18 @@ describe('sheet snapping', () => {
     expect(shouldExpandSheet(230, 0.5, 175, 319)).toBe(true);
     expect(shouldExpandSheet(270, -0.5, 175, 319)).toBe(false);
     expect(shouldExpandSheet(250, 0, 175, 319)).toBe(true);
+  });
+});
+
+describe('recipe deletion navigation', () => {
+  const recipes = ['first', 'second', 'third'].map(id => ({ id }) as RecipeDto);
+
+  it('keeps the following recipe at the removed recipe position', () => {
+    expect(getNextRecipeIdAfterRemoval(recipes, 'second')).toBe('third');
+  });
+
+  it('wraps to the first recipe when removing the last recipe', () => {
+    expect(getNextRecipeIdAfterRemoval(recipes, 'third')).toBe('first');
+    expect(getNextRecipeIdAfterRemoval([recipes[0]], 'first')).toBeNull();
   });
 });

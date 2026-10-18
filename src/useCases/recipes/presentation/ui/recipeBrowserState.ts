@@ -13,3 +13,10 @@ export const shouldExpandSheet = (height: number, velocity: number, collapsed: n
   if (Math.abs(velocity) > 0.35) return velocity > 0;
   return height >= (collapsed + expanded) / 2;
 };
+
+export const getNextRecipeIdAfterRemoval = (recipes: RecipeDto[], removedId: string) => {
+  const removedIndex = recipes.findIndex(recipe => recipe.id === removedId);
+  if (removedIndex < 0 || recipes.length < 2) return null;
+
+  return recipes[(removedIndex + 1) % recipes.length].id;
+};

@@ -8,6 +8,7 @@ import { AddRecipeOverlay } from './AddRecipeOverlay';
 import { AppMenu } from './AppMenu';
 import { RecipeCarousel } from './RecipeCarousel';
 import { RecipeSheet } from './RecipeSheet';
+import { getNextRecipeIdAfterRemoval } from './recipeBrowserState';
 import type { Route } from './+types/RecipeBrowserController';
 import './RecipeBrowser.css';
 import styles from './RecipeBrowser.module.css';
@@ -23,12 +24,15 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [addRecipeOpen, setAddRecipeOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const previousIndex = useRef(0);
+  const deleteTimerRef = useRef<number | null>(null);
+  const pendingDeleteIdRef = useRef<string | null>(null);
+  const recipesRef = useRef(recipes);
+  recipesRef.current = recipes;
 
   const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
   const activeRecipe = recipes[activeIndex];
@@ -43,11 +47,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     }
   }, [activeId, recipes]);
 
-  useEffect(() => {
-    if (!deleteOpen) return;
-    dialogRef.current?.showModal();
-    return () => dialogRef.current?.close();
-  }, [deleteOpen]);
+  useEffect(() => () => {
+    if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
+  }, []);
 
   const photoMutation = useMutation({
     mutationFn: ({ id, file }: { id: string; file: File }) => addRecipePhoto(id, file),
@@ -58,21 +60,52 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     onError: (mutationError: Error) => setOperationError(mutationError.message),
   });
   const deleteMutation = useMutation({
-    mutationFn: removeRecipe,
-    onSuccess: async (_, id) => {
-      setDeleteOpen(false);
+    mutationFn: ({ id }: { id: string; redirectToId?: string | null }) => removeRecipe(id),
+    onSuccess: async (_, { redirectToId }) => {
       setExpanded(false);
       setOperationError(null);
-      const next = recipes.filter(recipe => recipe.id !== id);
-      setActiveId(next[Math.min(activeIndex, next.length - 1)]?.id ?? null);
+      if (redirectToId !== undefined) setActiveId(redirectToId);
       await queryClient.invalidateQueries({ queryKey: ['recipes'] });
     },
     onError: (mutationError: Error) => setOperationError(mutationError.message),
   });
 
+  const cancelPendingDeletion = () => {
+    if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
+    deleteTimerRef.current = null;
+    pendingDeleteIdRef.current = null;
+    setPendingDeleteId(null);
+  };
+
+  const commitPendingDeletion = (redirectToId?: string | null) => {
+    const id = pendingDeleteIdRef.current;
+    if (!id) return;
+
+    cancelPendingDeletion();
+    deleteMutation.mutate({ id, redirectToId });
+  };
+
+  const togglePendingDeletion = () => {
+    if (pendingDeleteIdRef.current === activeRecipe?.id) {
+      cancelPendingDeletion();
+      return;
+    }
+    if (!activeRecipe || deleteMutation.isPending) return;
+
+    setOperationError(null);
+    pendingDeleteIdRef.current = activeRecipe.id;
+    setPendingDeleteId(activeRecipe.id);
+    deleteTimerRef.current = window.setTimeout(() => {
+      const id = pendingDeleteIdRef.current;
+      if (!id) return;
+      commitPendingDeletion(getNextRecipeIdAfterRemoval(recipesRef.current, id));
+    }, 5_000);
+  };
+
   const changeActive = (id: string) => {
     const index = recipes.findIndex(recipe => recipe.id === id);
     if (index >= 0) previousIndex.current = index;
+    if (pendingDeleteIdRef.current && pendingDeleteIdRef.current !== id) commitPendingDeletion();
     setActiveId(id);
     setExpanded(false);
     setOperationError(null);
@@ -95,8 +128,8 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     );
     return (
       <>
-        <div className={styles.background} inert={menuOpen || deleteOpen}>
-          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen || addRecipeOpen} onActiveChange={changeActive} />
+        <div className={styles.background} inert={menuOpen}>
+          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || addRecipeOpen || deleteMutation.isPending} onActiveChange={changeActive} />
           <button
             className={`${styles.addPhoto} swiper-no-swiping`}
             type="button"
@@ -129,27 +162,12 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             expanded={expanded}
             onExpandedChange={setExpanded}
             onPhoto={choosePhoto}
-            onDelete={() => {
-              setOperationError(null);
-              setDeleteOpen(true);
-            }}
+            onDelete={togglePendingDeletion}
             pending={photoMutation.isPending || deleteMutation.isPending}
+            deletionPending={pendingDeleteId === activeRecipe.id}
             error={operationError}
           />
         </div>
-        <dialog ref={dialogRef} className={styles.deleteDialog} onClose={() => setDeleteOpen(false)}>
-          <h2>Rezept löschen?</h2>
-          <p>
-            „
-            {activeRecipe.title}
-            “ wird dauerhaft gelöscht.
-          </p>
-          {deleteMutation.error && <p role="alert">{deleteMutation.error.message}</p>}
-          <div className={styles.deleteDialogActions}>
-            <button type="button" onClick={() => setDeleteOpen(false)} disabled={deleteMutation.isPending}>Abbrechen</button>
-            <button type="button" onClick={() => deleteMutation.mutate(activeRecipe.id)} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? 'Wird gelöscht …' : 'Löschen'}</button>
-          </div>
-        </dialog>
       </>
     );
   };
