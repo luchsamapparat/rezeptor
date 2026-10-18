@@ -27,3 +27,8 @@
   opacity: .45;
   cursor: default;
 }
+
+.saveCta[aria-busy="true"] {
+  opacity: .55;
+  cursor: wait;
+}

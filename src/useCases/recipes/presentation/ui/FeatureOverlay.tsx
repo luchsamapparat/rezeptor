@@ -56,10 +56,9 @@ export function FeatureOverlay({ children, closeDisabled = false, contentRef, ic
     const overlay = overlayRef.current;
     const siblings = overlay?.parentElement
       ? Array.from(overlay.parentElement.children).filter(
-          (element): element is HTMLElement => element !== overlay && element instanceof HTMLElement,
+          (element): element is HTMLElement => element !== overlay && element instanceof HTMLElement && !element.inert,
         )
       : [];
-    const previousInert = siblings.map(element => element.inert);
     siblings.forEach(element => element.inert = true);
 
     const focusFrame = requestAnimationFrame(() => {
@@ -96,7 +95,7 @@ export function FeatureOverlay({ children, closeDisabled = false, contentRef, ic
     return () => {
       cancelAnimationFrame(focusFrame);
       document.removeEventListener('keydown', onKeyDown);
-      siblings.forEach((element, index) => element.inert = previousInert[index]);
+      siblings.forEach(element => element.inert = false);
       (returnFocusRef?.current ?? previousFocus)?.focus();
     };
   }, [rendered]);
