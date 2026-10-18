@@ -1,14 +1,14 @@
 import sharp from 'sharp';
 import type { FileRepository } from '../../../common/persistence/FileRepository';
-import type { RecipePhotoFileRepository as IRecipePhotoFileRepository, RecipePhotoVariant } from '../recipeManagement';
+import type { FoodPhotoFileRepository as IFoodPhotoFileRepository, FoodPhotoVariant } from '../recipeManagement';
 
 const previewWidth = 64;
 const displayWidth = 1600;
 const variantGeneration = new Map<string, Promise<void>>();
 
-const variantFilename = (filename: string, variant: RecipePhotoVariant) => `${filename}.${variant}.webp`;
+const variantFilename = (filename: string, variant: FoodPhotoVariant) => `${filename}.${variant}.webp`;
 
-export class RecipePhotoFileRepository implements IRecipePhotoFileRepository {
+export class FoodPhotoFileRepository implements IFoodPhotoFileRepository {
   constructor(private files: FileRepository) { }
 
   async save(file: File): Promise<string> {
@@ -23,7 +23,7 @@ export class RecipePhotoFileRepository implements IRecipePhotoFileRepository {
     }
   }
 
-  async get(filename: string, variant: RecipePhotoVariant): Promise<ReadableStream<Uint8Array>> {
+  async get(filename: string, variant: FoodPhotoVariant): Promise<ReadableStream<Uint8Array>> {
     await this.ensureVariants(filename);
     return await this.files.get(variantFilename(filename, variant));
   }

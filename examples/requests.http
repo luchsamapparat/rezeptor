@@ -108,13 +108,11 @@ Content-Type: application/json
     }
   ],
   "cookbookId": null,
-  "pageNumber": 45,
-  "photoFileId": null,
-  "recipeFileId": null
+  "pageNumber": 45
 }
 
-### add recipe from image file with cookbook context (replace cookbookId with actual ID)
-POST http://localhost:3000/api/recipes/from-photo
+### add complete recipe (replace cookbookId with actual ID)
+POST http://localhost:3000/api/recipes/from-recipe
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -126,6 +124,36 @@ Content-Type: image/jpeg
 Content-Disposition: form-data; name="cookbookId"
 
 your-cookbook-id-here
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### remember food
+POST http://localhost:3000/api/recipes/from-photo
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="photoFile"; filename="photo1.jpg"
+Content-Type: image/jpeg
+
+< ./photo1.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="title"
+
+Roasted Eggplant
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### complete an existing recipe (replace :id and cookbookId)
+POST http://localhost:3000/api/recipes/:id/from-recipe
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="cookbookId"
+
+your-cookbook-id-here
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="recipeFile"; filename="recipe1.jpg"
+Content-Type: image/jpeg
+
+< ./recipe1.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ### edit recipe (replace :id with actual recipe ID)
@@ -160,11 +188,11 @@ PUT http://localhost:3000/api/recipes/:id/photo
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="photoFile"; filename="recipe-photo.jpg"
+Content-Disposition: form-data; name="photoFile"; filename="photo1.jpg"
 Content-Type: image/jpeg
 
 < ./photo1.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
-### get recipe photo (replace :id with actual recipe ID)
+### get prepared-food photo (replace :id with actual recipe ID)
 GET http://localhost:3000/api/recipes/:id/photo

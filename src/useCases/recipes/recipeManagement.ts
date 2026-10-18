@@ -25,16 +25,16 @@ export type RecipeFileRepository = {
 };
 
 /**
- * Repository interface for managing recipe photo storage.
- * Handles saving and removing recipe photos.
+ * Repository interface for managing prepared-food photo storage.
+ * Handles saving and removing prepared-food photos.
  */
-export type RecipePhotoFileRepository = {
+export type FoodPhotoFileRepository = {
   save(file: File): Promise<string>;
-  get(filename: string, variant: RecipePhotoVariant): Promise<ReadableStream<Uint8Array>>;
+  get(filename: string, variant: FoodPhotoVariant): Promise<ReadableStream<Uint8Array>>;
   remove(filename: string): Promise<void>;
 };
 
-export type RecipePhotoVariant = 'preview' | 'display';
+export type FoodPhotoVariant = 'preview' | 'display';
 
 /**
  * Service interface for extracting recipe data from recipe source files (e.g., photographed recipe pages from cookbooks).
@@ -50,7 +50,7 @@ export type RecipeExtractionService = {
 export type RecipeContents = {
   title: string | null;
   pageNumber: number | null;
-  instructions: string;
+  instructions: string | null;
   ingredients: Ingredient[];
 };
 
@@ -64,7 +64,7 @@ export type Ingredient = {
 export type Recipe = {
   id: Identifier;
   title: string;
-  instructions: string;
+  instructions: string | null;
   ingredients: Ingredient[];
   photoFileId: string | null;
   recipeFileId: string | null;
@@ -78,7 +78,7 @@ export type RecipeWithCookbook = Recipe & {
 
 export type NewRecipe = {
   title: string;
-  instructions: string;
+  instructions: string | null;
   ingredients: Ingredient[];
   photoFileId?: string | null;
   recipeFileId?: string | null;
@@ -101,16 +101,16 @@ type AddRecipeArgs = {
  */
 export const addRecipe = async ({ recipeRepository, recipe }: AddRecipeArgs) => recipeRepository.insert(recipe);
 
-type AddRecipeFromPhotoArgs = {
+type AddRecipeFromRecipeArgs = {
   recipeRepository: RecipeRepository;
   recipeFileRepository: RecipeFileRepository;
   recipeExtractionService: RecipeExtractionService;
   recipeFile: File;
-  cookbookId?: string | null;
+  cookbookId: string;
 };
 
 /**
- * Creates a new recipe by extracting contents from a photo file.
+ * Creates a new recipe by extracting contents from a photographed written recipe.
  * Uses the recipe extraction service to extract and parse recipe information,
  * then saves both the file and extracted data.
  *
@@ -119,16 +119,16 @@ type AddRecipeFromPhotoArgs = {
  * @param args.recipeFileRepository - Repository for storing recipe files
  * @param args.recipeExtractionService - Service for extracting recipe data from files
  * @param args.recipeFile - The image file containing the recipe
- * @param args.cookbookId - Optional cookbook ID to associate the recipe with
+ * @param args.cookbookId - Cookbook ID to associate the recipe with
  * @returns Promise resolving to the created recipe
  */
-export const addRecipeFromPhoto = async ({
+export const addRecipeFromRecipe = async ({
   recipeRepository,
   recipeFileRepository,
   recipeExtractionService,
   recipeFile,
   cookbookId,
-}: AddRecipeFromPhotoArgs) => {
+}: AddRecipeFromRecipeArgs) => {
   const recipeContents = await recipeExtractionService.extractRecipeContents(recipeFile);
   const recipeFileId = await recipeFileRepository.save(recipeFile);
   try {
@@ -138,7 +138,7 @@ export const addRecipeFromPhoto = async ({
       ingredients: recipeContents.ingredients,
       pageNumber: recipeContents.pageNumber,
       recipeFileId,
-      cookbookId: cookbookId || null,
+      cookbookId,
       photoFileId: null,
     };
     return await recipeRepository.insert(recipeData);
@@ -151,7 +151,7 @@ export const addRecipeFromPhoto = async ({
 
 export type RecipeChanges = {
   title?: string;
-  instructions?: string;
+  instructions?: string | null;
   ingredients?: Ingredient[];
   photoFileId?: string | null;
   recipeFileId?: string | null;
@@ -222,9 +222,9 @@ type GetRecipesArgs = {
  */
 export const getRecipes = async ({ recipeRepository }: GetRecipesArgs) => recipeRepository.getAll();
 
-type AddRecipePhotoArgs = {
+type AddFoodPhotoArgs = {
   recipeRepository: RecipeRepository;
-  recipePhotoFileRepository: RecipePhotoFileRepository;
+  foodPhotoFileRepository: FoodPhotoFileRepository;
   recipeId: Identifier;
   photoFile: File;
 };
@@ -235,18 +235,18 @@ type AddRecipePhotoArgs = {
  *
  * @param args - The arguments containing repositories, recipe ID, and photo file
  * @param args.recipeRepository - Repository for persisting recipes
- * @param args.recipePhotoFileRepository - Repository for storing photo files
+ * @param args.foodPhotoFileRepository - Repository for storing photo files
  * @param args.recipeId - ID of the recipe to add the photo to
  * @param args.photoFile - The photo file to add
  * @returns Promise resolving to the updated recipe
  * @throws {NotFoundError} If no recipe with the given ID exists
  */
-export const addRecipePhoto = async ({
+export const addFoodPhoto = async ({
   recipeRepository,
-  recipePhotoFileRepository,
+  foodPhotoFileRepository,
   recipeId,
   photoFile,
-}: AddRecipePhotoArgs) => {
+}: AddFoodPhotoArgs) => {
   const recipe = await recipeRepository.findById(recipeId);
 
   if (isNull(recipe)) {
@@ -254,32 +254,99 @@ export const addRecipePhoto = async ({
   }
 
   const previousPhotoFileId = recipe.photoFileId;
-  const photoFileId = await recipePhotoFileRepository.save(photoFile);
+  const photoFileId = await foodPhotoFileRepository.save(photoFile);
 
   let updatedRecipe: Recipe | null;
   try {
     updatedRecipe = await recipeRepository.update(recipeId, { photoFileId });
   }
   catch (error) {
-    await recipePhotoFileRepository.remove(photoFileId);
+    await foodPhotoFileRepository.remove(photoFileId);
     throw error;
   }
 
   if (isNull(updatedRecipe)) {
-    await recipePhotoFileRepository.remove(photoFileId);
+    await foodPhotoFileRepository.remove(photoFileId);
     throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
   }
   if (previousPhotoFileId) {
-    await recipePhotoFileRepository.remove(previousPhotoFileId);
+    await foodPhotoFileRepository.remove(previousPhotoFileId);
   }
   return updatedRecipe;
 };
 
-type GetRecipePhotoArgs = {
+type AddRecipeFromPhotoArgs = {
   recipeRepository: RecipeRepository;
-  recipePhotoFileRepository: RecipePhotoFileRepository;
+  foodPhotoFileRepository: FoodPhotoFileRepository;
+  title: string;
+  photoFile: File;
+};
+
+export const addRecipeFromPhoto = async ({ recipeRepository, foodPhotoFileRepository, title, photoFile }: AddRecipeFromPhotoArgs) => {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) throw new Error('A title is required.');
+
+  const photoFileId = await foodPhotoFileRepository.save(photoFile);
+  try {
+    return await recipeRepository.insert({
+      title: trimmedTitle,
+      photoFileId,
+      cookbookId: null,
+      recipeFileId: null,
+      pageNumber: null,
+      instructions: null,
+      ingredients: [],
+    });
+  }
+  catch (error) {
+    await foodPhotoFileRepository.remove(photoFileId);
+    throw error;
+  }
+};
+
+type CompleteRecipeFromRecipeArgs = {
+  recipeRepository: RecipeRepository;
+  recipeFileRepository: RecipeFileRepository;
+  recipeExtractionService: RecipeExtractionService;
   recipeId: Identifier;
-  variant: RecipePhotoVariant;
+  cookbookId: string;
+  recipeFile: File;
+};
+
+export const completeRecipeFromRecipe = async ({ recipeRepository, recipeFileRepository, recipeExtractionService, recipeId, cookbookId, recipeFile }: CompleteRecipeFromRecipeArgs) => {
+  const existing = await recipeRepository.findById(recipeId);
+  if (isNull(existing)) throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
+
+  const contents = await recipeExtractionService.extractRecipeContents(recipeFile);
+  const recipeFileId = await recipeFileRepository.save(recipeFile);
+  let updated: Recipe | null;
+  try {
+    updated = await recipeRepository.update(recipeId, {
+      cookbookId,
+      recipeFileId,
+      title: contents.title?.trim() || existing.title,
+      instructions: contents.instructions,
+      ingredients: contents.ingredients,
+      pageNumber: contents.pageNumber,
+    });
+  }
+  catch (error) {
+    await recipeFileRepository.remove(recipeFileId);
+    throw error;
+  }
+  if (isNull(updated)) {
+    await recipeFileRepository.remove(recipeFileId);
+    throw new NotFoundError(`No recipe with ID ${recipeId} found.`);
+  }
+  if (existing.recipeFileId) await recipeFileRepository.remove(existing.recipeFileId);
+  return updated;
+};
+
+type GetFoodPhotoArgs = {
+  recipeRepository: RecipeRepository;
+  foodPhotoFileRepository: FoodPhotoFileRepository;
+  recipeId: Identifier;
+  variant: FoodPhotoVariant;
 };
 
 /**
@@ -287,12 +354,12 @@ type GetRecipePhotoArgs = {
  *
  * @param args - The arguments containing repositories and recipe ID
  * @param args.recipeRepository - Repository for retrieving recipes
- * @param args.recipePhotoFileRepository - Repository for retrieving photo files
+ * @param args.foodPhotoFileRepository - Repository for retrieving photo files
  * @param args.recipeId - ID of the recipe to get the photo for
  * @returns Promise resolving to the photo file data
  * @throws {NotFoundError} If no recipe with the given ID exists or if the recipe has no photo
  */
-export const getRecipePhoto = async ({ recipeRepository, recipePhotoFileRepository, recipeId, variant }: GetRecipePhotoArgs) => {
+export const getFoodPhoto = async ({ recipeRepository, foodPhotoFileRepository, recipeId, variant }: GetFoodPhotoArgs) => {
   const recipe = await recipeRepository.findById(recipeId);
 
   if (isNull(recipe)) {
@@ -303,13 +370,13 @@ export const getRecipePhoto = async ({ recipeRepository, recipePhotoFileReposito
     throw new NotFoundError(`Recipe with ID ${recipeId} has no photo`);
   }
 
-  const photoData = await recipePhotoFileRepository.get(recipe.photoFileId, variant);
+  const photoData = await foodPhotoFileRepository.get(recipe.photoFileId, variant);
   return photoData;
 };
 
 type RemoveRecipeArgs = {
   recipeRepository: RecipeRepository;
-  recipePhotoFileRepository: RecipePhotoFileRepository;
+  foodPhotoFileRepository: FoodPhotoFileRepository;
   recipeFileRepository: RecipeFileRepository;
   recipeId: Identifier;
 };
@@ -320,13 +387,13 @@ type RemoveRecipeArgs = {
  *
  * @param args - The arguments containing repositories and recipe ID
  * @param args.recipeRepository - Repository for persisting recipes
- * @param args.recipePhotoFileRepository - Repository for photo file storage
+ * @param args.foodPhotoFileRepository - Repository for photo file storage
  * @param args.recipeFileRepository - Repository for recipe file storage
  * @param args.recipeId - ID of the recipe to remove
  * @returns Promise that resolves when the recipe and files are removed
  * @throws {NotFoundError} If no recipe with the given ID exists
  */
-export const removeRecipe = async ({ recipeRepository, recipePhotoFileRepository, recipeFileRepository, recipeId }: RemoveRecipeArgs) => {
+export const removeRecipe = async ({ recipeRepository, foodPhotoFileRepository, recipeFileRepository, recipeId }: RemoveRecipeArgs) => {
   const recipe = await recipeRepository.delete(recipeId);
 
   if (isNull(recipe)) {
@@ -337,6 +404,6 @@ export const removeRecipe = async ({ recipeRepository, recipePhotoFileRepository
     await recipeFileRepository.remove(recipe.recipeFileId);
   }
   if (recipe.photoFileId) {
-    await recipePhotoFileRepository.remove(recipe.photoFileId);
+    await foodPhotoFileRepository.remove(recipe.photoFileId);
   }
 };

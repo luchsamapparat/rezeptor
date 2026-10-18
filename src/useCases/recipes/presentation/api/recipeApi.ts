@@ -4,50 +4,44 @@ import z from 'zod';
 import { identifierSchema } from '../../../../application/model/identifier';
 import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
-import { recipeExtractionService, recipeFileRepository, recipePhotoFileRepository, recipeRepository } from '../../infrastructure/di';
-import { addRecipe, addRecipeFromPhoto, addRecipePhoto, editRecipe, getRecipe, getRecipePhoto, getRecipes, removeRecipe } from '../../recipeManagement';
+import { recipeExtractionService, recipeFileRepository, foodPhotoFileRepository, recipeRepository } from '../../infrastructure/di';
+import { addRecipe, addRecipeFromPhoto, addRecipeFromRecipe, addFoodPhoto, completeRecipeFromRecipe, editRecipe, getRecipe, getFoodPhoto, getRecipes, removeRecipe } from '../../recipeManagement';
 
 const recipePath = '/recipes';
 
 const recipeIdentifierName = 'recipeId';
 const recipeIdentifierPathSchema = z.object({ [recipeIdentifierName]: identifierSchema });
-const recipePhotoQuerySchema = z.object({ variant: z.enum(['preview', 'display']).default('display') });
+const foodPhotoQuerySchema = z.object({ variant: z.enum(['preview', 'display']).default('display') });
 
 const recipeDtoSchema = z.object({
   title: z.string().min(1),
-  instructions: z.string().min(1),
+  instructions: z.string().trim().min(1).nullable(),
   ingredients: z.array(z.object({
     quantity: z.string().nullable(),
     unit: z.string().nullable(),
     name: z.string().min(1),
     notes: z.string().nullable(),
   })),
-  photoFileId: z.string().nullable().optional(),
-  recipeFileId: z.string().nullable().optional(),
-  cookbookId: z.string().nullable().optional(),
-  pageNumber: z.number().nullable().optional(),
+  cookbookId: identifierSchema.nullable().optional(),
+  pageNumber: z.number().int().positive().nullable().optional(),
 });
 const addRecipeDtoSchema = recipeDtoSchema;
 const editRecipeDtoSchema = addRecipeDtoSchema.partial();
 
-const addRecipeFromPhotoDtoSchema = z.object({
-  cookbookId: z.string().nullable().optional(),
-  recipeFile: z.instanceof(File),
-}).refine(({ recipeFile }) => recipeFile.type.startsWith('image/'), {
-  message: 'The uploaded file must be an image.',
-});
+const imageFileSchema = z.instanceof(File).refine(file => file.type.startsWith('image/'), 'The uploaded file must be an image.');
+const addRecipeFromRecipeDtoSchema = z.object({ cookbookId: identifierSchema, recipeFile: imageFileSchema });
+const addRecipeFromPhotoDtoSchema = z.object({ title: z.string().trim().min(1), photoFile: imageFileSchema });
+const completeRecipeFromRecipeDtoSchema = addRecipeFromRecipeDtoSchema;
 
-const addRecipePhotoDtoSchema = z.object({
-  photoFile: z.instanceof(File),
-}).refine(({ photoFile }) => photoFile.type.startsWith('image/'), {
-  message: 'The uploaded file must be an image.',
+const addFoodPhotoDtoSchema = z.object({
+  photoFile: imageFileSchema,
 });
 
 export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
   .basePath(recipePath)
   .use(recipeRepository.middleware('recipeRepository'))
   .use(recipeFileRepository.middleware('recipeFileRepository'))
-  .use(recipePhotoFileRepository.middleware('recipePhotoFileRepository'))
+  .use(foodPhotoFileRepository.middleware('foodPhotoFileRepository'))
   .use(recipeExtractionService.middleware('recipeExtractionService'))
   .get(
     '/',
@@ -70,15 +64,37 @@ export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
     }), 201),
   )
   .post(
-    '/from-photo',
-    validator('form', addRecipeFromPhotoDtoSchema),
+    '/from-recipe',
+    validator('form', addRecipeFromRecipeDtoSchema),
     async (c) => {
       const { recipeFile, cookbookId } = c.req.valid('form');
-      return c.json(await addRecipeFromPhoto({
+      return c.json(await addRecipeFromRecipe({
         ...c.var,
         recipeFile,
         cookbookId,
       }), 201);
+    },
+  )
+  .post(
+    '/from-photo',
+    validator('form', addRecipeFromPhotoDtoSchema),
+    async (c) => {
+      const { title, photoFile } = c.req.valid('form');
+      return c.json(await addRecipeFromPhoto({ ...c.var, title, photoFile }), 201);
+    },
+  )
+  .post(
+    `/:${recipeIdentifierName}/from-recipe`,
+    validator('param', recipeIdentifierPathSchema),
+    validator('form', completeRecipeFromRecipeDtoSchema),
+    async (c) => {
+      const { cookbookId, recipeFile } = c.req.valid('form');
+      return c.json(await completeRecipeFromRecipe({
+        ...c.var,
+        recipeId: c.req.valid('param')[recipeIdentifierName],
+        cookbookId,
+        recipeFile,
+      }));
     },
   )
   .patch(
@@ -94,10 +110,10 @@ export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
   .put(
     `/:${recipeIdentifierName}/photo`,
     validator('param', recipeIdentifierPathSchema),
-    validator('form', addRecipePhotoDtoSchema),
+    validator('form', addFoodPhotoDtoSchema),
     async (c) => {
       const { photoFile } = c.req.valid('form');
-      return c.json(await addRecipePhoto({
+      return c.json(await addFoodPhoto({
         ...c.var,
         recipeId: c.req.valid('param')[recipeIdentifierName],
         photoFile,
@@ -107,9 +123,9 @@ export const recipeApi = new Hono<{ Variables: ApplicationContext }>()
   .get(
     `/:${recipeIdentifierName}/photo`,
     validator('param', recipeIdentifierPathSchema),
-    validator('query', recipePhotoQuerySchema),
+    validator('query', foodPhotoQuerySchema),
     async (c) => {
-      const photoData = await getRecipePhoto({
+      const photoData = await getFoodPhoto({
         ...c.var,
         recipeId: c.req.valid('param')[recipeIdentifierName],
         variant: c.req.valid('query').variant,

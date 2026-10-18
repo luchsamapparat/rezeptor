@@ -1,4 +1,4 @@
-import { BookMarked, Hamburger, LibraryBig, LogOut, X } from 'lucide-react';
+import { BookMarked, Camera, Hamburger, LibraryBig, LogOut, X } from 'lucide-react';
 import { useEffect, useRef, type RefObject } from 'react';
 import { Link } from 'react-router';
 import styles from './AppMenu.module.css';
@@ -7,11 +7,12 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddRecipe: () => void;
+  onRememberFood: () => void;
   restoreFocus: boolean;
   triggerRef: RefObject<HTMLButtonElement | null>;
 };
 
-export function AppMenu({ open, onAddRecipe, onOpenChange, restoreFocus, triggerRef }: Props) {
+export function AppMenu({ open, onAddRecipe, onRememberFood, onOpenChange, restoreFocus, triggerRef }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef(restoreFocus);
   restoreFocusRef.current = restoreFocus;
@@ -57,7 +58,11 @@ export function AppMenu({ open, onAddRecipe, onOpenChange, restoreFocus, trigger
               </Link>
               <button className={styles.link} type="button" onClick={onAddRecipe}>
                 <BookMarked aria-hidden="true" size={25} strokeWidth={1.5} />
-                <span>Neues Rezept</span>
+                <span>Rezept hinzufügen</span>
+              </button>
+              <button className={styles.link} type="button" onClick={onRememberFood}>
+                <Camera aria-hidden="true" size={25} strokeWidth={1.5} />
+                <span>Essen merken</span>
               </button>
               <a href={signOutUrl} className={styles.link}>
                 <LogOut aria-hidden="true" size={25} strokeWidth={1.5} />

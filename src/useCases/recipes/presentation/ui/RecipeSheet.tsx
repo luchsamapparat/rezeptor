@@ -11,6 +11,7 @@ type Props = {
   editing: boolean;
   onExpandedChange: (expanded: boolean) => void;
   onEdit: () => void;
+  onComplete: () => void;
   onCancel: () => void;
   onSave: (changes: Pick<EditRecipeDto, 'title' | 'cookbookId' | 'pageNumber'>) => void;
   onPhoto: () => void;
@@ -24,7 +25,7 @@ type Props = {
 
 const EXPANSION_HEIGHT = 144;
 
-export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedChange, onEdit, onCancel, onSave, onPhoto, onDelete, pending, editPending, photoPending, deletionPending, error }: Props) {
+export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedChange, onEdit, onComplete, onCancel, onSave, onPhoto, onDelete, pending, editPending, photoPending, deletionPending, error }: Props) {
   const [dragHeight, setDragHeight] = useState<number | null>(null);
   const [optimisticExpanded, setOptimisticExpanded] = useState<boolean | null>(null);
   const [title, setTitle] = useState(recipe.title);
@@ -101,7 +102,11 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
   }, [editing, recipe.cookbookId, recipe.id, recipe.pageNumber, recipe.title]);
 
   useLayoutEffect(() => {
-    if (editing) titleInputRef.current?.focus({ preventScroll: true });
+    if (!editing) return;
+    const frame = requestAnimationFrame(() => {
+      titleInputRef.current?.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
   }, [editing]);
 
   useEffect(() => {
@@ -254,12 +259,14 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
           <div className={styles.expandedContent} inert={!displayedExpanded && dragHeight === null}>
             <RecipeActions
               hasPhoto={recipe.photoFileId !== null}
+              complete={recipe.cookbookId !== null}
               pending={pending}
               photoPending={photoPending}
               deletionPending={deletionPending}
               editing={editing}
               editPending={editPending}
               onEdit={onEdit}
+              onComplete={onComplete}
               onCancel={onCancel}
               onPhoto={onPhoto}
               onDelete={onDelete}

@@ -8,9 +8,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ErrorState, PageHeader } from './components';
 import { Alert, AlertDescription } from './components/ui/Alert';
-import { addRecipeFromPhoto, cookbooksQuery } from '../api/client';
+import { addRecipeFromRecipe, cookbooksQuery } from '../api/client';
 
-export default function RecipeFromPhotoController() {
+export default function RecipeFromRecipeController() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -18,9 +18,9 @@ export default function RecipeFromPhotoController() {
 
   const { data: cookbooks = [] } = useQuery(cookbooksQuery());
 
-  const addRecipeFromPhotoMutation = useMutation({
-    mutationFn: ({ recipeFile, cookbookId }: { recipeFile: File; cookbookId?: string | null }) =>
-      addRecipeFromPhoto(recipeFile, cookbookId),
+  const addRecipeFromRecipeMutation = useMutation({
+    mutationFn: ({ recipeFile, cookbookId }: { recipeFile: File; cookbookId: string }) =>
+      addRecipeFromRecipe(recipeFile, cookbookId),
     onSuccess: (recipe) => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       // Navigate to edit page for the newly created recipe
@@ -55,16 +55,16 @@ export default function RecipeFromPhotoController() {
     const formData = new FormData(event.currentTarget);
     const cookbookId = formData.get('cookbookId') as string;
 
-    await addRecipeFromPhotoMutation.mutateAsync({
+    await addRecipeFromRecipeMutation.mutateAsync({
       recipeFile: selectedFile,
-      cookbookId: cookbookId === '__none__' ? null : cookbookId || null,
+      cookbookId,
     });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Add Recipe from Photo"
+        title="Upload from Recipe"
         actions={[
           { label: 'Back to Recipes', to: '/admin/', variant: 'secondary' },
         ]}
@@ -73,7 +73,7 @@ export default function RecipeFromPhotoController() {
       <div className="mb-6">
         <Alert>
           <AlertDescription>
-            Upload a photo of your recipe and we&apos;ll automatically extract the recipe details using AI.
+            Upload a photographed written recipe and we&apos;ll automatically extract the details using AI.
             You&apos;ll be able to review and edit the extracted data before saving.
           </AlertDescription>
         </Alert>
@@ -81,13 +81,13 @@ export default function RecipeFromPhotoController() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Upload Recipe Photo</CardTitle>
+          <CardTitle>Upload Written Recipe</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recipeFile">
-                Recipe Photo *
+                Written Recipe Image *
               </Label>
               <Input
                 type="file"
@@ -116,13 +116,12 @@ export default function RecipeFromPhotoController() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="cookbookId">Cookbook (Optional)</Label>
-              <Select name="cookbookId">
+              <Label htmlFor="cookbookId">Cookbook *</Label>
+              <Select name="cookbookId" required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a cookbook" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">None</SelectItem>
                   {cookbooks.map(cookbook => (
                     <SelectItem key={cookbook.id} value={cookbook.id}>
                       {cookbook.title}
@@ -137,23 +136,23 @@ export default function RecipeFromPhotoController() {
 
             <Button
               type="submit"
-              disabled={!selectedFile || addRecipeFromPhotoMutation.isPending}
+              disabled={!selectedFile || addRecipeFromRecipeMutation.isPending}
             >
-              {addRecipeFromPhotoMutation.isPending ? 'Extracting Recipe...' : 'Extract Recipe'}
+              {addRecipeFromRecipeMutation.isPending ? 'Extracting Recipe...' : 'Extract Recipe'}
             </Button>
 
-            {addRecipeFromPhotoMutation.isPending && (
+            {addRecipeFromRecipeMutation.isPending && (
               <Alert>
                 <AlertDescription>
-                  Analyzing your recipe photo... This may take a few moments.
+                  Analyzing your written recipe... This may take a few moments.
                 </AlertDescription>
               </Alert>
             )}
           </form>
 
-          {addRecipeFromPhotoMutation.error && (
+          {addRecipeFromRecipeMutation.error && (
             <div className="mt-4">
-              <ErrorState message={addRecipeFromPhotoMutation.error.message} />
+              <ErrorState message={addRecipeFromRecipeMutation.error.message} />
             </div>
           )}
         </CardContent>

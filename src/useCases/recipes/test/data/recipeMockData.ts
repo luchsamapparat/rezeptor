@@ -2,7 +2,7 @@ import { faker } from '@faker-js/faker';
 import { Factory } from 'fishery';
 import type { IngredientEntity } from '../../infrastructure/persistence/IngredientEntity';
 import type { InsertRecipeEntity, RecipeEntity, UpdateRecipeEntity } from '../../infrastructure/persistence/RecipeEntity';
-import type { AddFromPhotoRecipeDto, AddRecipeDto, EditRecipeDto } from '../../presentation/api/client';
+import type { AddRecipeFromRecipeDto, AddRecipeDto, EditRecipeDto } from '../../presentation/api/client';
 import type { NewRecipe } from '../../recipeManagement';
 import { ingredientEntityMockDataFactory, toIngredient } from './ingredientMockData';
 
@@ -37,12 +37,14 @@ export const toUpdateRecipeEntity = (entity: RecipeEntity): UpdateRecipeEntity =
   return updateEntity;
 };
 
-export const addFromPhotoRecipeDtoMockDataFactory = Factory.define<Omit<AddFromPhotoRecipeDto, 'recipeFile'>>(() => ({
+export const addFromRecipeRecipeDtoMockDataFactory = Factory.define<Omit<AddRecipeFromRecipeDto, 'recipeFile'>>(() => ({
   cookbookId: faker.string.uuid(),
 }));
 
 export const toAddRecipeDto = (entity: RecipeEntity, ingredients: IngredientEntity[]): AddRecipeDto => {
-  const { id, ...addDto } = entity;
+  const { id, photoFileId, recipeFileId, ...addDto } = entity;
+  void photoFileId;
+  void recipeFileId;
   return {
     ...addDto,
     ingredients: ingredients.map(toIngredient),
@@ -50,7 +52,9 @@ export const toAddRecipeDto = (entity: RecipeEntity, ingredients: IngredientEnti
 };
 
 export const toEditRecipeDto = (entity: RecipeEntity, ingredients: IngredientEntity[]): EditRecipeDto => {
-  const { id, ...editDto } = entity;
+  const { id, photoFileId, recipeFileId, ...editDto } = entity;
+  void photoFileId;
+  void recipeFileId;
   return {
     ...editDto,
     ingredients: ingredients.map(toIngredient),
@@ -65,4 +69,4 @@ export const updateRecipeEntityMock = toUpdateRecipeEntity(recipeEntityMock);
 export const addRecipeDtoMock = toAddRecipeDto(recipeEntityMock, ingredients);
 export const editRecipeDtoMock = toEditRecipeDto(recipeEntityMock, ingredients);
 
-export const addFromPhotoRecipeDtoMock = addFromPhotoRecipeDtoMockDataFactory.build();
+export const addFromRecipeRecipeDtoMock = addFromRecipeRecipeDtoMockDataFactory.build();

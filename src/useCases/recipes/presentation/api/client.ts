@@ -7,7 +7,9 @@ const recipesApiClient = hc<typeof recipesApi>(import.meta.env.SSR ? '/' : '/api
 
 export type RecipeDto = InferResponseType<typeof recipesApiClient.recipes.$get>[0];
 export type AddRecipeDto = InferRequestType<typeof recipesApiClient.recipes.$post>['json'];
-export type AddFromPhotoRecipeDto = InferRequestType<typeof recipesApiClient.recipes['from-photo']['$post']>['form'];
+export type AddRecipeFromRecipeDto = InferRequestType<typeof recipesApiClient.recipes['from-recipe']['$post']>['form'];
+export type AddRecipeFromPhotoDto = InferRequestType<typeof recipesApiClient.recipes['from-photo']['$post']>['form'];
+export type CompleteRecipeFromRecipeDto = InferRequestType<typeof recipesApiClient.recipes[':recipeId']['from-recipe']['$post']>['form'];
 export type EditRecipeDto = InferRequestType<typeof recipesApiClient.recipes[':recipeId']['$patch']>['json'];
 
 const recipesQueryKey = ['recipes'];
@@ -81,33 +83,41 @@ export const removeRecipe = async (id: string) => {
   }
 };
 
-export const addRecipeFromPhoto = async (recipeFile: File, cookbookId?: string | null) => {
+const postRecipeForm = async (url: string, formData: FormData) => {
+  const response = await window.fetch(url, { method: 'POST', body: formData });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(errorData.error || `Failed to save recipe: ${response.statusText}`);
+  }
+  return response.json() as Promise<RecipeDto>;
+};
+
+export const addRecipeFromRecipe = async (recipeFile: File, cookbookId: string) => {
   // Create FormData manually to ensure proper file handling
   const formData = new FormData();
   formData.append('recipeFile', recipeFile);
-  if (cookbookId) {
-    formData.append('cookbookId', cookbookId);
-  }
+  formData.append('cookbookId', cookbookId);
 
   // hc does not support uploading files
   // see https://github.com/honojs/website/pull/422
-  const response = await window.fetch(
-    '/api/recipes/from-photo',
-    {
-      method: 'POST',
-      body: formData,
-    },
-  );
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(errorData.error || `Failed to extract recipe from photo: ${response.statusText}`);
-  }
-
-  return response.json();
+  return postRecipeForm('/api/recipes/from-recipe', formData);
 };
 
-export const addRecipePhoto = async (recipeId: string, photoFile: File) => {
+export const addRecipeFromPhoto = async (title: string, photoFile: File) => {
+  const formData = new FormData();
+  formData.append('title', title);
+  formData.append('photoFile', photoFile);
+  return postRecipeForm('/api/recipes/from-photo', formData);
+};
+
+export const completeRecipeFromRecipe = async (recipeId: string, cookbookId: string, recipeFile: File) => {
+  const formData = new FormData();
+  formData.append('cookbookId', cookbookId);
+  formData.append('recipeFile', recipeFile);
+  return postRecipeForm(`/api/recipes/${recipeId}/from-recipe`, formData);
+};
+
+export const addFoodPhoto = async (recipeId: string, photoFile: File) => {
   // Create FormData manually to ensure proper file handling
   const formData = new FormData();
   formData.append('photoFile', photoFile);
@@ -124,7 +134,7 @@ export const addRecipePhoto = async (recipeId: string, photoFile: File) => {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(errorData.error || `Failed to upload recipe photo: ${response.statusText}`);
+    throw new Error(errorData.error || `Failed to upload photo: ${response.statusText}`);
   }
 
   return response.json();

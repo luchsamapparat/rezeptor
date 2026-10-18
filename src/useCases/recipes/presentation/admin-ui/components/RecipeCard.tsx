@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 interface RecipeCardProps {
   id: string;
   title: string;
-  instructions: string;
+  instructions: string | null;
   ingredients: Array<{
     quantity: string | null;
     unit: string | null;
@@ -26,7 +26,7 @@ export function RecipeCard({
   pageNumber,
   cookbookTitle,
 }: RecipeCardProps) {
-  const truncatedInstructions = instructions.length > 150 ? `${instructions.substring(0, 150)}...` : instructions;
+  const truncatedInstructions = instructions && instructions.length > 150 ? `${instructions.substring(0, 150)}...` : instructions;
   const ingredientSummary = ingredients.length > 0
     ? `${ingredients.length} ingredient${ingredients.length === 1 ? '' : 's'}`
     : 'No ingredients listed';

@@ -4,11 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { generatePath, useLocation, useNavigate, useParams } from 'react-router';
 import 'swiper/css';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { addRecipePhoto, cookbooksQuery, editRecipe, recipesQuery, removeRecipe } from '../api/client';
+import { addFoodPhoto, cookbooksQuery, editRecipe, recipesQuery, removeRecipe } from '../api/client';
 import { AddRecipeOverlay } from './AddRecipeOverlay';
 import { AppMenu } from './AppMenu';
 import { RecipeCarousel } from './RecipeCarousel';
 import { RecipeSheet } from './RecipeSheet';
+import { RememberFoodOverlay } from './RememberFoodOverlay';
 import { getNextRecipeIdAfterRemoval } from './recipeBrowserState';
 import type { Route } from './+types/RecipeBrowserController';
 import './RecipeBrowser.css';
@@ -35,6 +36,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
+  const [creationPending, setCreationPending] = useState(false);
+  const [completionPending, setCompletionPending] = useState(false);
+  const [rememberPending, setRememberPending] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const previousIndex = useRef(0);
@@ -44,6 +48,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   recipesRef.current = recipes;
 
   const addRecipeOpen = location.pathname === '/recipes/new';
+  const rememberFoodOpen = location.pathname === '/recipes/remember';
+  const completeRecipeOpen = routeRecipeId !== undefined && location.pathname === `/recipes/${routeRecipeId}/complete`;
+  const overlayOpen = addRecipeOpen || rememberFoodOpen || completeRecipeOpen;
   const expanded = routeRecipeId !== undefined;
   const activeId = routeRecipeId ?? selectedRecipeId;
   const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
@@ -73,7 +80,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   }, []);
 
   const photoMutation = useMutation({
-    mutationFn: ({ id, file }: { id: string; file: File }) => addRecipePhoto(id, file),
+    mutationFn: ({ id, file }: { id: string; file: File }) => addFoodPhoto(id, file),
     onSuccess: async () => {
       setOperationError(null);
       await queryClient.invalidateQueries({ queryKey: ['recipes'] });
@@ -99,6 +106,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     },
     onError: (mutationError: Error) => setOperationError(mutationError.message),
   });
+  const operationPending = photoMutation.isPending || deleteMutation.isPending || editMutation.isPending || creationPending || completionPending || rememberPending;
 
   const cancelPendingDeletion = () => {
     if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
@@ -152,7 +160,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const choosePhoto = () => photoInputRef.current?.click();
 
   const startEditing = () => {
-    if (!activeRecipe || editMutation.isPending) return;
+    if (!activeRecipe || activeRecipe.cookbookId === null || operationPending) return;
     cancelPendingDeletion();
     setOperationError(null);
     setEditingRecipeId(activeRecipe.id);
@@ -178,15 +186,15 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     );
     return (
       <>
-        <div className={styles.background} inert={menuOpen}>
-          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || addRecipeOpen || deleteMutation.isPending || editingRecipeId !== null} onActiveChange={changeActive} />
+        <div className={styles.background} inert={menuOpen || overlayOpen}>
+          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || overlayOpen || operationPending || editingRecipeId !== null} onActiveChange={changeActive} />
           <button
             className={`${styles.addPhoto} swiper-no-swiping`}
             type="button"
             data-visible={activeRecipe.photoFileId === null || undefined}
             aria-hidden={activeRecipe.photoFileId !== null}
             tabIndex={activeRecipe.photoFileId === null ? 0 : -1}
-            disabled={activeRecipe.photoFileId !== null || photoMutation.isPending || deleteMutation.isPending}
+            disabled={activeRecipe.photoFileId !== null || operationPending || overlayOpen}
             onClick={choosePhoto}
           >
             {photoMutation.isPending
@@ -199,7 +207,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             className={styles.fileInput}
             type="file"
             accept="image/*"
-            aria-label="Rezeptfoto auswählen"
+            aria-label="Foto vom Essen auswählen"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) {
@@ -216,11 +224,17 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             editing={editingRecipeId === activeRecipe.id}
             onExpandedChange={changeExpanded}
             onEdit={startEditing}
+            onComplete={() => {
+              if (operationPending) return;
+              cancelPendingDeletion();
+              setSelectedRecipeId(activeRecipe.id);
+              void navigate(generatePath('/recipes/:recipeId/complete', { recipeId: activeRecipe.id }));
+            }}
             onCancel={cancelEditing}
             onSave={changes => editMutation.mutate({ id: activeRecipe.id, changes })}
             onPhoto={choosePhoto}
             onDelete={togglePendingDeletion}
-            pending={photoMutation.isPending || deleteMutation.isPending || editMutation.isPending}
+            pending={operationPending || overlayOpen}
             editPending={editMutation.isPending}
             photoPending={photoMutation.isPending}
             deletionPending={pendingDeleteId === activeRecipe.id}
@@ -237,16 +251,44 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       <AppMenu
         open={menuOpen}
         onAddRecipe={() => {
+          cancelPendingDeletion();
           setMenuOpen(false);
           void navigate('/recipes/new');
         }}
+        onRememberFood={() => {
+          cancelPendingDeletion();
+          setMenuOpen(false);
+          void navigate('/recipes/remember');
+        }}
         onOpenChange={setMenuOpen}
-        restoreFocus={!addRecipeOpen}
+        restoreFocus={!overlayOpen}
         triggerRef={triggerRef}
       />
       <AddRecipeOverlay
         open={addRecipeOpen}
+        onPendingChange={setCreationPending}
         onClose={() => navigate('/')}
+        onRecipeCreated={(recipeId) => {
+          setSelectedRecipeId(recipeId);
+          void navigate(generatePath('/recipes/:recipeId', { recipeId }));
+        }}
+        returnFocusRef={triggerRef}
+      />
+      <RememberFoodOverlay
+        open={rememberFoodOpen}
+        onPendingChange={setRememberPending}
+        onClose={() => navigate('/')}
+        onRecipeCreated={(recipeId) => {
+          setSelectedRecipeId(recipeId);
+          void navigate(generatePath('/recipes/:recipeId', { recipeId }));
+        }}
+        returnFocusRef={triggerRef}
+      />
+      <AddRecipeOverlay
+        open={completeRecipeOpen}
+        recipeId={completeRecipeOpen ? routeRecipeId : undefined}
+        onPendingChange={setCompletionPending}
+        onClose={() => navigate(routeRecipeId ? generatePath('/recipes/:recipeId', { recipeId: routeRecipeId }) : '/')}
         onRecipeCreated={(recipeId) => {
           setSelectedRecipeId(recipeId);
           void navigate(generatePath('/recipes/:recipeId', { recipeId }));

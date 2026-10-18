@@ -28,7 +28,7 @@ model CookbookAuthor {
 model Recipe {
   id            String       @id @default(uuid())
   title         String
-  instructions  String
+  instructions  String?
   photoFileId   String?
   recipeFileId  String?
   cookbookId    String?

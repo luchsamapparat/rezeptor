@@ -164,7 +164,33 @@ describe('Recipe Management API Integration Tests', () => {
       expect(recipes[0]).toMatchObject({
         ...recipeEntityMock,
         id: body.id,
+        photoFileId: null,
+        recipeFileId: null,
       });
+    });
+
+    it('stores explicit missing instructions and rejects blank instructions', async ({ app }) => {
+      const create = await app.request(new Request('http://localhost/api/recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...addRecipeDtoMock, instructions: null }),
+      }));
+      expect(create.status).toBe(201);
+      const recipe = await create.json();
+      expect(recipe.instructions).toBeNull();
+
+      const update = (instructions: string | null) => app.request(new Request(`http://localhost/api/recipes/${recipe.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructions }),
+      }));
+      expect((await update('Cook dinner.')).status).toBe(200);
+      const cleared = await update(null);
+      expect(cleared.status).toBe(200);
+      expect((await cleared.json()).instructions).toBeNull();
+      expect((await update('   ')).status).toBe(422);
+      const fetched = await app.request(new Request(`http://localhost/api/recipes/${recipe.id}`));
+      expect((await fetched.json()).instructions).toBeNull();
     });
 
     it('should return 422 for invalid data', async ({ app }) => {
@@ -226,7 +252,7 @@ describe('Recipe Management API Integration Tests', () => {
       formData.append('recipeFile', testFile);
       formData.append('cookbookId', cookbookId);
 
-      const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+      const response = await app.request(new Request('http://localhost/api/recipes/from-recipe', {
         method: 'POST',
         body: formData,
       }));
@@ -254,7 +280,7 @@ describe('Recipe Management API Integration Tests', () => {
       expect(recipes[0].recipeFileId).not.toBeNull();
     });
 
-    it('should create a recipe from uploaded image file without cookbook context', async ({ app, database }) => {
+    it('should require a cookbook for a written recipe', async ({ app, database }) => {
       // given:
       // Setup the Azure OpenAI mock
       const { title, pageNumber, instructions } = recipeEntityMock;
@@ -274,29 +300,99 @@ describe('Recipe Management API Integration Tests', () => {
       const formData = new FormData();
       formData.append('recipeFile', testFile);
 
-      const response = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+      const response = await app.request(new Request('http://localhost/api/recipes/from-recipe', {
         method: 'POST',
         body: formData,
       }));
 
       // then:
-      expect(response.status).toBe(201);
-      const body = await response.json();
-      expect(body).toMatchObject({
-        title,
-        instructions,
-        ingredients,
-        pageNumber,
-        cookbookId: null,
-        photoFileId: null,
-      });
-      expect(body.id).toBeDefined();
-      expect(body.recipeFileId).toBeDefined();
+      expect(response.status).toBe(422);
 
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
       const recipes = await recipeRepository.getAll();
-      expect(recipes).toHaveLength(1);
-      expect(recipes[0].recipeFileId).not.toBeNull();
+      expect(recipes).toHaveLength(0);
+    });
+  });
+
+  describe('photo creation and completion', () => {
+    beforeEach(({ env }) => {
+      recipeExtractionService.injection(new AzureOpenAIRecipeExtractionService(azureOpenAIMock as unknown as AzureOpenAI, env.azureOpenAI.model, env.recipeExtraction, loggerMock));
+    });
+
+    it('stores an incomplete recipe and its photo variants, then completes it while preserving the photo', async ({ app, database, fileSystemMock }) => {
+      const photoFile = await loadTestFile('recipe2.jpg');
+      const photoForm = new FormData();
+      photoForm.append('title', '  My dinner  ');
+      photoForm.append('photoFile', photoFile);
+      const createdResponse = await app.request(new Request('http://localhost/api/recipes/from-photo', { method: 'POST', body: photoForm }));
+      expect(createdResponse.status).toBe(201);
+      const created = await createdResponse.json();
+      expect(created).toMatchObject({ title: 'My dinner', cookbookId: null, recipeFileId: null, pageNumber: null, instructions: null, ingredients: [] });
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${created.photoFileId}`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${created.photoFileId}.preview.webp`)).toBe(true);
+      expect(fileSystemMock.fileExists(`/data/recipePhotos/${created.photoFileId}.display.webp`)).toBe(true);
+
+      const cookbook = await new CookbookDatabaseRepository(database, loggerMock).insert(newCookbookMock);
+      setupAzureOpenAIMock({ title: 'Extracted dinner', instructions: 'Cook it.', pageNumber: 3 });
+      const completionForm = new FormData();
+      completionForm.append('cookbookId', cookbook.id);
+      completionForm.append('recipeFile', await loadTestFile('recipe1.jpg'));
+      const completedResponse = await app.request(new Request(`http://localhost/api/recipes/${created.id}/from-recipe`, { method: 'POST', body: completionForm }));
+      expect(completedResponse.status).toBe(200);
+      const completed = await completedResponse.json();
+      expect(completed).toMatchObject({ title: 'Extracted dinner', cookbookId: cookbook.id, photoFileId: created.photoFileId, instructions: 'Cook it.', pageNumber: 3 });
+      expect(completed.recipeFileId).not.toBeNull();
+      expect(fileSystemMock.fileExists(`/data/recipes/${completed.recipeFileId}`)).toBe(true);
+
+      setupAzureOpenAIMock({ title: null, instructions: '   ' });
+      const replacementForm = new FormData();
+      replacementForm.append('cookbookId', cookbook.id);
+      replacementForm.append('recipeFile', await loadTestFile('recipe2.jpg'));
+      const replacementResponse = await app.request(new Request(`http://localhost/api/recipes/${created.id}/from-recipe`, { method: 'POST', body: replacementForm }));
+      expect(replacementResponse.status).toBe(200);
+      const replaced = await replacementResponse.json();
+      expect(replaced.title).toBe('Extracted dinner');
+      expect(replaced.instructions).toBeNull();
+      expect(replaced.photoFileId).toBe(created.photoFileId);
+      expect(fileSystemMock.fileExists(`/data/recipes/${completed.recipeFileId}`)).toBe(false);
+      expect(fileSystemMock.fileExists(`/data/recipes/${replaced.recipeFileId}`)).toBe(true);
+    });
+
+    it('rejects invalid photo input and completion of a missing recipe', async ({ app, database }) => {
+      const missingPhoto = new FormData();
+      missingPhoto.append('title', 'Dinner');
+      expect((await app.request(new Request('http://localhost/api/recipes/from-photo', { method: 'POST', body: missingPhoto }))).status).toBe(422);
+
+      const emptyTitle = new FormData();
+      emptyTitle.append('title', '   ');
+      emptyTitle.append('photoFile', await loadTestFile('recipe1.jpg'));
+      expect((await app.request(new Request('http://localhost/api/recipes/from-photo', { method: 'POST', body: emptyTitle }))).status).toBe(422);
+
+      const invalidFile = new FormData();
+      invalidFile.append('title', 'Dinner');
+      invalidFile.append('photoFile', new File(['text'], 'note.txt', { type: 'text/plain' }));
+      expect((await app.request(new Request('http://localhost/api/recipes/from-photo', { method: 'POST', body: invalidFile }))).status).toBe(422);
+
+      const cookbook = await new CookbookDatabaseRepository(database, loggerMock).insert(newCookbookMock);
+      const invalidCookbook = new FormData();
+      invalidCookbook.append('cookbookId', 'invalid');
+      invalidCookbook.append('recipeFile', await loadTestFile('recipe1.jpg'));
+      expect((await app.request(new Request('http://localhost/api/recipes/from-recipe', { method: 'POST', body: invalidCookbook }))).status).toBe(422);
+
+      const invalidRecipeFile = new FormData();
+      invalidRecipeFile.append('cookbookId', cookbook.id);
+      invalidRecipeFile.append('recipeFile', new File(['text'], 'note.txt', { type: 'text/plain' }));
+      expect((await app.request(new Request('http://localhost/api/recipes/from-recipe', { method: 'POST', body: invalidRecipeFile }))).status).toBe(422);
+
+      const missingRecipe = new FormData();
+      missingRecipe.append('cookbookId', cookbook.id);
+      missingRecipe.append('recipeFile', await loadTestFile('recipe1.jpg'));
+      expect((await app.request(new Request(`http://localhost/api/recipes/${faker.string.uuid()}/from-recipe`, { method: 'POST', body: missingRecipe }))).status).toBe(404);
+      expect((await app.request(new Request('http://localhost/api/recipes/invalid/from-recipe', { method: 'POST', body: missingRecipe }))).status).toBe(422);
+
+      const missingFile = new FormData();
+      missingFile.append('cookbookId', cookbook.id);
+      expect((await app.request(new Request(`http://localhost/api/recipes/${faker.string.uuid()}/from-recipe`, { method: 'POST', body: missingFile }))).status).toBe(422);
     });
   });
 
@@ -420,10 +516,13 @@ describe('Recipe Management API Integration Tests', () => {
       });
 
       const testFile1 = await loadTestFile('recipe1.jpg');
+      const cookbookRepository = new CookbookDatabaseRepository(database, loggerMock);
+      const cookbook = await cookbookRepository.insert(newCookbookMock);
       const formData1 = new FormData();
       formData1.append('recipeFile', testFile1);
+      formData1.append('cookbookId', cookbook.id);
 
-      const createResponse = await app.request(new Request('http://localhost/api/recipes/from-photo', {
+      const createResponse = await app.request(new Request('http://localhost/api/recipes/from-recipe', {
         method: 'POST',
         body: formData1,
       }));
@@ -530,7 +629,7 @@ describe('Recipe Management API Integration Tests', () => {
       const recipeRepository = new RecipeDatabaseRepository(database, loggerMock);
       const updatedRecipeEntity = await recipeRepository.findById(recipeId);
       expect(updatedRecipeEntity?.photoFileId).not.toBeNull();
-    });
+    }, 15_000);
 
     it('should replace existing photo and remove all variants of the previous photo', async ({ app, database, fileSystemMock }) => {
       // given: recipe with existing photo - first upload a photo
@@ -640,7 +739,7 @@ describe('Recipe Management API Integration Tests', () => {
       expect(uploadResponse.status).toBe(200);
     });
 
-    it('should return recipe photo when it exists', async ({ app }) => {
+    it('should return the prepared-food photo when it exists', async ({ app }) => {
       // when:
       const response = await app.request(new Request(`http://localhost/api/recipes/${recipeId}/photo`, {
         method: 'GET',
@@ -694,7 +793,7 @@ describe('Recipe Management API Integration Tests', () => {
       expect(fileSystemMock.fileExists(`/data/recipePhotos/${legacyPhotoId}.display.webp`)).toBe(true);
       const storedOriginal = new Uint8Array(await new Response(await fileSystemMock.readFile(`/data/recipePhotos/${legacyPhotoId}`)).arrayBuffer());
       expect(storedOriginal).toEqual(originalPhoto);
-    });
+    }, 15_000);
 
     it('should return 404 for non-existent recipe', async ({ app }) => {
       // given:

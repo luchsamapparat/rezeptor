@@ -7,6 +7,8 @@ export const recipesRoutes = [
   layout(pathTo('RecipeBrowserController.tsx'), [
     index(pathTo('RecipeBrowserIndexRoute.tsx')),
     route('recipes/new', pathTo('NewRecipeRoute.tsx')),
+    route('recipes/remember', pathTo('RememberFoodRoute.tsx')),
     route('recipes/:recipeId', pathTo('RecipeDetailsRoute.tsx')),
+    route('recipes/:recipeId/complete', pathTo('CompleteRecipeRoute.tsx')),
   ]),
 ] satisfies RouteConfig;

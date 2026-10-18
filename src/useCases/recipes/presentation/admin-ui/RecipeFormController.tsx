@@ -65,7 +65,7 @@ export default function RecipeFormController() {
 
     await addRecipeMutation.mutateAsync({
       title: formData.get('title') as string,
-      instructions: formData.get('instructions') as string,
+      instructions: (formData.get('instructions') as string).trim() || null,
       ingredients: validIngredients,
       cookbookId: cookbookId === '__none__' ? null : cookbookId || null,
       pageNumber: pageNumber ? Number(pageNumber) : null,
@@ -102,12 +102,11 @@ export default function RecipeFormController() {
 
             <div className="space-y-2">
               <Label htmlFor="instructions">
-                Instructions *
+                Instructions
               </Label>
               <Textarea
                 id="instructions"
                 name="instructions"
-                required
                 rows={8}
                 placeholder="Enter step-by-step instructions for preparing this recipe..."
               />

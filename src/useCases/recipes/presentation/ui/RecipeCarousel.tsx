@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper/types';
 import type { RecipeDto } from '../api/client';
-import placeholderRecipePhoto from './assets/placeholder-recipe-photo.webp';
+import placeholderFoodPhoto from './assets/placeholder-food-photo.webp';
 import { setSwiperTouchEnabled } from './recipeCarouselState';
 import styles from './RecipeCarousel.module.css';
 
@@ -14,13 +14,13 @@ type Props = {
   onActiveChange: (id: string) => void;
 };
 
-type RecipePhotoProps = {
+type FoodPhotoProps = {
   recipe: RecipeDto;
   eager: boolean;
   active: boolean;
 };
 
-function RecipePhoto({ recipe, eager, active }: RecipePhotoProps) {
+function FoodPhoto({ recipe, eager, active }: FoodPhotoProps) {
   const [loaded, setLoaded] = useState(false);
   const displayRef = useRef<HTMLImageElement>(null);
 
@@ -30,7 +30,7 @@ function RecipePhoto({ recipe, eager, active }: RecipePhotoProps) {
   }, [recipe.photoFileId]);
 
   if (recipe.photoFileId === null) {
-    return <img className={clsx(styles.photo, styles.placeholder)} src={placeholderRecipePhoto} alt="" draggable={false} />;
+    return <img className={clsx(styles.photo, styles.placeholder)} src={placeholderFoodPhoto} alt="" draggable={false} />;
   }
 
   const version = encodeURIComponent(recipe.photoFileId);
@@ -102,7 +102,7 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
     >
       {recipes.map((recipe, slideIndex) => (
         <SwiperSlide key={recipe.id} className={styles.slide}>
-          <RecipePhoto
+          <FoodPhoto
             key={recipe.photoFileId ?? 'placeholder'}
             recipe={recipe}
             eager={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1))}

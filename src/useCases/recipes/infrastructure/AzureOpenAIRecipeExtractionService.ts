@@ -95,7 +95,10 @@ export class AzureOpenAIRecipeExtractionService implements RecipeExtractionServi
       this.log.info({
         'rezeptor.recipe.title': result.data.title,
       }, 'Recipe extracted successfully');
-      return result.data;
+      return {
+        ...result.data,
+        instructions: result.data.instructions?.trim() ? result.data.instructions : null,
+      };
     }
     else {
       this.log.error({
@@ -111,7 +114,7 @@ export class AzureOpenAIRecipeExtractionService implements RecipeExtractionServi
 const recipeContentSchema = z.object({
   title: z.string().nullable(),
   pageNumber: z.number().nullable(),
-  instructions: z.string(),
+  instructions: z.string().nullable(),
   ingredients: z.array(z.object({
     quantity: z.string().nullable(),
     unit: z.string().nullable(),

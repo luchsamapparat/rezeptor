@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { ErrorState, LoadingState, PageHeader } from './components';
-import { addRecipePhoto, cookbooksQuery, editRecipe, recipeQuery, removeRecipe } from '../api/client';
+import { addFoodPhoto, cookbooksQuery, editRecipe, recipeQuery, removeRecipe } from '../api/client';
 import type { Route } from './+types/RecipeEditController';
 
 interface Ingredient {
@@ -81,7 +81,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
 
   const addPhotoMutation = useMutation({
     mutationFn: ({ recipeId, photoFile }: { recipeId: string; photoFile: File }) =>
-      addRecipePhoto(recipeId, photoFile),
+      addFoodPhoto(recipeId, photoFile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
       queryClient.invalidateQueries({ queryKey: ['recipes', params.recipeId] });
@@ -120,7 +120,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
       id: params.recipeId,
       changes: {
         title: formData.get('title') as string,
-        instructions: formData.get('instructions') as string,
+        instructions: (formData.get('instructions') as string).trim() || null,
         ingredients: validIngredients,
         cookbookId: cookbookId === '__none__' ? null : cookbookId || null,
         pageNumber: pageNumber ? Number(pageNumber) : null,
@@ -222,13 +222,12 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
 
             <div className="space-y-2">
               <Label htmlFor="instructions">
-                Instructions *
+                Instructions
               </Label>
               <Textarea
                 id="instructions"
                 name="instructions"
-                defaultValue={recipe.instructions}
-                required
+                defaultValue={recipe.instructions ?? ''}
                 rows={10}
               />
             </div>
@@ -345,7 +344,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
       {/* Photo Upload Section */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Recipe Photo</CardTitle>
+          <CardTitle>Food Photo</CardTitle>
         </CardHeader>
         <CardContent>
           {recipe.photoFileId && (

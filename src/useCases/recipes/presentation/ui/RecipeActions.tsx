@@ -3,18 +3,20 @@ import styles from './RecipeActions.module.css';
 
 type Props = {
   hasPhoto: boolean;
+  complete: boolean;
   pending: boolean;
   photoPending: boolean;
   deletionPending: boolean;
   editing: boolean;
   editPending: boolean;
   onEdit: () => void;
+  onComplete: () => void;
   onCancel: () => void;
   onPhoto: () => void;
   onDelete: () => void;
 };
 
-export function RecipeActions({ hasPhoto, pending, photoPending, deletionPending, editing, editPending, onEdit, onCancel, onPhoto, onDelete }: Props) {
+export function RecipeActions({ hasPhoto, complete, pending, photoPending, deletionPending, editing, editPending, onEdit, onComplete, onCancel, onPhoto, onDelete }: Props) {
   return (
     <div className={styles.actionGroups}>
       <div
@@ -51,11 +53,12 @@ export function RecipeActions({ hasPhoto, pending, photoPending, deletionPending
           disabled={pending}
           onClick={(event) => {
             event.preventDefault();
-            onEdit();
+            if (complete) onEdit();
+            else onComplete();
           }}
         >
           <Pencil aria-hidden="true" size={25} strokeWidth={1.5} />
-          <span>Bearbeiten</span>
+          <span>{complete ? 'Bearbeiten' : 'Vervollständigen'}</span>
         </button>
         <button className={styles.action} type="button" disabled={pending} aria-busy={photoPending} onClick={onPhoto}>
           {photoPending

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Apple, Book, BookCopy, BookMarked, BookPlus, Camera, Carrot, Croissant, Pizza, Soup } from 'lucide-react';
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router';
-import { addRecipeFromPhoto, cookbooksQuery } from '../api/client';
+import { addRecipeFromRecipe, completeRecipeFromRecipe, cookbooksQuery } from '../api/client';
 import styles from './AddRecipeOverlay.module.css';
 import { FeatureOverlay } from './FeatureOverlay';
 
@@ -11,11 +11,13 @@ type Props = {
   onClose: () => void;
   onRecipeCreated: (recipeId: string) => void;
   returnFocusRef: RefObject<HTMLElement | null>;
+  recipeId?: string;
+  onPendingChange?: (pending: boolean) => void;
 };
 
 const loadingIcons = [Apple, Carrot, Croissant, Pizza, Soup];
 
-export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRef }: Props) {
+export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRef, recipeId, onPendingChange }: Props) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'cookbook' | 'photo'>('cookbook');
   const [cookbookId, setCookbookId] = useState('');
@@ -28,7 +30,9 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
   });
 
   const addRecipeMutation = useMutation({
-    mutationFn: (recipeFile: File) => addRecipeFromPhoto(recipeFile, cookbookId),
+    mutationFn: (recipeFile: File) => recipeId
+      ? completeRecipeFromRecipe(recipeId, cookbookId, recipeFile)
+      : addRecipeFromRecipe(recipeFile, cookbookId),
     onSuccess: async (recipe) => {
       await queryClient.invalidateQueries({ queryKey: ['recipes'] });
       onRecipeCreated(recipe.id);
@@ -47,6 +51,8 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
   useEffect(() => {
     if (addRecipeMutation.isPending) loadingRef.current?.focus();
   }, [addRecipeMutation.isPending]);
+
+  useEffect(() => onPendingChange?.(addRecipeMutation.isPending), [addRecipeMutation.isPending, onPendingChange]);
 
   useLayoutEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
@@ -176,7 +182,7 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
     <FeatureOverlay
       icon={BookMarked}
       open={open}
-      title="Neues Rezept"
+      title={recipeId ? 'Rezept vervollständigen' : 'Neues Rezept'}
       closeDisabled={addRecipeMutation.isPending}
       contentRef={contentRef}
       onClose={close}
