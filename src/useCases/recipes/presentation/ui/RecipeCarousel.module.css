@@ -17,3 +17,8 @@
   object-fit: cover;
   user-select: none;
 }
+
+.placeholder {
+  transform: scale(1.2);
+  filter: blur(48px);
+}

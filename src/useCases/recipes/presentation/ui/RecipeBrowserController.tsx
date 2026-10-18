@@ -17,7 +17,6 @@ export const loader = async ({ context }: Route.LoaderArgs) => ({
 export default function RecipeBrowserController({ loaderData }: Route.ComponentProps) {
   const queryClient = useQueryClient();
   const { data: recipes = [], isPending, error, refetch } = useQuery(recipesQuery({ initialData: loaderData.recipes ?? undefined }));
-  const withPhotos = recipes.filter(recipe => recipe.photoFileId !== null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,18 +26,18 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const dialogRef = useRef<HTMLDialogElement>(null);
   const previousIndex = useRef(0);
 
-  const activeIndex = Math.max(0, withPhotos.findIndex(recipe => recipe.id === activeId));
-  const activeRecipe = withPhotos[activeIndex];
+  const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
+  const activeRecipe = recipes[activeIndex];
 
   useEffect(() => {
-    if (withPhotos.length === 0) {
+    if (recipes.length === 0) {
       setActiveId(null);
       return;
     }
-    if (!activeId || !withPhotos.some(recipe => recipe.id === activeId)) {
-      setActiveId(withPhotos[Math.min(previousIndex.current, withPhotos.length - 1)].id);
+    if (!activeId || !recipes.some(recipe => recipe.id === activeId)) {
+      setActiveId(recipes[Math.min(previousIndex.current, recipes.length - 1)].id);
     }
-  }, [activeId, withPhotos]);
+  }, [activeId, recipes]);
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -60,7 +59,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       setDeleteOpen(false);
       setExpanded(false);
       setOperationError(null);
-      const next = withPhotos.filter(recipe => recipe.id !== id);
+      const next = recipes.filter(recipe => recipe.id !== id);
       setActiveId(next[Math.min(activeIndex, next.length - 1)]?.id ?? null);
       await queryClient.invalidateQueries({ queryKey: ['recipes'] });
     },
@@ -68,7 +67,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   });
 
   const changeActive = (id: string) => {
-    const index = withPhotos.findIndex(recipe => recipe.id === id);
+    const index = recipes.findIndex(recipe => recipe.id === id);
     if (index >= 0) previousIndex.current = index;
     setActiveId(id);
     setExpanded(false);
@@ -85,14 +84,13 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     );
     if (!activeRecipe) return (
       <div className={styles.state}>
-        <h1>Noch keine Rezepte mit Foto</h1>
-        <p>Füge einem Rezept ein Foto hinzu, um es hier anzusehen.</p>
+        <h1>Noch keine Rezepte</h1>
       </div>
     );
     return (
       <>
         <div className={styles.background} inert={menuOpen || deleteOpen}>
-          <RecipeCarousel recipes={withPhotos} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
+          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
           <RecipeSheet
             recipe={activeRecipe}
             expanded={expanded}
