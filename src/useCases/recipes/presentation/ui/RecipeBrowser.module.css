@@ -48,7 +48,18 @@
   color: #fff;
   background: transparent;
   filter: drop-shadow(0 1px 5px rgb(0 0 0 / 65%));
+  opacity: 0;
   transform: translate(-50%, -50%);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 200ms ease, visibility 0s linear 200ms;
+}
+
+.addPhoto[data-visible] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
   cursor: pointer;
 }
 
@@ -59,9 +70,15 @@
   white-space: nowrap;
 }
 
-.addPhoto:disabled {
+.addPhoto[data-visible]:disabled {
   cursor: wait;
   opacity: .55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .addPhoto {
+    transition: none;
+  }
 }
 
 .fileInput {

@@ -95,17 +95,18 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       <>
         <div className={styles.background} inert={menuOpen || deleteOpen}>
           <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
-          {activeRecipe.photoFileId === null && (
-            <button
-              className={`${styles.addPhoto} swiper-no-swiping`}
-              type="button"
-              disabled={photoMutation.isPending || deleteMutation.isPending}
-              onClick={choosePhoto}
-            >
-              <ImagePlus aria-hidden="true" size={32} strokeWidth={1.5} />
-              <span>Foto hinzufügen</span>
-            </button>
-          )}
+          <button
+            className={`${styles.addPhoto} swiper-no-swiping`}
+            type="button"
+            data-visible={activeRecipe.photoFileId === null || undefined}
+            aria-hidden={activeRecipe.photoFileId !== null}
+            tabIndex={activeRecipe.photoFileId === null ? 0 : -1}
+            disabled={activeRecipe.photoFileId !== null || photoMutation.isPending || deleteMutation.isPending}
+            onClick={choosePhoto}
+          >
+            <ImagePlus aria-hidden="true" size={32} strokeWidth={1.5} />
+            <span>Foto hinzufügen</span>
+          </button>
           <input
             ref={photoInputRef}
             className={styles.fileInput}
