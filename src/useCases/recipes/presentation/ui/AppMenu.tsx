@@ -57,7 +57,7 @@ export function AppMenu({ open, onAddRecipe, onOpenChange, restoreFocus, trigger
               </Link>
               <button className={styles.link} type="button" onClick={onAddRecipe}>
                 <BookMarked aria-hidden="true" size={25} strokeWidth={1.5} />
-                <span>Rezept merken</span>
+                <span>Neues Rezept</span>
               </button>
               <a href={signOutUrl} className={styles.link}>
                 <LogOut aria-hidden="true" size={25} strokeWidth={1.5} />

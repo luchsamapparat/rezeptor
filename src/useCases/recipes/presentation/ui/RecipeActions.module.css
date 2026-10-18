@@ -1,9 +1,40 @@
+.actionGroups {
+  display: grid;
+  width: 100%;
+}
+
 .actions {
+  grid-area: 1 / 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: flex-start;
   width: 100%;
   padding: 0 16px;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(6px);
+  transition:
+    visibility 0s linear 180ms,
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.actions[data-active] {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 0s;
+}
+
+.editing {
+  display: flex;
+  justify-content: center;
+}
+
+.editing .action {
+  width: calc(100% / 3);
 }
 
 .action {
@@ -47,5 +78,11 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .actions {
+    transition: none;
   }
 }

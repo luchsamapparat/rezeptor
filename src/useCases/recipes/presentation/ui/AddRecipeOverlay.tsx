@@ -176,7 +176,7 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
     <FeatureOverlay
       icon={BookMarked}
       open={open}
-      title="Rezept merken"
+      title="Neues Rezept"
       closeDisabled={addRecipeMutation.isPending}
       contentRef={contentRef}
       onClose={close}

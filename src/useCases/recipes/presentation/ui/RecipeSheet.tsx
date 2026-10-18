@@ -1,16 +1,22 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
-import type { RecipeDto } from '../api/client';
+import type { CookbookDto, EditRecipeDto, RecipeDto } from '../api/client';
 import { RecipeActions } from './RecipeActions';
 import styles from './RecipeSheet.module.css';
 import { clampSheetHeight, formatRecipeSource, shouldExpandSheet } from './recipeBrowserState';
 
 type Props = {
   recipe: RecipeDto;
+  cookbooks: CookbookDto[];
   expanded: boolean;
+  editing: boolean;
   onExpandedChange: (expanded: boolean) => void;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: (changes: Pick<EditRecipeDto, 'title' | 'cookbookId' | 'pageNumber'>) => void;
   onPhoto: () => void;
   onDelete: () => void;
   pending: boolean;
+  editPending: boolean;
   photoPending: boolean;
   deletionPending: boolean;
   error: string | null;
@@ -18,11 +24,15 @@ type Props = {
 
 const EXPANSION_HEIGHT = 144;
 
-export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDelete, pending, photoPending, deletionPending, error }: Props) {
+export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedChange, onEdit, onCancel, onSave, onPhoto, onDelete, pending, editPending, photoPending, deletionPending, error }: Props) {
   const [dragHeight, setDragHeight] = useState<number | null>(null);
   const [optimisticExpanded, setOptimisticExpanded] = useState<boolean | null>(null);
+  const [title, setTitle] = useState(recipe.title);
+  const [cookbookId, setCookbookId] = useState(recipe.cookbookId ?? '');
+  const [pageNumber, setPageNumber] = useState(recipe.pageNumber?.toString() ?? '');
   const [, setMeasurementRevision] = useState(0);
   const sheetRef = useRef<HTMLElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const collapsedHeight = useRef(0);
   const heightAnimation = useRef<Animation | null>(null);
   const previousRecipeId = useRef(recipe.id);
@@ -84,6 +94,17 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
   }, [expanded, optimisticExpanded]);
 
   useEffect(() => {
+    if (!editing) return;
+    setTitle(recipe.title);
+    setCookbookId(recipe.cookbookId ?? '');
+    setPageNumber(recipe.pageNumber?.toString() ?? '');
+  }, [editing, recipe.cookbookId, recipe.id, recipe.pageNumber, recipe.title]);
+
+  useLayoutEffect(() => {
+    if (editing) titleInputRef.current?.focus({ preventScroll: true });
+  }, [editing]);
+
+  useEffect(() => {
     const sheet = sheetRef.current;
     if (!sheet || displayedExpanded || dragHeight !== null) return;
     const updateHeight = () => {
@@ -97,7 +118,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
   }, [displayedExpanded, dragHeight, recipe.id]);
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
-    if (event.button !== 0 || (event.target as HTMLElement).closest('a, input, button:not([data-recipe-sheet-handle])')) return;
+    if (editing || event.button !== 0 || (event.target as HTMLElement).closest('a, input, select, textarea, button:not([data-recipe-sheet-handle])')) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
     heightAnimation.current?.cancel();
@@ -159,6 +180,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
           className={styles.handleButton}
           data-recipe-sheet-handle
           type="button"
+          disabled={editing}
           aria-label={displayedExpanded ? 'Rezeptdetails einklappen' : 'Rezeptdetails ausklappen'}
           aria-expanded={displayedExpanded}
           onClick={(event) => {
@@ -169,17 +191,83 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
         >
           <span className={styles.handle} />
         </button>
-        <div key={recipe.id} className={styles.content}>
+        <form
+          key={recipe.id}
+          className={styles.content}
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSave({
+              title: title.trim(),
+              cookbookId: cookbookId || null,
+              pageNumber: pageNumber === '' ? null : Number(pageNumber),
+            });
+          }}
+        >
           <div className={styles.heading}>
-            <h1>{recipe.title}</h1>
-            {source && <p>{source}</p>}
+            <div
+              className={styles.headingMode}
+              data-active={!editing || undefined}
+              aria-hidden={editing}
+              inert={editing}
+            >
+              <h1>{recipe.title}</h1>
+              {source && <p>{source}</p>}
+            </div>
+            <div
+              className={`${styles.headingMode} ${styles.editFields}`}
+              data-active={editing || undefined}
+              aria-hidden={!editing}
+              inert={!editing}
+            >
+              <div className={`${styles.field} ${styles.titleField}`}>
+                <input
+                  ref={titleInputRef}
+                  aria-label="Titel"
+                  placeholder={title === '' ? 'Titel' : undefined}
+                  value={title}
+                  required
+                  onChange={event => setTitle(event.target.value)}
+                />
+              </div>
+              <div className={styles.sourceFields}>
+                <div className={styles.field}>
+                  <select aria-label="Kochbuch" value={cookbookId} onChange={event => setCookbookId(event.target.value)}>
+                    <option value="">Kein Kochbuch</option>
+                    {cookbooks.map(cookbook => <option key={cookbook.id} value={cookbook.id}>{cookbook.title}</option>)}
+                  </select>
+                </div>
+                <div className={styles.field}>
+                  <input
+                    aria-label="Seite"
+                    placeholder={pageNumber === '' ? 'Seite' : undefined}
+                    type="number"
+                    min="1"
+                    step="1"
+                    inputMode="numeric"
+                    value={pageNumber}
+                    onChange={event => setPageNumber(event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
           <div className={styles.expandedContent} inert={!displayedExpanded && dragHeight === null}>
-            <RecipeActions recipeId={recipe.id} hasPhoto={recipe.photoFileId !== null} pending={pending} photoPending={photoPending} deletionPending={deletionPending} onPhoto={onPhoto} onDelete={onDelete} />
+            <RecipeActions
+              hasPhoto={recipe.photoFileId !== null}
+              pending={pending}
+              photoPending={photoPending}
+              deletionPending={deletionPending}
+              editing={editing}
+              editPending={editPending}
+              onEdit={onEdit}
+              onCancel={onCancel}
+              onPhoto={onPhoto}
+              onDelete={onDelete}
+            />
             {pending && <p className={styles.operationMessage} role="status">Wird verarbeitet …</p>}
             {error && <p className={styles.operationMessage} role="alert">{error}</p>}
           </div>
-        </div>
+        </form>
       </section>
     </div>
   );
