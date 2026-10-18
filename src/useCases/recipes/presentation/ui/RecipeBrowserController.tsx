@@ -95,11 +95,8 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
           <RecipeCarousel recipes={withPhotos} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
           <RecipeSheet
             recipe={activeRecipe}
-            index={activeIndex}
-            count={withPhotos.length}
             expanded={expanded}
             onExpandedChange={setExpanded}
-            onNavigate={index => changeActive(withPhotos[index].id)}
             onPhoto={(file) => {
               setOperationError(null);
               photoMutation.mutate({ id: activeRecipe.id, file });

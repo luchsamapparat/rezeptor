@@ -1,6 +1,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { Link } from 'react-router';
 import cookbooksIcon from './assets/cookbooks.svg';
+import closeIcon from './assets/close.svg';
 import logoutIcon from './assets/logout.svg';
 import menuIcon from './assets/menu.svg';
 import rememberIcon from './assets/remember.svg';
@@ -75,7 +76,7 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
           aria-expanded={open}
           onClick={() => onOpenChange(!open)}
         >
-          {open ? <span className={styles.close} aria-hidden="true">×</span> : <img src={menuIcon} alt="" width="30" height="30" />}
+          <img className={open ? undefined : styles.menuIcon} src={open ? closeIcon : menuIcon} alt="" width={open ? 30 : 29} height={open ? 30 : 25} />
         </button>
       </div>
     </>
