@@ -5,7 +5,7 @@ import { identifierSchema } from '../../../../application/model/identifier';
 import { type ApplicationContext } from '../../../../application/server/di';
 import { validator } from '../../../../common/server/validation';
 import { addCookbook, editCookbook, getCookbook, getCookbooks, identifyCookbook, removeCookbook } from '../../cookbookManagement';
-import { barcodeExtractionService, bookMetadataService, cookbookRepository } from '../../infrastructure/di';
+import { barcodeExtractionService, bookMetadataServices, cookbookRepository } from '../../infrastructure/di';
 
 const cookbookPath = '/cookbooks';
 
@@ -31,7 +31,7 @@ const identifyCookbookDtoSchema = z.object({ backCoverFile: z.instanceof(File) }
 export const cookbookApi = new Hono<{ Variables: ApplicationContext }>()
   .basePath(cookbookPath)
   .use(cookbookRepository.middleware('cookbookRepository'))
-  .use(bookMetadataService.middleware('bookMetadataService'))
+  .use(bookMetadataServices.middleware('bookMetadataServices'))
   .use(barcodeExtractionService.middleware('barcodeExtractionService'))
   .get(
     '/',

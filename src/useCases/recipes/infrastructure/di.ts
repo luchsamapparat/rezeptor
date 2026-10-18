@@ -3,8 +3,10 @@ import { books } from '@googleapis/books';
 import { AzureOpenAI } from 'openai';
 import { createChildLogger, database, dependency, fileRepositoryFactory, logger } from '../../../application/server/di';
 import type { Logger } from '../../../application/server/logging';
+import type { BookMetadataService } from '../cookbookManagement';
 import { AzureDocumentAnalysisBarcodeExtractionService } from './AzureDocumentAnalysisBarcodeExtractionService';
 import { AzureOpenAIRecipeExtractionService } from './AzureOpenAIRecipeExtractionService';
+import { DnbBookMetadataService } from './DnbBookMetadataService';
 import { GoogleBooksBookMetadataService } from './GoogleBooksBookMetadataService';
 import { CookbookDatabaseRepository } from './persistence/CookbookDatabaseRepository';
 import { RecipeDatabaseRepository } from './persistence/RecipeDatabaseRepository';
@@ -21,10 +23,14 @@ export const cookbookRepository = dependency(async (_, c) => {
 }, 'request');
 
 const googleBooks = dependency(env => books({ version: 'v1', auth: env.googleBooks.key }));
-export const bookMetadataService = dependency(async (_, c) => {
+export const bookMetadataServices = dependency(async (_, c): Promise<BookMetadataService[]> => {
   const books = await googleBooks.resolve(c);
-  const logger = await createChildLogger(c, useCaseLogger, { component: 'GoogleBooksBookMetadataService' });
-  return new GoogleBooksBookMetadataService(books, logger);
+  const dnbLogger = await createChildLogger(c, useCaseLogger, { component: 'DnbBookMetadataService' });
+  const googleBooksLogger = await createChildLogger(c, useCaseLogger, { component: 'GoogleBooksBookMetadataService' });
+  return [
+    new DnbBookMetadataService(fetch, dnbLogger),
+    new GoogleBooksBookMetadataService(books, googleBooksLogger),
+  ];
 });
 
 const azureAiFormRecognizer = dependency(env => new DocumentAnalysisClient(

@@ -2,13 +2,14 @@ import type { DocumentAnalysisClient } from '@azure/ai-form-recognizer';
 import { faker } from '@faker-js/faker';
 import type { books_v1 } from '@googleapis/books';
 import { omit } from 'lodash-es';
-import { describe, expect } from 'vitest';
+import { describe, expect, vi } from 'vitest';
 import { loadTestFile } from '../../../tests/data/testFile';
 import { beforeEach, it } from '../../../tests/integrationTest';
 import { loggerMock } from '../../../tests/mocks/logger.mock';
-import type { BookMetadata } from '../cookbookManagement';
+import { ExternalServiceError } from '../../../common/server/error';
+import type { BookMetadata, BookMetadataService } from '../cookbookManagement';
 import { AzureDocumentAnalysisBarcodeExtractionService } from '../infrastructure/AzureDocumentAnalysisBarcodeExtractionService';
-import { barcodeExtractionService, bookMetadataService } from '../infrastructure/di';
+import { barcodeExtractionService, bookMetadataServices } from '../infrastructure/di';
 import { GoogleBooksBookMetadataService } from '../infrastructure/GoogleBooksBookMetadataService';
 import { CookbookDatabaseRepository } from '../infrastructure/persistence/CookbookDatabaseRepository';
 import { cookbookAuthorEntityMockDataFactory } from './data/cookbookAuthorMockData';
@@ -236,6 +237,7 @@ describe('Cookbooks API Integration Tests', () => {
   describe('POST /api/cookbooks/identification', () => {
     beforeEach(() => {
       barcodeExtractionService.injection(new AzureDocumentAnalysisBarcodeExtractionService(documentAnalysisClientMock as unknown as DocumentAnalysisClient, loggerMock));
+      bookMetadataServices.injection([new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock)]);
     });
 
     it('should identify cookbook from back cover image and return dummy data', async ({ app }) => {
@@ -260,7 +262,13 @@ describe('Cookbooks API Integration Tests', () => {
       const formData = new FormData();
       formData.append('backCoverFile', testFile);
 
-      bookMetadataService.injection(new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock));
+      const unavailableProvider: BookMetadataService = {
+        findBook: vi.fn().mockResolvedValue(null),
+      };
+      bookMetadataServices.injection([
+        unavailableProvider,
+        new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock),
+      ]);
 
       const response = await app
         .request(new Request('http://localhost/api/cookbooks/identification', {
@@ -281,6 +289,78 @@ describe('Cookbooks API Integration Tests', () => {
       expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
         q: `isbn:${expectedEan13}`,
       });
+      expect(unavailableProvider.findBook).toHaveBeenCalledWith(expectedEan13);
+    });
+
+    it('should stop searching after the first provider finds a book', async ({ app }) => {
+      // given:
+      const expectedBookMetadata: BookMetadata = {
+        title: addCookbookDtoMock.title,
+        authors: addCookbookDtoMock.authors.map(({ name }) => name),
+        isbn10: addCookbookDtoMock.isbn10?.toString() ?? null,
+        isbn13: addCookbookDtoMock.isbn13?.toString() ?? null,
+      };
+      const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+      const matchingProvider: BookMetadataService = {
+        findBook: vi.fn().mockResolvedValue(expectedBookMetadata),
+      };
+      const laterProvider: BookMetadataService = {
+        findBook: vi.fn(),
+      };
+
+      setupAzureFormRecognizerMock({ ean13: expectedEan13 });
+      bookMetadataServices.injection([matchingProvider, laterProvider]);
+
+      const formData = new FormData();
+      formData.append('backCoverFile', await loadTestFile('backcover1.jpg'));
+
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(expectedBookMetadata);
+      expect(matchingProvider.findBook).toHaveBeenCalledWith(expectedEan13);
+      expect(laterProvider.findBook).not.toHaveBeenCalled();
+    });
+
+    it('should continue searching when a provider fails', async ({ app }) => {
+      // given:
+      const expectedBookMetadata: BookMetadata = {
+        title: addCookbookDtoMock.title,
+        authors: addCookbookDtoMock.authors.map(({ name }) => name),
+        isbn10: addCookbookDtoMock.isbn10?.toString() ?? null,
+        isbn13: addCookbookDtoMock.isbn13?.toString() ?? null,
+      };
+      const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+      const matchingProvider: BookMetadataService = {
+        findBook: vi.fn().mockResolvedValue(expectedBookMetadata),
+      };
+
+      setupAzureFormRecognizerMock({ ean13: expectedEan13 });
+      googleBookVolumesListMockFn.mockRejectedValueOnce(new Error('Google Books unavailable.'));
+      bookMetadataServices.injection([
+        new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock),
+        matchingProvider,
+      ]);
+
+      const formData = new FormData();
+      formData.append('backCoverFile', await loadTestFile('backcover1.jpg'));
+
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual(expectedBookMetadata);
+      expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({ q: `isbn:${expectedEan13}` });
+      expect(matchingProvider.findBook).toHaveBeenCalledWith(expectedEan13);
     });
 
     it('should return 422 when the image contains no EAN-13 barcode ', async ({ app }) => {
@@ -325,6 +405,14 @@ describe('Cookbooks API Integration Tests', () => {
       });
       setupGoogleBooksMock(null);
 
+      const otherProvider: BookMetadataService = {
+        findBook: vi.fn().mockResolvedValue(null),
+      };
+      bookMetadataServices.injection([
+        otherProvider,
+        new GoogleBooksBookMetadataService(googleBooksMock as unknown as books_v1.Books, loggerMock),
+      ]);
+
       const testFile = await loadTestFile('backcover1.jpg');
 
       // when:
@@ -351,6 +439,36 @@ describe('Cookbooks API Integration Tests', () => {
       expect(googleBookVolumesListMockFn).toHaveBeenCalledWith({
         q: `isbn:${expectedEan13}`,
       });
+      expect(otherProvider.findBook).toHaveBeenCalledWith(expectedEan13);
+    });
+
+    it('should return 500 when all metadata providers fail', async ({ app }) => {
+      // given:
+      const expectedEan13 = faker.commerce.isbn({ variant: 13, separator: '' });
+      const firstProvider: BookMetadataService = {
+        findBook: vi.fn().mockRejectedValue(new ExternalServiceError('First provider unavailable.')),
+      };
+      const secondProvider: BookMetadataService = {
+        findBook: vi.fn().mockRejectedValue(new ExternalServiceError('Second provider unavailable.')),
+      };
+
+      setupAzureFormRecognizerMock({ ean13: expectedEan13 });
+      bookMetadataServices.injection([firstProvider, secondProvider]);
+
+      const formData = new FormData();
+      formData.append('backCoverFile', await loadTestFile('backcover1.jpg'));
+
+      // when:
+      const response = await app.request(new Request('http://localhost/api/cookbooks/identification', {
+        method: 'POST',
+        body: formData,
+      }));
+
+      // then:
+      expect(response.status).toBe(500);
+      expect(await response.json()).toMatchObject({ error: 'First provider unavailable.' });
+      expect(firstProvider.findBook).toHaveBeenCalledWith(expectedEan13);
+      expect(secondProvider.findBook).toHaveBeenCalledWith(expectedEan13);
     });
 
     it('should return 422 when no file is provided', async ({ app }) => {

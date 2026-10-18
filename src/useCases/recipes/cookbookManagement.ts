@@ -1,6 +1,6 @@
 import { isNull } from 'lodash-es';
 import type { Identifier } from '../../application/model/identifier';
-import { NotFoundError, ValidationError } from '../../common/server/error';
+import { ExternalServiceError, NotFoundError, ValidationError } from '../../common/server/error';
 
 /**
  * Repository interface for cookbook persistence operations.
@@ -149,7 +149,7 @@ export const getCookbooks = async ({ cookbookRepository }: GetCookbooksArgs) => 
 
 type IdentifyCookbookArgs = {
   barcodeExtractionService: BarcodeExtractionService;
-  bookMetadataService: BookMetadataService;
+  bookMetadataServices: BookMetadataService[];
   backCoverFile: File;
 };
 
@@ -159,26 +159,43 @@ type IdentifyCookbookArgs = {
  *
  * @param args - Arguments containing services and the back cover file
  * @param args.barcodeExtractionService - Service to extract barcode from image
- * @param args.bookMetadataService - Service to retrieve book metadata
+ * @param args.bookMetadataServices - Ordered services to retrieve book metadata
  * @param args.backCoverFile - Image file containing the cookbook's back cover
  * @returns Promise resolving to the book metadata
  * @throws {ValidationError} When no EAN-13 barcode is found in the image
  * @throws {NotFoundError} When no book metadata is found for the extracted barcode
  */
-export const identifyCookbook = async ({ barcodeExtractionService, bookMetadataService, backCoverFile }: IdentifyCookbookArgs) => {
+export const identifyCookbook = async ({ barcodeExtractionService, bookMetadataServices, backCoverFile }: IdentifyCookbookArgs) => {
   const { ean13 } = await barcodeExtractionService.extractBarcode(backCoverFile);
 
   if (isNull(ean13)) {
     throw new ValidationError('No EAN-13 barcode found in uploaded image.');
   }
 
-  const book = await bookMetadataService.findBook(ean13);
+  let providerError: ExternalServiceError | null = null;
 
-  if (isNull(book)) {
-    throw new NotFoundError(`No book found for the extracted EAN-13 barcode ${ean13}.`);
+  for (const bookMetadataService of bookMetadataServices) {
+    try {
+      const book = await bookMetadataService.findBook(ean13);
+
+      if (!isNull(book)) {
+        return book;
+      }
+    }
+    catch (error) {
+      if (!(error instanceof ExternalServiceError)) {
+        throw error;
+      }
+
+      providerError ??= error;
+    }
   }
 
-  return book;
+  if (!isNull(providerError)) {
+    throw providerError;
+  }
+
+  throw new NotFoundError(`No book found for the extracted EAN-13 barcode ${ean13}.`);
 };
 
 type RemoveCookbookArgs = {

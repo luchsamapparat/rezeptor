@@ -1,7 +1,7 @@
 import { type books_v1 } from '@googleapis/books';
 import { isEmpty, isUndefined } from 'lodash-es';
 import type { Logger } from '../../../application/server/logging';
-import { ValidationError } from '../../../common/server/error';
+import { ExternalServiceError, ValidationError } from '../../../common/server/error';
 import type { BookMetadata, BookMetadataService } from '../cookbookManagement';
 
 export class GoogleBooksBookMetadataService implements BookMetadataService {
@@ -19,16 +19,24 @@ export class GoogleBooksBookMetadataService implements BookMetadataService {
     }
     this.log.debug({ 'rezeptor.book.isbn': sanitizedIsbn }, 'Searching for book by ISBN');
 
-    const volumes = await this.apiClient.volumes.list({
-      q: `isbn:${sanitizedIsbn}`,
-    });
+    let volumes: books_v1.Schema$Volumes;
 
-    if (isEmpty(volumes.data.items)) {
+    try {
+      const response = await this.apiClient.volumes.list({
+        q: `isbn:${sanitizedIsbn}`,
+      });
+      volumes = response.data;
+    }
+    catch (error) {
+      throw new ExternalServiceError('Failed to communicate with Google Books API.', error);
+    }
+
+    if (isEmpty(volumes.items)) {
       this.log.debug({ 'rezeptor.book.isbn': sanitizedIsbn }, 'No book found for ISBN');
       return null;
     }
 
-    const volumeInfo = volumes.data.items?.[0].volumeInfo ?? undefined;
+    const volumeInfo = volumes.items?.[0].volumeInfo ?? undefined;
 
     if (isUndefined(volumeInfo) || isUndefined(volumeInfo?.title)) {
       this.log.debug({ 'rezeptor.book.isbn': sanitizedIsbn }, 'Book found but volume info incomplete');
