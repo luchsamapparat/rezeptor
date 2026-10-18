@@ -40,7 +40,7 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
       {recipes.map((recipe, slideIndex) => (
         <SwiperSlide key={recipe.id} className={styles.slide}>
           <img
-            className={`${styles.photo}${recipe.photoFileId === null ? ` ${styles.placeholder}` : ''}`}
+            className={styles.photo}
             src={recipe.photoFileId === null ? placeholderRecipePhoto : `/api/recipes/${recipe.id}/photo?v=${encodeURIComponent(recipe.photoFileId)}`}
             alt={recipe.photoFileId === null ? '' : `Foto von ${recipe.title}`}
             loading={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1)) ? 'eager' : 'lazy'}
