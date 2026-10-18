@@ -1,0 +1,155 @@
+.overlay {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: stretch center;
+  padding: calc(94px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
+  background: rgb(0 0 0 / 18%);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  animation: feature-overlay-in 240ms ease both;
+}
+
+.overlay[data-closing] {
+  pointer-events: none;
+  animation: feature-overlay-out 240ms ease both;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.backdrop:disabled {
+  cursor: wait;
+}
+
+.close {
+  position: absolute;
+  z-index: 1;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  right: 22px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding: 9px;
+  border: 0;
+  border-radius: 50%;
+  place-items: center;
+  color: #fff;
+  background: transparent;
+  filter: drop-shadow(0 1px 5px rgb(0 0 0 / 45%));
+  cursor: pointer;
+}
+
+.close:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 560px);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 28px;
+  background: rgb(255 255 255 / 80%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  box-shadow: inset 0 0 2px rgb(255 255 255 / 30%);
+  animation: feature-panel-in 260ms ease-out both;
+}
+
+.overlay[data-closing] .panel {
+  animation: feature-panel-out 260ms ease-in both;
+}
+
+.header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 16px;
+  padding: 23px 24px 0;
+}
+
+.header svg {
+  display: block;
+  flex: none;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.content {
+  min-height: 0;
+  flex: 1;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@keyframes feature-overlay-in {
+  from {
+    background: transparent;
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes feature-overlay-out {
+  to {
+    background: transparent;
+    -webkit-backdrop-filter: blur(0);
+    backdrop-filter: blur(0);
+  }
+}
+
+@keyframes feature-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes feature-panel-out {
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@media (min-width: 700px) {
+  .overlay {
+    padding-right: 32px;
+    padding-bottom: 32px;
+    padding-left: 32px;
+  }
+
+  .panel {
+    max-height: 900px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .panel {
+    animation: none;
+  }
+}

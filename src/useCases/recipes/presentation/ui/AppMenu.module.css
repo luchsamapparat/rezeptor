@@ -63,11 +63,12 @@
   max-height: 100%;
   padding: 32px;
   overflow: auto;
+  border: 1px solid var(--recipe-glass-border);
   border-radius: 30px;
   background: var(--recipe-glass);
-  -webkit-backdrop-filter: blur(15px);
-  backdrop-filter: blur(15px);
-  box-shadow: inset 0 0 2px rgb(0 0 0 / 30%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  box-shadow: inset 0 0 2px rgb(255 255 255 / 30%);
   animation: menu-content-in 240ms 70ms ease both;
 }
 
@@ -83,8 +84,13 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  padding: 0;
+  border: 0;
   color: rgb(0 0 0 / 95%);
+  font: inherit;
+  background: transparent;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .link svg {

@@ -1,5 +1,5 @@
 .browser {
-  --recipe-glass: rgb(255 255 255 / 80%);
+  --recipe-glass: rgb(255 255 255 / 70%);
   --recipe-glass-border: rgb(255 255 255 / 30%);
   --recipe-ink: #000;
 
@@ -19,12 +19,6 @@
 .browser button,
 .browser a {
   -webkit-tap-highlight-color: transparent;
-}
-
-.browser button:focus-visible,
-.browser a:focus-visible {
-  outline: 2px solid #1d4ed8;
-  outline-offset: 3px;
 }
 
 .background {

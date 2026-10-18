@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import 'swiper/css';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { addRecipePhoto, recipesQuery, removeRecipe } from '../api/client';
+import { AddRecipeOverlay } from './AddRecipeOverlay';
 import { AppMenu } from './AppMenu';
 import { RecipeCarousel } from './RecipeCarousel';
 import { RecipeSheet } from './RecipeSheet';
@@ -21,6 +22,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [addRecipeOpen, setAddRecipeOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [operationError, setOperationError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -94,7 +96,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     return (
       <>
         <div className={styles.background} inert={menuOpen || deleteOpen}>
-          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
+          <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen || addRecipeOpen} onActiveChange={changeActive} />
           <button
             className={`${styles.addPhoto} swiper-no-swiping`}
             type="button"
@@ -155,7 +157,26 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   return (
     <main className={styles.browser} data-recipe-browser>
       {renderContent()}
-      <AppMenu open={menuOpen} onOpenChange={setMenuOpen} triggerRef={triggerRef} />
+      <AppMenu
+        open={menuOpen}
+        onAddRecipe={() => {
+          setMenuOpen(false);
+          setAddRecipeOpen(true);
+        }}
+        onOpenChange={setMenuOpen}
+        restoreFocus={!addRecipeOpen}
+        triggerRef={triggerRef}
+      />
+      <AddRecipeOverlay
+        open={addRecipeOpen}
+        onClose={() => setAddRecipeOpen(false)}
+        onRecipeCreated={(recipeId) => {
+          setActiveId(recipeId);
+          setExpanded(false);
+          setAddRecipeOpen(false);
+        }}
+        returnFocusRef={triggerRef}
+      />
     </main>
   );
 }

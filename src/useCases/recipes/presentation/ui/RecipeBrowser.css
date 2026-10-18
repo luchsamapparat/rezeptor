@@ -6,3 +6,8 @@ body:has([data-recipe-browser]) {
   overflow: hidden;
   overscroll-behavior: none;
 }
+
+[data-recipe-browser] :focus,
+[data-recipe-browser] :focus-visible {
+  outline: none;
+}

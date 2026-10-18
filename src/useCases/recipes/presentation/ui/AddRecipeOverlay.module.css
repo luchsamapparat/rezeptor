@@ -1,0 +1,310 @@
+.step {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  padding: 34px 24px 24px;
+}
+
+.stepViewport {
+  display: grid;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.stepPane {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition:
+    transform 320ms cubic-bezier(.22, 1, .36, 1),
+    opacity 260ms ease,
+    visibility 0s linear 320ms;
+}
+
+.stepViewport[data-step="cookbook"] .cookbookPane,
+.stepViewport[data-step="photo"] .photoPane {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0);
+  transition-delay: 0s;
+}
+
+.stepViewport[data-step="cookbook"] .photoPane {
+  transform: translate3d(14px, 0, 0);
+}
+
+.stepViewport[data-step="photo"] .cookbookPane {
+  transform: translate3d(-14px, 0, 0);
+}
+
+.intro h2,
+.loading h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.intro {
+  text-align: center;
+}
+
+.intro p,
+.photoPrompt > p,
+.loading p {
+  margin: 10px 0 0;
+  color: rgb(0 0 0 / 64%);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cookbookList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 28px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.cookbook {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 13px;
+  min-height: 56px;
+  padding: 14px 16px;
+  border: 1px solid rgb(0 0 0 / 14%);
+  border-radius: 14px;
+  color: #111;
+  font: inherit;
+  text-align: left;
+  background: rgb(255 255 255 / 38%);
+  cursor: pointer;
+}
+
+.cookbook svg {
+  flex: none;
+}
+
+.cookbookText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cookbookText strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cookbookText small {
+  overflow: hidden;
+  color: rgb(0 0 0 / 58%);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.newCookbook {
+  align-self: center;
+  margin: 22px 0;
+  min-height: 96px;
+}
+
+.newCookbook:visited {
+  color: #111;
+}
+
+.secondaryButton {
+  min-height: 48px;
+  padding: 12px 20px;
+  border-radius: 24px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  border: 1px solid #111;
+  color: #111;
+  background: transparent;
+}
+
+.empty {
+  margin: 36px 0 0;
+  color: rgb(0 0 0 / 58%);
+  font-size: 14px;
+  text-align: center;
+}
+
+.centerState,
+.loading {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.centerState {
+  gap: 18px;
+  font-size: 14px;
+}
+
+.centerState p {
+  margin: 0;
+}
+
+.changeCookbook {
+  max-width: 360px;
+  margin: 18px 0 0;
+  color: rgb(0 0 0 / 64%);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.changeCookbook strong {
+  font-weight: 700;
+}
+
+.changeCookbookCta {
+  min-height: 136px;
+  margin-top: 24px;
+}
+
+.photoPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 24px;
+}
+
+.iconCta {
+  display: flex;
+  width: min(100%, 280px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  border: 0;
+  color: #111;
+  font: inherit;
+  text-decoration: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.iconCta span {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.photoCta {
+  min-height: 136px;
+}
+
+.fileInput,
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.error {
+  padding: 14px;
+  border: 1px solid rgb(150 24 24 / 25%);
+  border-radius: 12px;
+  color: #7f1d1d;
+  font-size: 13px;
+  background: rgb(254 226 226 / 55%);
+}
+
+.error p {
+  margin: 0;
+}
+
+.errorDetail {
+  margin-top: 5px !important;
+  opacity: .72;
+}
+
+.loading {
+  padding-bottom: 80px;
+}
+
+.loadingIcons {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 28px;
+}
+
+.loadingIcon {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  opacity: 0;
+  animation: food-cycle 5s infinite;
+}
+
+.loadingIcon:nth-child(2) { animation-delay: 1s; }
+.loadingIcon:nth-child(3) { animation-delay: 2s; }
+.loadingIcon:nth-child(4) { animation-delay: 3s; }
+.loadingIcon:nth-child(5) { animation-delay: 4s; }
+
+@keyframes food-cycle {
+  0% {
+    opacity: 0;
+    transform: rotate(-18deg) scale(.65);
+  }
+
+  8%,
+  16% {
+    opacity: 1;
+    transform: rotate(6deg) scale(1);
+  }
+
+  24%,
+  100% {
+    opacity: 0;
+    transform: rotate(22deg) scale(.65);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loadingIcon {
+    animation: none;
+  }
+
+  .stepPane {
+    transition: none;
+  }
+
+  .loadingIcon:first-child {
+    opacity: 1;
+  }
+}

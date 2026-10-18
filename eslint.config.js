@@ -20,6 +20,7 @@ export default defineConfig([
       'no-empty-pattern': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       '@stylistic/eol-last': 'off',
+      '@stylistic/jsx-one-expression-per-line': 'off',
     },
     settings: {
       react: {

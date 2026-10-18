@@ -6,11 +6,15 @@ import styles from './AppMenu.module.css';
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAddRecipe: () => void;
+  restoreFocus: boolean;
   triggerRef: RefObject<HTMLButtonElement | null>;
 };
 
-export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
+export function AppMenu({ open, onAddRecipe, onOpenChange, restoreFocus, triggerRef }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef(restoreFocus);
+  restoreFocusRef.current = restoreFocus;
 
   useEffect(() => {
     if (!open) return;
@@ -34,7 +38,7 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      triggerRef.current?.focus();
+      if (restoreFocusRef.current) triggerRef.current?.focus();
     };
   }, [open, onOpenChange, triggerRef]);
 
@@ -51,10 +55,10 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
                 <LibraryBig aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Kochbücher</span>
               </Link>
-              <Link to="/admin/recipes/from-photo" className={styles.link}>
+              <button className={styles.link} type="button" onClick={onAddRecipe}>
                 <BookMarked aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Rezept merken</span>
-              </Link>
+              </button>
               <a href={signOutUrl} className={styles.link}>
                 <LogOut aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Abmelden</span>
@@ -73,7 +77,7 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
           onClick={() => onOpenChange(!open)}
         >
           {open
-            ? <X className={styles.triggerIcon} aria-hidden="true" size={30} strokeWidth={1.5} />
+            ? <X aria-hidden="true" size={30} strokeWidth={1.5} />
             : <Hamburger className={styles.triggerIcon} aria-hidden="true" size={29} strokeWidth={1.5} />}
         </button>
       </div>
