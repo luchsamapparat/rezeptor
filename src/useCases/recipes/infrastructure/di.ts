@@ -20,7 +20,7 @@ export const cookbookRepository = dependency(async (_, c) => {
   return new CookbookDatabaseRepository(client, logger);
 }, 'request');
 
-const googleBooks = dependency(env => books({ version: 'v1', key: env.googleBooks.key }));
+const googleBooks = dependency(env => books({ version: 'v1', auth: env.googleBooks.key }));
 export const bookMetadataService = dependency(async (_, c) => {
   const books = await googleBooks.resolve(c);
   const logger = await createChildLogger(c, useCaseLogger, { component: 'GoogleBooksBookMetadataService' });
