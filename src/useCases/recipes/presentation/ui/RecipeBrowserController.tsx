@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ImagePlus } from 'lucide-react';
+import { ImagePlus, LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { generatePath, useLocation, useNavigate, useParams } from 'react-router';
 import 'swiper/css';
@@ -160,7 +160,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             disabled={activeRecipe.photoFileId !== null || photoMutation.isPending || deleteMutation.isPending}
             onClick={choosePhoto}
           >
-            <ImagePlus aria-hidden="true" size={32} strokeWidth={1.5} />
+            {photoMutation.isPending
+              ? <LoaderCircle className={styles.spinner} aria-hidden="true" size={32} strokeWidth={1.5} />
+              : <ImagePlus aria-hidden="true" size={32} strokeWidth={1.5} />}
             <span>Foto hinzufügen</span>
           </button>
           <input
@@ -185,6 +187,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             onPhoto={choosePhoto}
             onDelete={togglePendingDeletion}
             pending={photoMutation.isPending || deleteMutation.isPending}
+            photoPending={photoMutation.isPending}
             deletionPending={pendingDeleteId === activeRecipe.id}
             error={operationError}
           />
