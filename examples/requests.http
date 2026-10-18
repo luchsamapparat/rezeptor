@@ -10,12 +10,19 @@ Content-Type: application/json
 {
   "title": "Flavor",
   "authors": [
-    "Yotam Ottolenghi", 
-    "Ixta Belfrage"
+    {
+      "name": "Yotam Ottolenghi"
+    },
+    {
+      "name": "Ixta Belfrage"
+    }
   ],
   "isbn10": "3831040869",
-  "isbn13": "9783831484100"
+  "isbn13": "9783831040865"
 }
+
+### get specific cookbook (replace :id with actual cookbook ID)
+GET http://localhost:3000/api/cookbooks/:id
 
 ### edit cookbook (replace :id with actual cookbook ID)
 PATCH http://localhost:3000/api/cookbooks/:id
@@ -24,8 +31,12 @@ Content-Type: application/json
 {
   "title": "Flavor: More than 100 Simple Recipes for a More Complex World",
   "authors": [
-    "Yotam Ottolenghi", 
-    "Ixta Belfrage"
+    {
+      "name": "Yotam Ottolenghi"
+    },
+    {
+      "name": "Ixta Belfrage"
+    }
   ]
 }
 
