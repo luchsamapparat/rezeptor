@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import { useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper/types';
@@ -40,7 +41,7 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
       {recipes.map((recipe, slideIndex) => (
         <SwiperSlide key={recipe.id} className={styles.slide}>
           <img
-            className={styles.photo}
+            className={clsx(styles.photo, { [styles.placeholder]: recipe.photoFileId === null })}
             src={recipe.photoFileId === null ? placeholderRecipePhoto : `/api/recipes/${recipe.id}/photo?v=${encodeURIComponent(recipe.photoFileId)}`}
             alt={recipe.photoFileId === null ? '' : `Foto von ${recipe.title}`}
             loading={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1)) ? 'eager' : 'lazy'}

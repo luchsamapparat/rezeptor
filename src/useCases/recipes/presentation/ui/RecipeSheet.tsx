@@ -8,7 +8,7 @@ type Props = {
   recipe: RecipeDto;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
-  onPhoto: (file: File) => void;
+  onPhoto: () => void;
   onDelete: () => void;
   pending: boolean;
   error: string | null;
@@ -141,7 +141,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
             {source && <p>{source}</p>}
           </div>
           <div className={styles.expandedContent} inert={!expanded && dragHeight === null}>
-            <RecipeActions recipeId={recipe.id} pending={pending} onPhoto={onPhoto} onDelete={onDelete} />
+            <RecipeActions recipeId={recipe.id} hasPhoto={recipe.photoFileId !== null} pending={pending} onPhoto={onPhoto} onDelete={onDelete} />
             {pending && <p className={styles.operationMessage} role="status">Wird verarbeitet …</p>}
             {error && <p className={styles.operationMessage} role="alert">{error}</p>}
           </div>

@@ -19,6 +19,6 @@
 }
 
 .placeholder {
-  /* transform: scale(1.2);
-  filter: blur(48px); */
+  transform: scale(1.2);
+  filter: blur(24px);
 }

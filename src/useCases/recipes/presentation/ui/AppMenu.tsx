@@ -1,10 +1,6 @@
+import { BookMarked, Hamburger, LibraryBig, LogOut, X } from 'lucide-react';
 import { useEffect, useRef, type RefObject } from 'react';
 import { Link } from 'react-router';
-import cookbooksIcon from './assets/cookbooks.svg';
-import closeIcon from './assets/close.svg';
-import logoutIcon from './assets/logout.svg';
-import menuIcon from './assets/menu.svg';
-import rememberIcon from './assets/remember.svg';
 import styles from './AppMenu.module.css';
 
 type Props = {
@@ -52,15 +48,15 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
           <div className={styles.panel} role="dialog" aria-modal="true" aria-label="Menü" ref={panelRef}>
             <nav className={styles.links} aria-label="Hauptmenü">
               <Link to="/admin/cookbooks" className={styles.link}>
-                <img src={cookbooksIcon} alt="" width="25" height="25" />
+                <LibraryBig aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Kochbücher</span>
               </Link>
               <Link to="/admin/recipes/from-photo" className={styles.link}>
-                <img src={rememberIcon} alt="" width="25" height="25" />
+                <BookMarked aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Rezept merken</span>
               </Link>
               <a href={signOutUrl} className={styles.link}>
-                <img src={logoutIcon} alt="" width="25" height="25" />
+                <LogOut aria-hidden="true" size={25} strokeWidth={1.5} />
                 <span>Abmelden</span>
               </a>
             </nav>
@@ -76,7 +72,9 @@ export function AppMenu({ open, onOpenChange, triggerRef }: Props) {
           aria-expanded={open}
           onClick={() => onOpenChange(!open)}
         >
-          <img className={open ? undefined : styles.menuIcon} src={open ? closeIcon : menuIcon} alt="" width={open ? 30 : 29} height={open ? 30 : 25} />
+          {open
+            ? <X className={styles.triggerIcon} aria-hidden="true" size={30} strokeWidth={1.5} />
+            : <Hamburger className={styles.triggerIcon} aria-hidden="true" size={29} strokeWidth={1.5} />}
         </button>
       </div>
     </>

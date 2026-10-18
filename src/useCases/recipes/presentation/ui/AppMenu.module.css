@@ -26,13 +26,13 @@
   pointer-events: auto;
 }
 
-.trigger img {
+.trigger svg {
   display: block;
   flex: none;
 }
 
-.menuIcon {
-  filter: invert(1) drop-shadow(0 0 5px rgb(0 0 0 / 45%));
+.triggerIcon {
+  filter: drop-shadow(0 0 5px rgb(0 0 0 / 45%));
 }
 
 .overlay {
@@ -87,7 +87,7 @@
   text-decoration: none;
 }
 
-.link img {
+.link svg {
   display: block;
 }
 

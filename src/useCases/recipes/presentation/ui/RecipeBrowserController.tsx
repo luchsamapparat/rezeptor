@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ImagePlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import 'swiper/css';
 import { getQueryClient } from '../../../../application/client/queryClient';
@@ -24,6 +25,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const [operationError, setOperationError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const previousIndex = useRef(0);
 
   const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
@@ -74,6 +76,8 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
     setOperationError(null);
   };
 
+  const choosePhoto = () => photoInputRef.current?.click();
+
   const renderContent = () => {
     if (isPending) return <div className={styles.state} role="status"><h1>Rezepte werden geladen …</h1></div>;
     if (error) return (
@@ -91,14 +95,37 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       <>
         <div className={styles.background} inert={menuOpen || deleteOpen}>
           <RecipeCarousel recipes={recipes} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
+          {activeRecipe.photoFileId === null && (
+            <button
+              className={`${styles.addPhoto} swiper-no-swiping`}
+              type="button"
+              disabled={photoMutation.isPending || deleteMutation.isPending}
+              onClick={choosePhoto}
+            >
+              <ImagePlus aria-hidden="true" size={32} strokeWidth={1.5} />
+              <span>Foto hinzufügen</span>
+            </button>
+          )}
+          <input
+            ref={photoInputRef}
+            className={styles.fileInput}
+            type="file"
+            accept="image/*"
+            aria-label="Rezeptfoto auswählen"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                setOperationError(null);
+                photoMutation.mutate({ id: activeRecipe.id, file });
+              }
+              event.target.value = '';
+            }}
+          />
           <RecipeSheet
             recipe={activeRecipe}
             expanded={expanded}
             onExpandedChange={setExpanded}
-            onPhoto={(file) => {
-              setOperationError(null);
-              photoMutation.mutate({ id: activeRecipe.id, file });
-            }}
+            onPhoto={choosePhoto}
             onDelete={() => {
               setOperationError(null);
               setDeleteOpen(true);

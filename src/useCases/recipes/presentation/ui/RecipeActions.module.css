@@ -20,7 +20,7 @@
   cursor: pointer;
 }
 
-.action img {
+.action svg {
   display: block;
   flex: none;
 }
@@ -37,12 +37,4 @@
 .action:disabled {
   cursor: wait;
   opacity: .45;
-}
-
-.fileInput {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
 }
