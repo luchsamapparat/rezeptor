@@ -1,0 +1,114 @@
+.browser {
+  --recipe-glass: rgb(255 255 255 / 80%);
+  --recipe-glass-border: rgb(255 255 255 / 30%);
+  --recipe-ink: #000;
+
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  color: var(--recipe-ink);
+  font-family: Inter, Arial, sans-serif;
+  background: #181818;
+}
+
+.browser,
+.browser * {
+  box-sizing: border-box;
+}
+
+.browser button,
+.browser a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.browser button:focus-visible,
+.browser a:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 3px;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100%;
+  padding: 32px;
+  color: white;
+  text-align: center;
+  background: linear-gradient(145deg, #282e2a, #101412);
+}
+
+.state h1 {
+  margin: 0;
+  font-size: clamp(24px, 5vw, 36px);
+}
+
+.state p {
+  margin: 0;
+}
+
+.state button {
+  padding: 12px 20px;
+  border: 1px solid white;
+  border-radius: 8px;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+}
+
+.deleteDialog {
+  width: min(340px, calc(100% - 32px));
+  padding: 24px;
+  border: 1px solid var(--recipe-glass-border);
+  border-radius: 12px;
+  color: #000;
+  font-family: Inter, Arial, sans-serif;
+  background: rgb(255 255 255 / 95%);
+}
+
+.deleteDialog::backdrop {
+  background: rgb(0 0 0 / 50%);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.deleteDialog h2 {
+  margin: 0 0 12px;
+  font-size: 22px;
+}
+
+.deleteDialog p {
+  margin: 0 0 20px;
+  overflow-wrap: anywhere;
+}
+
+.deleteDialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.deleteDialogActions button {
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.deleteDialogActions button:last-child {
+  border-color: #a72828;
+  color: white;
+  background: #a72828;
+}

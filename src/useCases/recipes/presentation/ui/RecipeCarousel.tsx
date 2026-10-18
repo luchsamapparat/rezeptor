@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import type { Swiper as SwiperInstance } from 'swiper/types';
 import type { RecipeDto } from '../api/client';
+import styles from './RecipeCarousel.module.css';
 
 type Props = {
   recipes: RecipeDto[];
@@ -22,7 +23,7 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
   return (
     <Swiper
       key={recipes.map(recipe => recipe.id).join(':')}
-      className="recipe-carousel"
+      className={styles.carousel}
       slidesPerView={1}
       initialSlide={index}
       loop={recipes.length >= 2}
@@ -36,9 +37,9 @@ export function RecipeCarousel({ recipes, activeId, blocked, onActiveChange }: P
       }}
     >
       {recipes.map((recipe, slideIndex) => (
-        <SwiperSlide key={recipe.id} className="recipe-slide">
+        <SwiperSlide key={recipe.id} className={styles.slide}>
           <img
-            className="recipe-slide-photo"
+            className={styles.photo}
             src={`/api/recipes/${recipe.id}/photo?v=${encodeURIComponent(recipe.photoFileId ?? '')}`}
             alt={`Foto von ${recipe.title}`}
             loading={Math.abs(slideIndex - index) <= 1 || (recipes.length > 1 && (slideIndex === 0 || slideIndex === recipes.length - 1)) ? 'eager' : 'lazy'}

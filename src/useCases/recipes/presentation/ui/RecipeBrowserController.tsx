@@ -7,7 +7,8 @@ import { AppMenu } from './AppMenu';
 import { RecipeCarousel } from './RecipeCarousel';
 import { RecipeSheet } from './RecipeSheet';
 import type { Route } from './+types/RecipeBrowserController';
-import './stylesheet.css';
+import './RecipeBrowser.css';
+import styles from './RecipeBrowser.module.css';
 
 export const loader = async ({ context }: Route.LoaderArgs) => ({
   recipes: await getQueryClient(context).ensureQueryData(recipesQuery()).catch(() => null),
@@ -75,22 +76,22 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   };
 
   const renderContent = () => {
-    if (isPending) return <div className="recipe-browser-state" role="status"><h1>Rezepte werden geladen …</h1></div>;
+    if (isPending) return <div className={styles.state} role="status"><h1>Rezepte werden geladen …</h1></div>;
     if (error) return (
-      <div className="recipe-browser-state" role="alert">
+      <div className={styles.state} role="alert">
         <h1>Rezepte konnten nicht geladen werden.</h1>
         <button type="button" onClick={() => void refetch()}>Erneut versuchen</button>
       </div>
     );
     if (!activeRecipe) return (
-      <div className="recipe-browser-state">
+      <div className={styles.state}>
         <h1>Noch keine Rezepte mit Foto</h1>
         <p>Füge einem Rezept ein Foto hinzu, um es hier anzusehen.</p>
       </div>
     );
     return (
       <>
-        <div className="recipe-browser-background" inert={menuOpen || deleteOpen}>
+        <div className={styles.background} inert={menuOpen || deleteOpen}>
           <RecipeCarousel recipes={withPhotos} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
           <RecipeSheet
             recipe={activeRecipe}
@@ -111,7 +112,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             error={operationError}
           />
         </div>
-        <dialog ref={dialogRef} className="recipe-delete-dialog" onClose={() => setDeleteOpen(false)}>
+        <dialog ref={dialogRef} className={styles.deleteDialog} onClose={() => setDeleteOpen(false)}>
           <h2>Rezept löschen?</h2>
           <p>
             „
@@ -119,7 +120,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
             “ wird dauerhaft gelöscht.
           </p>
           {deleteMutation.error && <p role="alert">{deleteMutation.error.message}</p>}
-          <div className="recipe-delete-dialog-actions">
+          <div className={styles.deleteDialogActions}>
             <button type="button" onClick={() => setDeleteOpen(false)} disabled={deleteMutation.isPending}>Abbrechen</button>
             <button type="button" onClick={() => deleteMutation.mutate(activeRecipe.id)} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? 'Wird gelöscht …' : 'Löschen'}</button>
           </div>
@@ -129,7 +130,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   };
 
   return (
-    <main className="recipe-browser">
+    <main className={styles.browser} data-recipe-browser>
       {renderContent()}
       <AppMenu open={menuOpen} onOpenChange={setMenuOpen} triggerRef={triggerRef} />
     </main>

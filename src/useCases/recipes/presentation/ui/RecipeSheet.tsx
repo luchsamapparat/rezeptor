@@ -1,6 +1,7 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import type { RecipeDto } from '../api/client';
 import { RecipeActions } from './RecipeActions';
+import styles from './RecipeSheet.module.css';
 import { clampSheetHeight, formatRecipeSource, shouldExpandSheet } from './recipeBrowserState';
 
 type Props = {
@@ -25,10 +26,10 @@ export function RecipeSheet({ recipe, index, count, expanded, onExpandedChange, 
   const source = formatRecipeSource(recipe);
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
-    if (event.button !== 0 || (event.target as HTMLElement).closest('a, input, .recipe-action, .recipe-dot')) return;
+    if (event.button !== 0 || (event.target as HTMLElement).closest('a, input, button:not([data-recipe-sheet-handle])')) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    drag.current = { pointerId: event.pointerId, startY: event.clientY, startHeight: expanded ? EXPANDED : COLLAPSED, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0, moved: false, onHandle: Boolean((event.target as HTMLElement).closest('.recipe-sheet-handle-button')) };
+    drag.current = { pointerId: event.pointerId, startY: event.clientY, startHeight: expanded ? EXPANDED : COLLAPSED, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0, moved: false, onHandle: Boolean((event.target as HTMLElement).closest('[data-recipe-sheet-handle]')) };
   };
 
   const onPointerMove = (event: PointerEvent<HTMLElement>) => {
@@ -60,9 +61,11 @@ export function RecipeSheet({ recipe, index, count, expanded, onExpandedChange, 
   };
 
   return (
-    <div className="recipe-sheet-shade swiper-no-swiping">
+    <div className={`${styles.shade} swiper-no-swiping`}>
       <section
-        className={`recipe-sheet${expanded ? ' recipe-sheet--expanded' : ''}${dragHeight !== null ? ' recipe-sheet--dragging' : ''}`}
+        className={styles.sheet}
+        data-expanded={expanded || undefined}
+        data-dragging={dragHeight !== null || undefined}
         style={{ height: `calc(${dragHeight ?? (expanded ? EXPANDED : COLLAPSED)}px + env(safe-area-inset-bottom, 0px))` }}
         aria-label="Rezeptdetails"
         onPointerDown={onPointerDown}
@@ -71,30 +74,32 @@ export function RecipeSheet({ recipe, index, count, expanded, onExpandedChange, 
         onPointerCancel={finishDrag}
       >
         <button
-          className="recipe-sheet-handle-button"
+          className={styles.handleButton}
+          data-recipe-sheet-handle
           type="button"
           aria-label={expanded ? 'Rezeptdetails einklappen' : 'Rezeptdetails ausklappen'}
           aria-expanded={expanded}
           onClick={(event) => { if (event.detail === 0) onExpandedChange(!expanded); }}
         >
-          <span className="recipe-sheet-handle" />
+          <span className={styles.handle} />
         </button>
-        <div className="recipe-sheet-content">
-          <div className="recipe-sheet-heading">
+        <div className={styles.content}>
+          <div className={styles.heading}>
             <h1>{recipe.title}</h1>
             {source && <p>{source}</p>}
           </div>
-          <div className="recipe-sheet-expanded-content" inert={!expanded && dragHeight === null}>
+          <div className={styles.expandedContent} inert={!expanded && dragHeight === null}>
             <RecipeActions recipeId={recipe.id} pending={pending} onPhoto={onPhoto} onDelete={onDelete} />
-            {pending && <p className="recipe-operation-message" role="status">Wird verarbeitet …</p>}
-            {error && <p className="recipe-operation-message" role="alert">{error}</p>}
+            {pending && <p className={styles.operationMessage} role="status">Wird verarbeitet …</p>}
+            {error && <p className={styles.operationMessage} role="alert">{error}</p>}
             {count > 1 && (
-              <nav className="recipe-dots" aria-label="Rezepte">
+              <nav className={styles.dots} aria-label="Rezepte">
                 {Array.from({ length: count }, (_, dot) => (
                   <button
                     key={dot}
                     type="button"
-                    className={`recipe-dot${dot === index ? ' recipe-dot--active' : ''}`}
+                    className={styles.dot}
+                    data-active={dot === index || undefined}
                     aria-label={`Rezept ${dot + 1} von ${count} anzeigen`}
                     aria-current={dot === index ? 'true' : undefined}
                     onClick={() => onNavigate(dot)}
