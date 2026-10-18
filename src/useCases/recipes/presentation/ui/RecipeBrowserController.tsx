@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ImagePlus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { generatePath, useLocation, useNavigate, useParams } from 'react-router';
 import 'swiper/css';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { addRecipePhoto, recipesQuery, removeRecipe } from '../api/client';
@@ -19,11 +20,12 @@ export const loader = async ({ context }: Route.LoaderArgs) => ({
 
 export default function RecipeBrowserController({ loaderData }: Route.ComponentProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { recipeId: routeRecipeId } = useParams();
   const { data: recipes = [], isPending, error, refetch } = useQuery(recipesQuery({ initialData: loaderData.recipes ?? undefined }));
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(routeRecipeId ?? null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [addRecipeOpen, setAddRecipeOpen] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -34,18 +36,30 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const recipesRef = useRef(recipes);
   recipesRef.current = recipes;
 
+  const addRecipeOpen = location.pathname === '/recipes/new';
+  const expanded = routeRecipeId !== undefined;
+  const activeId = routeRecipeId ?? selectedRecipeId;
   const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
   const activeRecipe = recipes[activeIndex];
 
   useEffect(() => {
+    if (routeRecipeId) {
+      if (recipes.some(recipe => recipe.id === routeRecipeId)) {
+        setSelectedRecipeId(routeRecipeId);
+      }
+      else if (!isPending) {
+        void navigate('/', { replace: true });
+      }
+      return;
+    }
     if (recipes.length === 0) {
-      setActiveId(null);
+      setSelectedRecipeId(null);
       return;
     }
     if (!activeId || !recipes.some(recipe => recipe.id === activeId)) {
-      setActiveId(recipes[Math.min(previousIndex.current, recipes.length - 1)].id);
+      setSelectedRecipeId(recipes[Math.min(previousIndex.current, recipes.length - 1)].id);
     }
-  }, [activeId, recipes]);
+  }, [activeId, isPending, navigate, recipes, routeRecipeId]);
 
   useEffect(() => () => {
     if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
@@ -62,9 +76,9 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: string; redirectToId?: string | null }) => removeRecipe(id),
     onSuccess: async (_, { redirectToId }) => {
-      setExpanded(false);
       setOperationError(null);
-      if (redirectToId !== undefined) setActiveId(redirectToId);
+      if (redirectToId !== undefined) setSelectedRecipeId(redirectToId);
+      void navigate('/');
       await queryClient.invalidateQueries({ queryKey: ['recipes'] });
     },
     onError: (mutationError: Error) => setOperationError(mutationError.message),
@@ -103,12 +117,19 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   };
 
   const changeActive = (id: string) => {
+    if (id === activeId) return;
     const index = recipes.findIndex(recipe => recipe.id === id);
     if (index >= 0) previousIndex.current = index;
     if (pendingDeleteIdRef.current && pendingDeleteIdRef.current !== id) commitPendingDeletion();
-    setActiveId(id);
-    setExpanded(false);
+    setSelectedRecipeId(id);
+    if (expanded) void navigate('/');
     setOperationError(null);
+  };
+
+  const changeExpanded = (nextExpanded: boolean) => {
+    if (!activeRecipe) return;
+    setSelectedRecipeId(activeRecipe.id);
+    void navigate(nextExpanded ? generatePath('/recipes/:recipeId', { recipeId: activeRecipe.id }) : '/');
   };
 
   const choosePhoto = () => photoInputRef.current?.click();
@@ -160,7 +181,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
           <RecipeSheet
             recipe={activeRecipe}
             expanded={expanded}
-            onExpandedChange={setExpanded}
+            onExpandedChange={changeExpanded}
             onPhoto={choosePhoto}
             onDelete={togglePendingDeletion}
             pending={photoMutation.isPending || deleteMutation.isPending}
@@ -179,7 +200,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
         open={menuOpen}
         onAddRecipe={() => {
           setMenuOpen(false);
-          setAddRecipeOpen(true);
+          void navigate('/recipes/new');
         }}
         onOpenChange={setMenuOpen}
         restoreFocus={!addRecipeOpen}
@@ -187,11 +208,10 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
       />
       <AddRecipeOverlay
         open={addRecipeOpen}
-        onClose={() => setAddRecipeOpen(false)}
+        onClose={() => navigate('/')}
         onRecipeCreated={(recipeId) => {
-          setActiveId(recipeId);
-          setExpanded(false);
-          setAddRecipeOpen(false);
+          setSelectedRecipeId(recipeId);
+          void navigate(generatePath('/recipes/:recipeId', { recipeId }));
         }}
         returnFocusRef={triggerRef}
       />

@@ -19,16 +19,19 @@ const EXPANSION_HEIGHT = 144;
 
 export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDelete, pending, deletionPending, error }: Props) {
   const [dragHeight, setDragHeight] = useState<number | null>(null);
+  const [optimisticExpanded, setOptimisticExpanded] = useState<boolean | null>(null);
+  const [, setMeasurementRevision] = useState(0);
   const sheetRef = useRef<HTMLElement>(null);
   const collapsedHeight = useRef(0);
   const heightAnimation = useRef<Animation | null>(null);
   const previousRecipeId = useRef(recipe.id);
   const drag = useRef<{ pointerId: number; startY: number; startHeight: number; collapsedHeight: number; lastY: number; lastTime: number; velocity: number; moved: boolean; onHandle: boolean } | null>(null);
   const source = formatRecipeSource(recipe);
+  const displayedExpanded = optimisticExpanded ?? expanded;
   const minimumHeight = drag.current?.collapsedHeight ?? collapsedHeight.current;
   const expandedHeight = minimumHeight + EXPANSION_HEIGHT;
-  const height = dragHeight ?? (expanded ? expandedHeight : null);
-  const progress = height === null ? 0 : Math.min(1, Math.max(0, (height - minimumHeight) / EXPANSION_HEIGHT));
+  const height = dragHeight ?? (displayedExpanded && minimumHeight > 0 ? expandedHeight : null);
+  const progress = height === null ? (displayedExpanded ? 1 : 0) : Math.min(1, Math.max(0, (height - minimumHeight) / EXPANSION_HEIGHT));
   const textChannel = Math.round(255 * (1 - progress));
   const sheetStyle = {
     '--recipe-sheet-progress': progress,
@@ -40,7 +43,21 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
     const sheet = sheetRef.current;
     const recipeChanged = previousRecipeId.current !== recipe.id;
     previousRecipeId.current = recipe.id;
-    if (!sheet || expanded) return;
+    if (!sheet) return;
+
+    if (displayedExpanded) {
+      if (collapsedHeight.current > 0) return;
+
+      const renderedHeight = sheet.style.height;
+      sheet.removeAttribute('data-expanded');
+      sheet.style.height = 'auto';
+      const targetHeight = sheet.getBoundingClientRect().height;
+      sheet.dataset.expanded = 'true';
+      sheet.style.height = renderedHeight;
+      collapsedHeight.current = targetHeight;
+      setMeasurementRevision(revision => revision + 1);
+      return;
+    }
 
     const fromHeight = heightAnimation.current
       ? sheet.getBoundingClientRect().height
@@ -59,20 +76,24 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
     animation.onfinish = () => {
       if (heightAnimation.current === animation) heightAnimation.current = null;
     };
-  }, [expanded, recipe.id]);
+  }, [displayedExpanded, recipe.id]);
+
+  useEffect(() => {
+    if (optimisticExpanded === expanded) setOptimisticExpanded(null);
+  }, [expanded, optimisticExpanded]);
 
   useEffect(() => {
     const sheet = sheetRef.current;
-    if (!sheet || expanded || dragHeight !== null) return;
+    if (!sheet || displayedExpanded || dragHeight !== null) return;
     const updateHeight = () => {
-      if (heightAnimation.current) return;
+      if (heightAnimation.current || drag.current) return;
       collapsedHeight.current = sheet.getBoundingClientRect().height;
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
     observer.observe(sheet);
     return () => observer.disconnect();
-  }, [dragHeight, expanded, recipe.id]);
+  }, [displayedExpanded, dragHeight, recipe.id]);
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
     if (event.button !== 0 || (event.target as HTMLElement).closest('a, input, button:not([data-recipe-sheet-handle])')) return;
@@ -81,7 +102,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
     heightAnimation.current?.cancel();
     heightAnimation.current = null;
     const currentHeight = event.currentTarget.getBoundingClientRect().height;
-    const minimumHeight = expanded ? collapsedHeight.current : currentHeight;
+    const minimumHeight = displayedExpanded ? collapsedHeight.current : currentHeight;
     drag.current = { pointerId: event.pointerId, startY: event.clientY, startHeight: currentHeight, collapsedHeight: minimumHeight, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0, moved: false, onHandle: Boolean((event.target as HTMLElement).closest('[data-recipe-sheet-handle]')) };
   };
 
@@ -107,9 +128,14 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
     if (current.moved) {
       const expandedHeight = current.collapsedHeight + EXPANSION_HEIGHT;
       const height = clampSheetHeight(current.startHeight + current.startY - event.clientY, current.collapsedHeight, expandedHeight);
-      onExpandedChange(shouldExpandSheet(height, current.velocity, current.collapsedHeight, expandedHeight));
+      const nextExpanded = shouldExpandSheet(height, current.velocity, current.collapsedHeight, expandedHeight);
+      setOptimisticExpanded(nextExpanded);
+      onExpandedChange(nextExpanded);
     }
-    else if (current.onHandle && event.type === 'pointerup') onExpandedChange(!expanded);
+    else if (current.onHandle && event.type === 'pointerup') {
+      setOptimisticExpanded(!displayedExpanded);
+      onExpandedChange(!displayedExpanded);
+    }
     drag.current = null;
     setDragHeight(null);
   };
@@ -119,7 +145,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
       <section
         ref={sheetRef}
         className={styles.sheet}
-        data-expanded={expanded || undefined}
+        data-expanded={displayedExpanded || undefined}
         data-dragging={dragHeight !== null || undefined}
         style={sheetStyle}
         aria-label="Rezeptdetails"
@@ -132,9 +158,13 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
           className={styles.handleButton}
           data-recipe-sheet-handle
           type="button"
-          aria-label={expanded ? 'Rezeptdetails einklappen' : 'Rezeptdetails ausklappen'}
-          aria-expanded={expanded}
-          onClick={(event) => { if (event.detail === 0) onExpandedChange(!expanded); }}
+          aria-label={displayedExpanded ? 'Rezeptdetails einklappen' : 'Rezeptdetails ausklappen'}
+          aria-expanded={displayedExpanded}
+          onClick={(event) => {
+            if (event.detail !== 0) return;
+            setOptimisticExpanded(!displayedExpanded);
+            onExpandedChange(!displayedExpanded);
+          }}
         >
           <span className={styles.handle} />
         </button>
@@ -143,7 +173,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
             <h1>{recipe.title}</h1>
             {source && <p>{source}</p>}
           </div>
-          <div className={styles.expandedContent} inert={!expanded && dragHeight === null}>
+          <div className={styles.expandedContent} inert={!displayedExpanded && dragHeight === null}>
             <RecipeActions recipeId={recipe.id} hasPhoto={recipe.photoFileId !== null} pending={pending} deletionPending={deletionPending} onPhoto={onPhoto} onDelete={onDelete} />
             {pending && <p className={styles.operationMessage} role="status">Wird verarbeitet …</p>}
             {error && <p className={styles.operationMessage} role="alert">{error}</p>}
