@@ -14,7 +14,7 @@ type Props = {
   error: string | null;
 };
 
-const EXPANDED = 319;
+const EXPANSION_HEIGHT = 144;
 
 export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDelete, pending, error }: Props) {
   const [dragHeight, setDragHeight] = useState<number | null>(null);
@@ -25,8 +25,9 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
   const drag = useRef<{ pointerId: number; startY: number; startHeight: number; collapsedHeight: number; lastY: number; lastTime: number; velocity: number; moved: boolean; onHandle: boolean } | null>(null);
   const source = formatRecipeSource(recipe);
   const minimumHeight = drag.current?.collapsedHeight ?? collapsedHeight.current;
-  const height = dragHeight ?? (expanded ? EXPANDED : null);
-  const progress = height === null ? 0 : Math.min(1, Math.max(0, (height - minimumHeight) / (EXPANDED - minimumHeight)));
+  const expandedHeight = minimumHeight + EXPANSION_HEIGHT;
+  const height = dragHeight ?? (expanded ? expandedHeight : null);
+  const progress = height === null ? 0 : Math.min(1, Math.max(0, (height - minimumHeight) / EXPANSION_HEIGHT));
   const textChannel = Math.round(255 * (1 - progress));
   const sheetStyle = {
     '--recipe-sheet-progress': progress,
@@ -94,7 +95,7 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
       current.velocity = (current.lastY - event.clientY) / elapsed;
       current.lastY = event.clientY;
       current.lastTime = event.timeStamp;
-      setDragHeight(clampSheetHeight(current.startHeight + delta, current.collapsedHeight, EXPANDED));
+      setDragHeight(clampSheetHeight(current.startHeight + delta, current.collapsedHeight, current.collapsedHeight + EXPANSION_HEIGHT));
     }
   };
 
@@ -103,8 +104,9 @@ export function RecipeSheet({ recipe, expanded, onExpandedChange, onPhoto, onDel
     if (!current || current.pointerId !== event.pointerId) return;
     event.stopPropagation();
     if (current.moved) {
-      const height = clampSheetHeight(current.startHeight + current.startY - event.clientY, current.collapsedHeight, EXPANDED);
-      onExpandedChange(shouldExpandSheet(height, current.velocity, current.collapsedHeight, EXPANDED));
+      const expandedHeight = current.collapsedHeight + EXPANSION_HEIGHT;
+      const height = clampSheetHeight(current.startHeight + current.startY - event.clientY, current.collapsedHeight, expandedHeight);
+      onExpandedChange(shouldExpandSheet(height, current.velocity, current.collapsedHeight, expandedHeight));
     }
     else if (current.onHandle && event.type === 'pointerup') onExpandedChange(!expanded);
     drag.current = null;
