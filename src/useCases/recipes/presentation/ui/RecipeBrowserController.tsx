@@ -1,71 +1,137 @@
-import { useQuery } from '@tanstack/react-query';
-import { isNull } from 'lodash-es';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState } from 'react';
 import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import { Navigation, Pagination } from 'swiper/modules';
-import { Swiper, SwiperSlide } from 'swiper/react';
 import { getQueryClient } from '../../../../application/client/queryClient';
-import { recipesQuery } from '../api/client';
+import { addRecipePhoto, recipesQuery, removeRecipe } from '../api/client';
+import { AppMenu } from './AppMenu';
+import { RecipeCarousel } from './RecipeCarousel';
+import { RecipeSheet } from './RecipeSheet';
 import type { Route } from './+types/RecipeBrowserController';
 import './stylesheet.css';
 
-export const loader = async ({ context }: Route.LoaderArgs) => ({ recipes: await getQueryClient(context).ensureQueryData(recipesQuery()) });
+export const loader = async ({ context }: Route.LoaderArgs) => ({
+  recipes: await getQueryClient(context).ensureQueryData(recipesQuery()).catch(() => null),
+});
 
 export default function RecipeBrowserController({ loaderData }: Route.ComponentProps) {
-  const {
-    data: recipes = [],
-    isLoading,
-    error,
-  } = useQuery(recipesQuery({ initialData: loaderData.recipes }));
+  const queryClient = useQueryClient();
+  const { data: recipes = [], isPending, error, refetch } = useQuery(recipesQuery({ initialData: loaderData.recipes ?? undefined }));
+  const withPhotos = recipes.filter(recipe => recipe.photoFileId !== null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const previousIndex = useRef(0);
 
-  if (isLoading) {
-    return (
-      <h1>Loading...</h1>
+  const activeIndex = Math.max(0, withPhotos.findIndex(recipe => recipe.id === activeId));
+  const activeRecipe = withPhotos[activeIndex];
+
+  useEffect(() => {
+    if (withPhotos.length === 0) {
+      setActiveId(null);
+      return;
+    }
+    if (!activeId || !withPhotos.some(recipe => recipe.id === activeId)) {
+      setActiveId(withPhotos[Math.min(previousIndex.current, withPhotos.length - 1)].id);
+    }
+  }, [activeId, withPhotos]);
+
+  useEffect(() => {
+    if (!deleteOpen) return;
+    dialogRef.current?.showModal();
+    return () => dialogRef.current?.close();
+  }, [deleteOpen]);
+
+  const photoMutation = useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => addRecipePhoto(id, file),
+    onSuccess: async () => {
+      setOperationError(null);
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    },
+    onError: (mutationError: Error) => setOperationError(mutationError.message),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: removeRecipe,
+    onSuccess: async (_, id) => {
+      setDeleteOpen(false);
+      setExpanded(false);
+      setOperationError(null);
+      const next = withPhotos.filter(recipe => recipe.id !== id);
+      setActiveId(next[Math.min(activeIndex, next.length - 1)]?.id ?? null);
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    },
+    onError: (mutationError: Error) => setOperationError(mutationError.message),
+  });
+
+  const changeActive = (id: string) => {
+    const index = withPhotos.findIndex(recipe => recipe.id === id);
+    if (index >= 0) previousIndex.current = index;
+    setActiveId(id);
+    setExpanded(false);
+    setOperationError(null);
+  };
+
+  const renderContent = () => {
+    if (isPending) return <div className="recipe-browser-state" role="status"><h1>Rezepte werden geladen …</h1></div>;
+    if (error) return (
+      <div className="recipe-browser-state" role="alert">
+        <h1>Rezepte konnten nicht geladen werden.</h1>
+        <button type="button" onClick={() => void refetch()}>Erneut versuchen</button>
+      </div>
     );
-  }
-
-  if (error) {
+    if (!activeRecipe) return (
+      <div className="recipe-browser-state">
+        <h1>Noch keine Rezepte mit Foto</h1>
+        <p>Füge einem Rezept ein Foto hinzu, um es hier anzusehen.</p>
+      </div>
+    );
     return (
       <>
-        <h1>Error</h1>
-        <pre>{error instanceof Error ? error.message : error}</pre>
+        <div className="recipe-browser-background" inert={menuOpen || deleteOpen}>
+          <RecipeCarousel recipes={withPhotos} activeId={activeRecipe.id} blocked={menuOpen || deleteOpen} onActiveChange={changeActive} />
+          <RecipeSheet
+            recipe={activeRecipe}
+            index={activeIndex}
+            count={withPhotos.length}
+            expanded={expanded}
+            onExpandedChange={setExpanded}
+            onNavigate={index => changeActive(withPhotos[index].id)}
+            onPhoto={(file) => {
+              setOperationError(null);
+              photoMutation.mutate({ id: activeRecipe.id, file });
+            }}
+            onDelete={() => {
+              setOperationError(null);
+              setDeleteOpen(true);
+            }}
+            pending={photoMutation.isPending || deleteMutation.isPending}
+            error={operationError}
+          />
+        </div>
+        <dialog ref={dialogRef} className="recipe-delete-dialog" onClose={() => setDeleteOpen(false)}>
+          <h2>Rezept löschen?</h2>
+          <p>
+            „
+            {activeRecipe.title}
+            “ wird dauerhaft gelöscht.
+          </p>
+          {deleteMutation.error && <p role="alert">{deleteMutation.error.message}</p>}
+          <div className="recipe-delete-dialog-actions">
+            <button type="button" onClick={() => setDeleteOpen(false)} disabled={deleteMutation.isPending}>Abbrechen</button>
+            <button type="button" onClick={() => deleteMutation.mutate(activeRecipe.id)} disabled={deleteMutation.isPending}>{deleteMutation.isPending ? 'Wird gelöscht …' : 'Löschen'}</button>
+          </div>
+        </dialog>
       </>
     );
-  }
-
-  const recipesWithPhotos = recipes.filter(recipe => !isNull(recipe.photoFileId));
+  };
 
   return (
-
-    <>
-
-      {
-        recipesWithPhotos.length === 0
-          ? (
-              <p>No recipes found. Add some recipes to get started!</p>
-            )
-          : (
-              <Swiper
-                slidesPerView={1}
-                loop={true}
-                modules={[Pagination, Navigation]}
-              >
-                {recipesWithPhotos.map(recipe => (
-                  <SwiperSlide
-                    key={recipe.id}
-                    style={{
-                      backgroundImage: recipe.photoFileId ? `url('/api/recipes/${recipe.id}/photo')` : undefined,
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-                      backgroundSize: 'cover',
-                    }}
-                  >
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            )
-      }
-    </>
+    <main className="recipe-browser">
+      {renderContent()}
+      <AppMenu open={menuOpen} onOpenChange={setMenuOpen} triggerRef={triggerRef} />
+    </main>
   );
 }
