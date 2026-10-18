@@ -7,13 +7,14 @@ type Props = PropsWithChildren<{
   open: boolean;
   title: string;
   closeDisabled?: boolean;
+  contentRef?: RefObject<HTMLDivElement | null>;
   onClose: () => void;
   returnFocusRef?: RefObject<HTMLElement | null>;
 }>;
 
 const focusableSelector = 'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])';
 
-export function FeatureOverlay({ children, closeDisabled = false, icon: Icon, open, title, onClose, returnFocusRef }: Props) {
+export function FeatureOverlay({ children, closeDisabled = false, contentRef, icon: Icon, open, title, onClose, returnFocusRef }: Props) {
   const titleId = useId();
   const [rendered, setRendered] = useState(open);
   const [closing, setClosing] = useState(false);
@@ -133,7 +134,7 @@ export function FeatureOverlay({ children, closeDisabled = false, icon: Icon, op
           <Icon aria-hidden="true" size={30} strokeWidth={1.5} />
           <h1 id={titleId}>{title}</h1>
         </header>
-        <div className={styles.content}>{open ? children : displayedChildrenRef.current}</div>
+        <div ref={contentRef} className={styles.content}>{open ? children : displayedChildrenRef.current}</div>
       </div>
     </div>
   );

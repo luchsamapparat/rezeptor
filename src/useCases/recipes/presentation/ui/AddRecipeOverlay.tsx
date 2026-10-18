@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Apple, Book, BookCopy, BookMarked, BookPlus, Camera, Carrot, Croissant, Pizza, Soup } from 'lucide-react';
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Link } from 'react-router';
 import { addRecipeFromPhoto, cookbooksQuery } from '../api/client';
 import styles from './AddRecipeOverlay.module.css';
@@ -19,6 +19,7 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'cookbook' | 'photo'>('cookbook');
   const [cookbookId, setCookbookId] = useState('');
+  const contentRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
   const { data: cookbooks = [], isPending: cookbooksPending, error: cookbooksError, refetch } = useQuery({
@@ -46,6 +47,10 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
   useEffect(() => {
     if (addRecipeMutation.isPending) loadingRef.current?.focus();
   }, [addRecipeMutation.isPending]);
+
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [step]);
 
   const close = () => {
     if (!addRecipeMutation.isPending) onClose();
@@ -173,6 +178,7 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
       open={open}
       title="Rezept merken"
       closeDisabled={addRecipeMutation.isPending}
+      contentRef={contentRef}
       onClose={close}
       returnFocusRef={returnFocusRef}
     >

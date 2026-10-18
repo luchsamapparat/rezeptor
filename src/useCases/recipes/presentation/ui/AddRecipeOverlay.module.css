@@ -6,13 +6,12 @@
 }
 
 .stepViewport {
-  display: grid;
+  position: relative;
   min-height: 100%;
   overflow: hidden;
 }
 
 .stepPane {
-  grid-area: 1 / 1;
   min-width: 0;
   opacity: 0;
   visibility: hidden;
@@ -22,6 +21,12 @@
     transform 320ms cubic-bezier(.22, 1, .36, 1),
     opacity 260ms ease,
     visibility 0s linear 320ms;
+}
+
+.stepPane[inert] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
 }
 
 .stepViewport[data-step="cookbook"] .cookbookPane,
