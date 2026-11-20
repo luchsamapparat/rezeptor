@@ -81,7 +81,7 @@
     "typescript-eslint": "8.46.2",
     "vite": "7.1.12",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "4.0.6"
+    "vitest": "4.1.11"
   },
   "overrides": {
     "@prisma/driver-adapter-utils": "6.19.0"
