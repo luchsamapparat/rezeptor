@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: rezeptor
-          image: ghcr.io/luchsamapparat/rezeptor:latest
+          image: ghcr.io/luchsamapparat/rezeptor:latest@sha256:bd1b330b45142e3abcdd7f01ee539e48d195b452ffe4283db0272094a773b19a
           ports:
             - containerPort: 80
           env:
