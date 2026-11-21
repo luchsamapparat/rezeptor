@@ -63,7 +63,7 @@
     "@react-router/dev": "7.9.5",
     "@stylistic/eslint-plugin": "5.5.0",
     "@types/capitalize": "2.0.2",
-    "@types/node": "24.9.2",
+    "@types/node": "24.19.2",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
     "@types/stopword": "2.0.3",
