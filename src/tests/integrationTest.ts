@@ -25,8 +25,8 @@ export const test = baseTest
   });
 
 export const it = test;
-export const beforeEach = baseBeforeEach<TestApp>;
-export const afterEach = baseAfterEach<TestApp>;
+export const beforeEach: typeof baseBeforeEach<TestApp> = baseBeforeEach<TestApp>;
+export const afterEach: typeof baseAfterEach<TestApp> = baseAfterEach<TestApp>;
 
 async function createTestApp(database: DatabaseClient) {
   const app = new Hono();

@@ -19,7 +19,7 @@ const migrationSqlPath = join(import.meta.dirname, '../../database/migration.sql
 export async function generateMigrationSql() {
   const prismaSchemaPath = join(import.meta.dirname, '../../database/schema.prisma');
   await execAsync(
-    `npx prisma migrate diff --from-empty --to-schema-datamodel ${prismaSchemaPath} --script > ${migrationSqlPath}`,
+    `npx prisma migrate diff --from-empty --to-schema "${prismaSchemaPath}" --script > "${migrationSqlPath}"`,
   );
 }
 

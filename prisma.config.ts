@@ -5,10 +5,7 @@ export default defineConfig({
   migrations: {
     path: 'database/migrations',
   },
-  views: {
-    path: 'database/views',
-  },
-  typedSql: {
-    path: 'database/queries',
+  datasource: {
+    url: process.env.DATABASE_URL,
   },
 });

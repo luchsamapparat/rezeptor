@@ -1,11 +1,10 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "client"
+  provider = "prisma-client"
+  output   = "../src/common/persistence/generated"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Cookbook {

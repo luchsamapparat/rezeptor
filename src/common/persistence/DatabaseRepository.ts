@@ -1,7 +1,5 @@
-// import { Prisma } from '@prisma/client';
-
 import { ATTR_EXCEPTION_MESSAGE, ATTR_EXCEPTION_STACKTRACE, ATTR_EXCEPTION_TYPE } from '@opentelemetry/semantic-conventions/incubating';
-import { Prisma } from '@prisma/client';
+import { Prisma } from './generated/client';
 import type { Logger } from '../../application/server/logging';
 
 export abstract class DatabaseRepository {

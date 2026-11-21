@@ -1,7 +1,7 @@
 import { isNull } from 'lodash-es';
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 
-export const documentAnalysisClientMock = {
+export const documentAnalysisClientMock: { beginAnalyzeDocument: Mock } = {
   beginAnalyzeDocument: vi.fn(),
 };
 
@@ -9,7 +9,7 @@ export function setupAzureFormRecognizerMock({
   ean13,
 }: {
   ean13: string | null;
-}) {
+}): { mockPollUntilDone: Mock } {
   // Build response based on what's provided
   const response: Record<string, unknown> = {};
 

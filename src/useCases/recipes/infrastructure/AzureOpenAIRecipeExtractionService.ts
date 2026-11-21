@@ -44,14 +44,16 @@ export class AzureOpenAIRecipeExtractionService implements RecipeExtractionServi
         messages: [
           { role: 'system', content: this.instructions.systemPrompt },
           {
-            role: 'user', content: [
+            role: 'user',
+            content: [
               { type: 'text', text: this.instructions.userPrompt },
               { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${Buffer.from(await document.arrayBuffer()).toString('base64')}` } },
             ],
           },
         ],
         response_format: {
-          type: 'json_schema', json_schema: {
+          type: 'json_schema',
+          json_schema: {
             name: 'recipeContentSchema',
             schema: z.toJSONSchema(recipeContentSchema),
           },

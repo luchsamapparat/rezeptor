@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../../../common/persistence/generated/client';
 import { isArray } from 'lodash-es';
 import type { Logger } from '../../../../application/server/logging';
 import type { DatabaseClient } from '../../../../common/persistence/database';

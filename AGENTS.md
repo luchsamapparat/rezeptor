@@ -1,6 +1,6 @@
 # Repository guidance
 
-Rezeptor is a recipe management application. React Router 7 renders the UI through a Hono server; Hono also serves the API. Prisma uses PostgreSQL in production. The recipes use case integrates Azure Document Intelligence, Azure OpenAI, and Google Books.
+Rezeptor is a recipe management application. React Router 8 renders the UI through a Hono server; Hono also serves the API. Prisma 7 uses PostgreSQL in production. The recipes use case integrates Azure Document Intelligence, Azure OpenAI, and Google Books.
 
 ## Where to work
 

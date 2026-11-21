@@ -1,10 +1,10 @@
 import { isNull } from 'lodash-es';
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 import type { BookMetadata } from '../../cookbookManagement';
 
-export const googleBookVolumesListMockFn = vi.fn();
+export const googleBookVolumesListMockFn: Mock = vi.fn();
 
-export const googleBooksMock = {
+export const googleBooksMock: { volumes: { list: Mock } } = {
   volumes: {
     list: googleBookVolumesListMockFn,
   },

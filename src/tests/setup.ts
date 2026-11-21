@@ -1,5 +1,5 @@
 import { PGlite } from '@electric-sql/pglite';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../common/persistence/generated/client';
 import { PrismaPGlite } from 'pglite-prisma-adapter';
 import { afterAll, beforeAll, beforeEach } from 'vitest';
 import { getMigrationSql, getTestDatabase, setTestDatabase } from './testDatabase';

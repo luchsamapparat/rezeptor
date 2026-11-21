@@ -1,9 +1,9 @@
-import { vi } from 'vitest';
+import { vi, type Mock } from 'vitest';
 import type { RecipeContents } from '../../recipeManagement';
 
 type RecipeContentsMock = Partial<RecipeContents>;
 
-export const azureOpenAIMock = {
+export const azureOpenAIMock: { chat: { completions: { create: Mock } } } = {
   chat: {
     completions: {
       create: vi.fn(),
