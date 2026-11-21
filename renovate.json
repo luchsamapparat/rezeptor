@@ -7,8 +7,7 @@
     {
       "matchManagers": ["npm"],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "npm minor and patch updates",
-      "separateMinorPatch": false
+      "groupName": "npm minor and patch updates"
     },
     {
       "matchManagers": ["npm"],
