@@ -5,6 +5,17 @@
   ],
   "packageRules": [
     {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "npm minor and patch updates",
+      "separateMinorPatch": false
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["major"],
+      "groupName": null
+    },
+    {
       "matchManagers": ["dockerfile"],
       "pinDigests": true
     }
