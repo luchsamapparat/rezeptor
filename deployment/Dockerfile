@@ -1,22 +1,22 @@
-FROM node:24-alpine AS development-dependencies-env
+FROM node:26-alpine AS development-dependencies-env
 COPY . /app
 WORKDIR /app
 RUN npm ci
 
-FROM node:24-alpine AS production-dependencies-env
+FROM node:26-alpine AS production-dependencies-env
 COPY package.json package-lock.json /app/
 COPY database/schema.prisma /app/
 WORKDIR /app
 RUN npm ci --omit=dev
 RUN npm run db:generate
 
-FROM node:24-alpine AS build-env
+FROM node:26-alpine AS build-env
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
 RUN npm run build
 
-FROM node:24-alpine
+FROM node:26-alpine
 COPY deployment/start.sh /app/
 COPY package.json package-lock.json /app/
 COPY database /app/
