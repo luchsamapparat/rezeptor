@@ -15,7 +15,7 @@ services:
     depends_on:
       - database
   database:
-    image: postgres:18
+    image: postgres:19
     container_name: rezeptor-database
     env_file:
       - ./.env
