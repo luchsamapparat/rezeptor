@@ -30,8 +30,26 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
+  postgres-upgrade:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - name: Verify PostgreSQL 18 dump and restore into the Compose target
+        run: |
+          npm run db:generate
+          node scripts/verifyPostgresUpgrade.mjs
+
   build-and-publish:
-    needs: validate
+    needs: [validate, postgres-upgrade]
     runs-on: ubuntu-latest
     permissions:
       contents: read
