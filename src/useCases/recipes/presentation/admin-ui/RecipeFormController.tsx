@@ -11,6 +11,7 @@ import { ErrorState, PageHeader } from './components';
 import { addRecipe, cookbooksQuery } from '../api/client';
 
 interface Ingredient {
+  id: string;
   quantity: string;
   unit: string;
   name: string;
@@ -20,21 +21,21 @@ interface Ingredient {
 export default function RecipeFormController() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { quantity: '', unit: '', name: '', notes: '' },
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => [
+    { id: crypto.randomUUID(), quantity: '', unit: '', name: '', notes: '' },
   ]);
 
   const { data: cookbooks = [] } = useQuery(cookbooksQuery());
 
   const addIngredient = () => {
-    setIngredients([...ingredients, { quantity: '', unit: '', name: '', notes: '' }]);
+    setIngredients([...ingredients, { id: crypto.randomUUID(), quantity: '', unit: '', name: '', notes: '' }]);
   };
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
+  const updateIngredient = (index: number, field: Exclude<keyof Ingredient, 'id'>, value: string) => {
     const updated = [...ingredients];
     updated[index][field] = value;
     setIngredients(updated);
@@ -122,7 +123,7 @@ export default function RecipeFormController() {
 
               <div className="space-y-3">
                 {ingredients.map((ingredient, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                  <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-2">
                       <Input
                         placeholder="Qty"

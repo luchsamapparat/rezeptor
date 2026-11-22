@@ -41,7 +41,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const [rememberPending, setRememberPending] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const previousIndex = useRef(0);
+  const previousIndexRef = useRef(0);
   const deleteTimerRef = useRef<number | null>(null);
   const pendingDeleteIdRef = useRef<string | null>(null);
   const recipesRef = useRef(recipes);
@@ -56,24 +56,18 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const activeIndex = Math.max(0, recipes.findIndex(recipe => recipe.id === activeId));
   const activeRecipe = recipes[activeIndex];
 
+  const nextSelectedRecipeId = routeRecipeId && recipes.some(recipe => recipe.id === routeRecipeId)
+    ? routeRecipeId
+    : recipes.some(recipe => recipe.id === selectedRecipeId)
+      ? selectedRecipeId
+      : recipes[Math.min(previousIndexRef.current, recipes.length - 1)]?.id ?? null;
+  if (selectedRecipeId !== nextSelectedRecipeId) setSelectedRecipeId(nextSelectedRecipeId);
+
   useEffect(() => {
-    if (routeRecipeId) {
-      if (recipes.some(recipe => recipe.id === routeRecipeId)) {
-        setSelectedRecipeId(routeRecipeId);
-      }
-      else if (!isPending) {
-        void navigate('/', { replace: true });
-      }
-      return;
+    if (routeRecipeId && !recipes.some(recipe => recipe.id === routeRecipeId) && !isPending) {
+      void navigate('/', { replace: true });
     }
-    if (recipes.length === 0) {
-      setSelectedRecipeId(null);
-      return;
-    }
-    if (!activeId || !recipes.some(recipe => recipe.id === activeId)) {
-      setSelectedRecipeId(recipes[Math.min(previousIndex.current, recipes.length - 1)].id);
-    }
-  }, [activeId, isPending, navigate, recipes, routeRecipeId]);
+  }, [isPending, navigate, recipes, routeRecipeId]);
 
   useEffect(() => () => {
     if (deleteTimerRef.current !== null) window.clearTimeout(deleteTimerRef.current);
@@ -143,7 +137,7 @@ export default function RecipeBrowserController({ loaderData }: Route.ComponentP
   const changeActive = (id: string) => {
     if (id === activeId) return;
     const index = recipes.findIndex(recipe => recipe.id === id);
-    if (index >= 0) previousIndex.current = index;
+    if (index >= 0) previousIndexRef.current = index;
     if (pendingDeleteIdRef.current && pendingDeleteIdRef.current !== id) commitPendingDeletion();
     setSelectedRecipeId(id);
     if (expanded) void navigate('/');

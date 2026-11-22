@@ -20,11 +20,11 @@ export function PageHeader({ title, actions = [] }: PageHeaderProps) {
       <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
       {actions.length > 0 && (
         <div className="flex gap-2">
-          {actions.map((action, index) =>
+          {actions.map(action =>
             action.to
               ? (
                   <Button
-                    key={index}
+                    key={action.to ?? action.label}
                     variant={action.variant || 'default'}
                     disabled={action.disabled}
                     asChild
@@ -34,7 +34,7 @@ export function PageHeader({ title, actions = [] }: PageHeaderProps) {
                 )
               : (
                   <Button
-                    key={index}
+                    key={action.to ?? action.label}
                     variant={action.variant || 'default'}
                     onClick={action.onClick}
                     disabled={action.disabled}

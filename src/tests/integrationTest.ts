@@ -1,3 +1,4 @@
+/* eslint-disable @eslint-react/rules-of-hooks */
 import { faker } from '@faker-js/faker';
 import { Hono } from 'hono';
 import { afterEach as baseAfterEach, beforeEach as baseBeforeEach, test as baseTest } from 'vitest';

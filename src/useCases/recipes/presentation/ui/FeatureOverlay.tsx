@@ -17,7 +17,7 @@ const focusableSelector = 'a[href], button:not(:disabled), input:not(:disabled),
 export function FeatureOverlay({ children, closeDisabled = false, contentRef, icon: Icon, open, title, onClose, returnFocusRef }: Props) {
   const titleId = useId();
   const [rendered, setRendered] = useState(open);
-  const [closing, setClosing] = useState(false);
+  const [previousOpen, setPreviousOpen] = useState(open);
   const overlayRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const displayedChildrenRef = useRef(children);
@@ -29,23 +29,17 @@ export function FeatureOverlay({ children, closeDisabled = false, contentRef, ic
   onCloseRef.current = onClose;
   openRef.current = open;
 
-  useEffect(() => {
-    if (open) {
-      setRendered(true);
-      setClosing(false);
-      return;
-    }
-    if (!rendered) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setRendered(false);
-      return;
-    }
+  if (previousOpen !== open) {
+    setPreviousOpen(open);
+    if (open) setRendered(true);
+  }
+  const closing = !open && rendered;
 
-    setClosing(true);
+  useEffect(() => {
+    if (open || !rendered) return;
     const timeout = window.setTimeout(() => {
       setRendered(false);
-      setClosing(false);
-    }, 260);
+    }, window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260);
     return () => window.clearTimeout(timeout);
   }, [open, rendered]);
 
@@ -53,6 +47,7 @@ export function FeatureOverlay({ children, closeDisabled = false, contentRef, ic
     if (!rendered) return;
 
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const returnFocusTarget = returnFocusRef?.current ?? previousFocus;
     const overlay = overlayRef.current;
     const siblings = overlay?.parentElement
       ? Array.from(overlay.parentElement.children).filter(
@@ -96,9 +91,9 @@ export function FeatureOverlay({ children, closeDisabled = false, contentRef, ic
       cancelAnimationFrame(focusFrame);
       document.removeEventListener('keydown', onKeyDown);
       siblings.forEach(element => element.inert = false);
-      (returnFocusRef?.current ?? previousFocus)?.focus();
+      returnFocusTarget?.focus();
     };
-  }, [rendered]);
+  }, [rendered, returnFocusRef]);
 
   if (!rendered) return null;
 

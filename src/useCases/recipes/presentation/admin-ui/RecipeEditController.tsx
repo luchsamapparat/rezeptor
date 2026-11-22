@@ -5,7 +5,7 @@ import { Label } from './components/ui/Label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/Select';
 import { Textarea } from './components/ui/Textarea';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { getQueryClient } from '../../../../application/client/queryClient';
 import { ErrorState, LoadingState, PageHeader } from './components';
@@ -13,6 +13,7 @@ import { addFoodPhoto, cookbooksQuery, editRecipe, recipeQuery, removeRecipe } f
 import type { Route } from './+types/RecipeEditController';
 
 interface Ingredient {
+  id: string;
   quantity: string;
   unit: string;
   name: string;
@@ -30,7 +31,14 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | null>(null);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>(() => loaderData.recipe.ingredients.map(ingredient => ({
+    id: crypto.randomUUID(),
+    quantity: ingredient.quantity || '',
+    unit: ingredient.unit || '',
+    name: ingredient.name,
+    notes: ingredient.notes || '',
+  })));
+  const [ingredientSource, setIngredientSource] = useState<Pick<typeof loaderData.recipe, 'ingredients'> | undefined>(loaderData.recipe);
 
   const {
     data: recipe,
@@ -40,10 +48,11 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
 
   const { data: cookbooks = [] } = useQuery(cookbooksQuery());
 
-  // Initialize ingredients when recipe data is loaded
-  useEffect(() => {
+  if (recipe !== ingredientSource) {
+    setIngredientSource(recipe);
     if (recipe?.ingredients) {
-      setIngredients(recipe.ingredients.map(ingredient => ({
+      setIngredients(() => recipe.ingredients.map(ingredient => ({
+        id: crypto.randomUUID(),
         quantity: ingredient.quantity || '',
         unit: ingredient.unit || '',
         name: ingredient.name,
@@ -51,19 +60,19 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
       })));
     }
     else {
-      setIngredients([{ quantity: '', unit: '', name: '', notes: '' }]);
+      setIngredients(() => [{ id: crypto.randomUUID(), quantity: '', unit: '', name: '', notes: '' }]);
     }
-  }, [recipe]);
+  }
 
   const addIngredient = () => {
-    setIngredients([...ingredients, { quantity: '', unit: '', name: '', notes: '' }]);
+    setIngredients([...ingredients, { id: crypto.randomUUID(), quantity: '', unit: '', name: '', notes: '' }]);
   };
 
   const removeIngredient = (index: number) => {
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
+  const updateIngredient = (index: number, field: Exclude<keyof Ingredient, 'id'>, value: string) => {
     const updated = [...ingredients];
     updated[index][field] = value;
     setIngredients(updated);
@@ -242,7 +251,7 @@ export default function RecipeEditController({ loaderData, params }: Route.Compo
 
               <div className="space-y-3">
                 {ingredients.map((ingredient, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-2 items-end">
+                  <div key={ingredient.id} className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-2">
                       <Input
                         placeholder="Qty"

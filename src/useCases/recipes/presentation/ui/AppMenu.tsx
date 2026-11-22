@@ -19,6 +19,7 @@ export function AppMenu({ open, onAddRecipe, onRememberFood, onOpenChange, resto
 
   useEffect(() => {
     if (!open) return;
+    const trigger = triggerRef.current;
     panelRef.current?.querySelector<HTMLElement>('a')?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onOpenChange(false);
@@ -39,7 +40,7 @@ export function AppMenu({ open, onAddRecipe, onRememberFood, onOpenChange, resto
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      if (restoreFocusRef.current) triggerRef.current?.focus();
+      if (restoreFocusRef.current) trigger?.focus();
     };
   }, [open, onOpenChange, triggerRef]);
 
