@@ -18,9 +18,18 @@ type Props = {
 
 export function RememberFoodOverlay({ open, onClose, onRecipeCreated, returnFocusRef, onPendingChange }: Props) {
   const queryClient = useQueryClient();
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<{ file: File; previewUrl: string } | null>(null);
   const [title, setTitle] = useState('');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previousOpen, setPreviousOpen] = useState(open);
+  const photoFile = photo?.file ?? null;
+  const previewUrl = photo?.previewUrl ?? null;
+  if (previousOpen !== open) {
+    setPreviousOpen(open);
+    if (!open) {
+      setPhoto(null);
+      setTitle('');
+    }
+  }
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const mutation = useMutation({
@@ -34,19 +43,12 @@ export function RememberFoodOverlay({ open, onClose, onRecipeCreated, returnFocu
   resetMutationRef.current = mutation.reset;
 
   useEffect(() => {
-    if (!photoFile) {
-      setPreviewUrl(null);
-      return;
-    }
-    const url = URL.createObjectURL(photoFile);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [photoFile]);
+    if (!previewUrl) return;
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
   useEffect(() => {
     if (open) return;
-    setPhotoFile(null);
-    setTitle('');
     resetMutationRef.current();
   }, [open]);
 
@@ -91,7 +93,7 @@ export function RememberFoodOverlay({ open, onClose, onRecipeCreated, returnFocu
           disabled={mutation.isPending}
           onChange={(event) => {
             const file = event.target.files?.[0];
-            if (file) setPhotoFile(file);
+            if (file) setPhoto({ file, previewUrl: URL.createObjectURL(file) });
             event.target.value = '';
           }}
         />

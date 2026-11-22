@@ -2,6 +2,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { isNull } from 'lodash-es';
 import { createContext, type RouterContextProvider } from 'react-router';
 
+// eslint-disable-next-line @eslint-react/naming-convention-context-name
 const queryClientContext = createContext<QueryClient | null>(null);
 
 export const provideQueryClient = (context: Readonly<RouterContextProvider>, queryClient: QueryClient) => {

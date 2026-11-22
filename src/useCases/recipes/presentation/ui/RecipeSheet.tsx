@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useReducer, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import type { CookbookDto, EditRecipeDto, RecipeDto } from '../api/client';
 import { RecipeActions } from './RecipeActions';
 import styles from './RecipeSheet.module.css';
@@ -31,16 +31,26 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
   const [title, setTitle] = useState(recipe.title);
   const [cookbookId, setCookbookId] = useState(recipe.cookbookId ?? '');
   const [pageNumber, setPageNumber] = useState(recipe.pageNumber?.toString() ?? '');
-  const [, setMeasurementRevision] = useState(0);
+  const [, updateMeasurement] = useReducer(revision => revision + 1, 0);
+  const [editSource, setEditSource] = useState({ editing, id: recipe.id, title: recipe.title, cookbookId: recipe.cookbookId, pageNumber: recipe.pageNumber });
+  if (optimisticExpanded !== null && optimisticExpanded === expanded) setOptimisticExpanded(null);
+  if (editSource.editing !== editing || editSource.id !== recipe.id || editSource.title !== recipe.title || editSource.cookbookId !== recipe.cookbookId || editSource.pageNumber !== recipe.pageNumber) {
+    setEditSource({ editing, id: recipe.id, title: recipe.title, cookbookId: recipe.cookbookId, pageNumber: recipe.pageNumber });
+    if (editing) {
+      setTitle(recipe.title);
+      setCookbookId(recipe.cookbookId ?? '');
+      setPageNumber(recipe.pageNumber?.toString() ?? '');
+    }
+  }
   const sheetRef = useRef<HTMLElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const collapsedHeight = useRef(0);
-  const heightAnimation = useRef<Animation | null>(null);
-  const previousRecipeId = useRef(recipe.id);
-  const drag = useRef<{ pointerId: number; startY: number; startHeight: number; collapsedHeight: number; lastY: number; lastTime: number; velocity: number; moved: boolean; onHandle: boolean } | null>(null);
+  const collapsedHeightRef = useRef(0);
+  const heightAnimationRef = useRef<Animation | null>(null);
+  const previousRecipeIdRef = useRef(recipe.id);
+  const dragRef = useRef<{ pointerId: number; startY: number; startHeight: number; collapsedHeight: number; lastY: number; lastTime: number; velocity: number; moved: boolean; onHandle: boolean } | null>(null);
   const source = formatRecipeSource(recipe);
   const displayedExpanded = optimisticExpanded ?? expanded;
-  const minimumHeight = drag.current?.collapsedHeight ?? collapsedHeight.current;
+  const minimumHeight = dragRef.current?.collapsedHeight ?? collapsedHeightRef.current;
   const expandedHeight = minimumHeight + EXPANSION_HEIGHT;
   const height = dragHeight ?? (displayedExpanded && minimumHeight > 0 ? expandedHeight : null);
   const progress = height === null ? (displayedExpanded ? 1 : 0) : Math.min(1, Math.max(0, (height - minimumHeight) / EXPANSION_HEIGHT));
@@ -53,12 +63,12 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
 
   useLayoutEffect(() => {
     const sheet = sheetRef.current;
-    const recipeChanged = previousRecipeId.current !== recipe.id;
-    previousRecipeId.current = recipe.id;
+    const recipeChanged = previousRecipeIdRef.current !== recipe.id;
+    previousRecipeIdRef.current = recipe.id;
     if (!sheet) return;
 
     if (displayedExpanded) {
-      if (collapsedHeight.current > 0) return;
+      if (collapsedHeightRef.current > 0) return;
 
       const renderedHeight = sheet.style.height;
       sheet.removeAttribute('data-expanded');
@@ -66,40 +76,29 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
       const targetHeight = sheet.getBoundingClientRect().height;
       sheet.dataset.expanded = 'true';
       sheet.style.height = renderedHeight;
-      collapsedHeight.current = targetHeight;
-      setMeasurementRevision(revision => revision + 1);
+      collapsedHeightRef.current = targetHeight;
+      updateMeasurement();
       return;
     }
 
-    const fromHeight = heightAnimation.current
+    const fromHeight = heightAnimationRef.current
       ? sheet.getBoundingClientRect().height
-      : collapsedHeight.current;
-    heightAnimation.current?.cancel();
-    heightAnimation.current = null;
+      : collapsedHeightRef.current;
+    heightAnimationRef.current?.cancel();
+    heightAnimationRef.current = null;
     const targetHeight = sheet.getBoundingClientRect().height;
-    collapsedHeight.current = targetHeight;
+    collapsedHeightRef.current = targetHeight;
 
     if (!recipeChanged || fromHeight === 0 || Math.abs(fromHeight - targetHeight) < 1 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const animation = sheet.animate(
       [{ height: `${fromHeight}px` }, { height: `${targetHeight}px` }],
       { duration: 220, easing: 'ease' },
     );
-    heightAnimation.current = animation;
+    heightAnimationRef.current = animation;
     animation.onfinish = () => {
-      if (heightAnimation.current === animation) heightAnimation.current = null;
+      if (heightAnimationRef.current === animation) heightAnimationRef.current = null;
     };
   }, [displayedExpanded, recipe.id]);
-
-  useEffect(() => {
-    if (optimisticExpanded === expanded) setOptimisticExpanded(null);
-  }, [expanded, optimisticExpanded]);
-
-  useEffect(() => {
-    if (!editing) return;
-    setTitle(recipe.title);
-    setCookbookId(recipe.cookbookId ?? '');
-    setPageNumber(recipe.pageNumber?.toString() ?? '');
-  }, [editing, recipe.cookbookId, recipe.id, recipe.pageNumber, recipe.title]);
 
   useLayoutEffect(() => {
     if (!editing) return;
@@ -113,8 +112,8 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
     const sheet = sheetRef.current;
     if (!sheet || displayedExpanded || dragHeight !== null) return;
     const updateHeight = () => {
-      if (heightAnimation.current || drag.current) return;
-      collapsedHeight.current = sheet.getBoundingClientRect().height;
+      if (heightAnimationRef.current || dragRef.current) return;
+      collapsedHeightRef.current = sheet.getBoundingClientRect().height;
     };
     updateHeight();
     const observer = new ResizeObserver(updateHeight);
@@ -126,15 +125,15 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
     if (editing || event.button !== 0 || (event.target as HTMLElement).closest('a, input, select, textarea, button:not([data-recipe-sheet-handle])')) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
-    heightAnimation.current?.cancel();
-    heightAnimation.current = null;
+    heightAnimationRef.current?.cancel();
+    heightAnimationRef.current = null;
     const currentHeight = event.currentTarget.getBoundingClientRect().height;
-    const minimumHeight = displayedExpanded ? collapsedHeight.current : currentHeight;
-    drag.current = { pointerId: event.pointerId, startY: event.clientY, startHeight: currentHeight, collapsedHeight: minimumHeight, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0, moved: false, onHandle: Boolean((event.target as HTMLElement).closest('[data-recipe-sheet-handle]')) };
+    const minimumHeight = displayedExpanded ? collapsedHeightRef.current : currentHeight;
+    dragRef.current = { pointerId: event.pointerId, startY: event.clientY, startHeight: currentHeight, collapsedHeight: minimumHeight, lastY: event.clientY, lastTime: event.timeStamp, velocity: 0, moved: false, onHandle: Boolean((event.target as HTMLElement).closest('[data-recipe-sheet-handle]')) };
   };
 
   const onPointerMove = (event: PointerEvent<HTMLElement>) => {
-    const current = drag.current;
+    const current = dragRef.current;
     if (!current || current.pointerId !== event.pointerId) return;
     const delta = current.startY - event.clientY;
     if (Math.abs(delta) > 4) current.moved = true;
@@ -149,7 +148,7 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
   };
 
   const finishDrag = (event: PointerEvent<HTMLElement>) => {
-    const current = drag.current;
+    const current = dragRef.current;
     if (!current || current.pointerId !== event.pointerId) return;
     event.stopPropagation();
     if (current.moved) {
@@ -163,7 +162,7 @@ export function RecipeSheet({ recipe, cookbooks, expanded, editing, onExpandedCh
       setOptimisticExpanded(!displayedExpanded);
       onExpandedChange(!displayedExpanded);
     }
-    drag.current = null;
+    dragRef.current = null;
     setDragHeight(null);
   };
 

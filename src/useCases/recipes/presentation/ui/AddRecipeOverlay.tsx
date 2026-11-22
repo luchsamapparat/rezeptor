@@ -15,12 +15,26 @@ type Props = {
   onPendingChange?: (pending: boolean) => void;
 };
 
-const loadingIcons = [Apple, Carrot, Croissant, Pizza, Soup];
+const loadingIcons = [
+  { id: 'apple', Icon: Apple },
+  { id: 'carrot', Icon: Carrot },
+  { id: 'croissant', Icon: Croissant },
+  { id: 'pizza', Icon: Pizza },
+  { id: 'soup', Icon: Soup },
+];
 
 export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRef, recipeId, onPendingChange }: Props) {
   const queryClient = useQueryClient();
   const [step, setStep] = useState<'cookbook' | 'photo'>('cookbook');
   const [cookbookId, setCookbookId] = useState('');
+  const [previousOpen, setPreviousOpen] = useState(open);
+  if (previousOpen !== open) {
+    setPreviousOpen(open);
+    if (!open) {
+      setStep('cookbook');
+      setCookbookId('');
+    }
+  }
   const contentRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -43,8 +57,6 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
 
   useEffect(() => {
     if (open) return;
-    setStep('cookbook');
-    setCookbookId('');
     resetMutationRef.current();
   }, [open]);
 
@@ -115,8 +127,8 @@ export function AddRecipeOverlay({ open, onClose, onRecipeCreated, returnFocusRe
     if (addRecipeMutation.isPending) return (
       <div ref={loadingRef} className={styles.loading} role="status" aria-live="polite" tabIndex={-1}>
         <div className={styles.loadingIcons} aria-hidden="true">
-          {loadingIcons.map((Icon, index) => (
-            <Icon className={styles.loadingIcon} key={Icon.displayName ?? index} size={52} strokeWidth={1.25} />
+          {loadingIcons.map(({ id, Icon }) => (
+            <Icon className={styles.loadingIcon} key={id} size={52} strokeWidth={1.25} />
           ))}
         </div>
         <h2>Rezept wird verarbeitet</h2>
