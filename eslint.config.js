@@ -1,6 +1,6 @@
+import react from '@eslint-react/eslint-plugin';
 import js from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
-import react from 'eslint-plugin-react';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
@@ -10,8 +10,7 @@ export default defineConfig([
   { files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], plugins: { js }, extends: ['js/recommended'] },
   { files: ['**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'], languageOptions: { globals: { ...globals.browser, ...globals.node } } },
   tseslint.configs.recommended,
-  react.configs.flat.recommended,
-  react.configs.flat['jsx-runtime'],
+  react.configs['recommended-typescript'],
   stylistic.configs.customize({
     semi: true,
   }),
@@ -21,11 +20,6 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
       '@stylistic/eol-last': 'off',
       '@stylistic/jsx-one-expression-per-line': 'off',
-    },
-    settings: {
-      react: {
-        version: 'detect',
-      },
     },
   },
 ]);
