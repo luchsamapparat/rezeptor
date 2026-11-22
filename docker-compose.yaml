@@ -15,14 +15,16 @@ services:
     depends_on:
       - database
   database:
-    image: postgres:18
+    image: postgres:19
     container_name: rezeptor-database
     env_file:
       - ./.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DATABASE:-rezeptor}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data_19:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rezeptor"]
       interval: 10s
@@ -30,4 +32,4 @@ services:
       retries: 5
 
 volumes:
-  postgres_data:
+  postgres_data_19:

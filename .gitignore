@@ -1,5 +1,6 @@
 .DS_Store
 .env
+/.backups/
 /node_modules/
 *.tsbuildinfo
 /.react-router/
