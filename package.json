@@ -19,7 +19,7 @@
   "dependencies": {
     "@azure/ai-form-recognizer": "5.1.0",
     "@googleapis/books": "13.0.1",
-    "@hono/otel": "1.3.0",
+    "@hono/otel": "1.4.0",
     "@hono/zod-openapi": "1.6.3",
     "@hono/zod-validator": "0.9.1",
     "@opentelemetry/auto-instrumentations-node": "0.83.1",
@@ -43,7 +43,7 @@
     "hono-simple-di": "0.2.1",
     "isbot": "5.2.3",
     "lodash-es": "4.18.1",
-    "lucide-react": "1.77.0",
+    "lucide-react": "1.78.0",
     "openai": "7.62.0",
     "pg": "8.23.1",
     "pino": "10.4.0",
